@@ -1,0 +1,57 @@
+name: sikasirsahaja
+description: "SiKasirSahaja - Aplikasi Kasir/POS Modern"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # Firebase
+  firebase_core: ^4.14.0
+  firebase_auth: ^6.6.1
+  cloud_firestore: ^6.9.0
+  firebase_storage: ^13.5.0
+
+  # State Management
+  provider: ^6.1.5+1
+
+  # Barcode Scanner
+  mobile_scanner: ^7.4.0
+
+  # UI & Formatting
+  google_fonts: ^8.2.1
+  intl: ^0.20.3
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/6.png"
+  min_sdk_android: 21
+  web:
+    generate: true
+    image_path: "assets/images/6.png"
+  windows:
+    generate: true
+    image_path: "assets/images/6.png"
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+

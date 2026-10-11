@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper Functions ─────────────────────────────────────
+    
+    // Check if user is authenticated
+    function isAuth() {
+      return request.auth != null;
+    }
+    
+    // Get user document data
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    // Check if authenticated user has admin role
+    function isAdmin() {
+      return isAuth() && getUserData().role == 'admin';
+    }
+    
+    // Check if authenticated user has kasir role
+    function isKasir() {
+      return isAuth() && getUserData().role == 'kasir';
+    }
+    
+    // Check if user is active
+    function isActive() {
+      return isAuth() && getUserData().isActive == true;
+    }
+
+    // ─── Users Collection ─────────────────────────────────────
+    match /users/{userId} {
+      allow read: if isAuth() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAdmin() || (isAuth() && request.auth.uid == userId 
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'isActive']));
+      allow delete: if false;
+    }
+
+    // ─── Categories Collection ────────────────────────────────
+    match /categories/{categoryId} {
+      allow read: if isAuth() && isActive();
+      allow write: if isAdmin() && isActive();
+    }
+
+    // ─── Products Collection ──────────────────────────────────
+    match /products/{productId} {
+      allow read: if isAuth() && isActive();
+      allow write: if isAdmin() && isActive();
+    }
+
+    // ─── Transactions Collection ──────────────────────────────
+    match /transactions/{transactionId} {
+      allow read: if isAuth() && isActive() && 
+        (isAdmin() || resource.data.cashierId == request.auth.uid);
+      allow create: if isAuth() && isActive() && 
+        (isAdmin() || isKasir()) &&
+        request.resource.data.cashierId == request.auth.uid;
+      allow update: if isAdmin() && isActive();
+      allow delete: if false;
+
+      match /items/{itemId} {
+        allow read: if isAuth() && isActive() && 
+          (isAdmin() || get(/databases/$(database)/documents/transactions/$(transactionId)).data.cashierId == request.auth.uid);
+        allow create: if isAuth() && isActive() && (isAdmin() || isKasir());
+        allow update: if isAdmin() && isActive();
+        allow delete: if false;
+      }
+    }
+
+    // ─── Stock Movements Collection ───────────────────────────
+    match /stock_movements/{movementId} {
+      allow read: if isAuth() && isActive() && 
+        (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuth() && isActive() && (isAdmin() || isKasir());
+      allow update: if isAdmin() && isActive();
+      allow delete: if false;
+    }
+
+    // ─── Store Settings Collection ────────────────────────────
+    match /store_settings/{settingId} {
+      allow read: if isAuth() && isActive();
+      allow write: if isAdmin() && isActive();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
