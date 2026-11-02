@@ -86,13 +86,7 @@ class SiKasirSahajaApp extends StatelessWidget {
   }
 }
 
-/// Routes users based on authentication state and role.
-///
-/// This widget listens to [AuthProvider] and renders:
-/// - A loading screen while auth state is being determined
-/// - [LoginScreen] when unauthenticated
-/// - [AdminDashboardScreen] when authenticated as admin
-/// - [CashierDashboardScreen] when authenticated as kasir
+/// Routes users based on authentication state and role with smooth transitions.
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
@@ -100,27 +94,36 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
 
+    Widget screen;
     switch (authProvider.status) {
       case AuthStatus.uninitialized:
-        return const LoadingOverlay(
+        screen = const LoadingOverlay(
+          key: ValueKey('uninitialized'),
           message: 'Memuat aplikasi...',
         );
 
       case AuthStatus.authenticating:
-        return const LoadingOverlay(
+        screen = const LoadingOverlay(
+          key: ValueKey('authenticating'),
           message: 'Sedang masuk...',
         );
 
       case AuthStatus.authenticated:
-        // Role-based routing
         if (authProvider.isAdmin) {
-          return const AdminDashboardScreen();
+          screen = const AdminDashboardScreen(key: ValueKey('admin'));
         } else {
-          return const CashierDashboardScreen();
+          screen = const CashierDashboardScreen(key: ValueKey('cashier'));
         }
 
       case AuthStatus.unauthenticated:
-        return const LoginScreen();
+        screen = const LoginScreen(key: ValueKey('login'));
     }
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 350),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      child: screen,
+    );
   }
 }

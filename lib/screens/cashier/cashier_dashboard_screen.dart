@@ -14,6 +14,7 @@ import '../../providers/product_provider.dart';
 import '../../providers/shift_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../widgets/barcode_scanner_modal.dart';
+import '../../widgets/motion_widgets.dart';
 import '../admin/transaction/transaction_detail_dialog.dart';
 import '../pos/pos_screen.dart';
 import 'closing/shift_closing_dialog.dart';
@@ -57,16 +58,12 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
 
-              // Clear cart
               context.read<PosProvider>().clearCart();
-
-              // Sign out from Firebase
               await context.read<AuthProvider>().signOut();
 
-              // Navigate directly to AuthGate (LoginScreen)
               if (context.mounted) {
                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const AuthGate()),
+                  SmoothPageRoute(page: const AuthGate()),
                   (route) => false,
                 );
               }
@@ -80,6 +77,13 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
   }
 
   Future<void> _scanBarcodeQuick(BuildContext context) async {
+    final shiftProvider = context.read<ShiftProvider>();
+    if (!shiftProvider.hasActiveShift) {
+      final opened = await StartShiftDialog.show(context);
+      if (opened != true) return;
+    }
+
+    if (!context.mounted) return;
     final barcode = await BarcodeScannerModal.show(context);
     if (barcode != null && barcode.isNotEmpty && context.mounted) {
       final product =
@@ -96,7 +100,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           );
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const PosScreen()),
+            SmoothPageRoute(page: const PosScreen()),
           );
         }
       } else if (context.mounted) {
@@ -120,7 +124,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
     if (context.mounted) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => const PosScreen()),
+        SmoothPageRoute(page: const PosScreen()),
       );
     }
   }
@@ -164,7 +168,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                 color: Colors.white.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
               ),
-              child: const Icon(Icons.storefront_rounded, size: 20),
+              child: const Icon(Icons.storefront_rounded, size: 19),
             ),
             const SizedBox(width: 10),
             Column(
@@ -196,8 +200,11 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openPos(context),
         backgroundColor: AppTheme.secondary,
-        icon: const Icon(Icons.shopping_cart_checkout_rounded),
-        label: const Text('Buka Kasir / POS'),
+        icon: const Icon(Icons.point_of_sale_rounded),
+        label: const Text(
+          'Buka Kasir / POS',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -206,182 +213,331 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ─── Header Card: Cashier Shift Info ───────────────────
-              _buildShiftHeader(context, user?.name ?? 'Kasir', todayStr),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 40),
+                child: _buildShiftHeader(
+                  context,
+                  user?.name ?? 'Kasir',
+                  todayStr,
+                  myTodaySales,
+                ),
+              ),
               const SizedBox(height: 14),
 
               // ─── Shift Status & Closing Card (Ala Indomaret) ────────
-              _buildShiftControlCard(context, shiftProvider),
-              const SizedBox(height: AppTheme.spacingLg),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 110),
+                child: _buildShiftControlCard(context, shiftProvider),
+              ),
+              const SizedBox(height: 18),
 
               // ─── Primary Quick Actions ────────────────────────────
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openPos(context),
-                      icon: const Icon(Icons.point_of_sale_rounded, size: 22),
-                      label: const Text(
-                        'Mulai Transaksi',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.secondary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 170),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: ScaleTap(
+                        onTap: () => _openPos(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 16,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.secondaryGradient,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusMd),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    AppTheme.secondary.withValues(alpha: 0.25),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.point_of_sale_rounded,
+                                color: Colors.white,
+                                size: 21,
+                              ),
+                              SizedBox(width: 8),
+                              Text(
+                                'Mulai Transaksi',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _scanBarcodeQuick(context),
-                      icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-                      label: const Text('Scan'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: AppTheme.primary),
-                        foregroundColor: AppTheme.primary,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ScaleTap(
+                        onTap: () => _scanBarcodeQuick(context),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceContainerLowest,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusMd),
+                            border: Border.all(
+                              color: AppTheme.primary.withValues(alpha: 0.35),
+                              width: 1.5,
+                            ),
+                            boxShadow: AppTheme.cardShadow,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.qr_code_scanner_rounded,
+                                color: AppTheme.primary,
+                                size: 20,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                'Scan',
+                                style: TextStyle(
+                                  color: AppTheme.primary,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 22),
 
               // ─── Today's Shift Performance Metrics ─────────────────
-              Text(
-                'Ringkasan Shift Hari Ini',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 230),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ringkasan Shift Hari Ini',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
-              ),
-              const SizedBox(height: 8),
+                    const SizedBox(height: 10),
+                    Builder(
+                      builder: (context) {
+                        final width = MediaQuery.of(context).size.width;
+                        final isDesktop = width >= 900;
+                        final isTablet = width >= 600 && width < 900;
+                        final crossAxisCount =
+                            isDesktop ? 4 : (isTablet ? 2 : 2);
+                        final aspectRatio =
+                            isDesktop ? 1.8 : (isTablet ? 1.75 : 1.48);
 
-              Builder(
-                builder: (context) {
-                  final width = MediaQuery.of(context).size.width;
-                  final isDesktop = width >= 900;
-                  final isTablet = width >= 600 && width < 900;
-                  final crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
-                  final aspectRatio = isDesktop ? 1.8 : (isTablet ? 1.6 : 1.45);
-
-                  return GridView.count(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                    childAspectRatio: aspectRatio,
-                    children: [
-                      _buildMetricCard(
-                        'Total Penjualan',
-                        CurrencyFormatter.format(myTodaySales),
-                        Icons.payments_rounded,
-                        AppTheme.secondary,
-                        subtitle: 'Omset shift Anda',
-                      ),
-                      _buildMetricCard(
-                        'Transaksi Sukses',
-                        '${myTodayTx.length} Nota',
-                        Icons.receipt_long_rounded,
-                        AppTheme.primary,
-                        subtitle: 'Pelanggan terlayani',
-                      ),
-                      _buildMetricCard(
-                        'Item Terjual',
-                        '$myTodayItems Pcs',
-                        Icons.inventory_2_outlined,
-                        AppTheme.tertiary,
-                        subtitle: 'Total kuantitas barang',
-                      ),
-                      _buildMetricCard(
-                        'Status Shift',
-                        shiftProvider.hasActiveShift ? 'Shift Aktif' : 'Belum Buka',
-                        Icons.check_circle_rounded,
-                        shiftProvider.hasActiveShift
-                            ? AppTheme.secondary
-                            : AppTheme.outline,
-                        subtitle: shiftProvider.hasActiveShift
-                            ? 'Siap melayani'
-                            : 'Buka shift kasir',
-                      ),
-                    ],
-                  );
-                },
+                        return GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: crossAxisCount,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: aspectRatio,
+                          children: [
+                            _buildMetricCard(
+                              'Total Penjualan',
+                              AnimatedCurrencyText(
+                                value: myTodaySales,
+                                style: AppTheme.numericSmallStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.secondary,
+                                ),
+                              ),
+                              Icons.payments_rounded,
+                              AppTheme.secondary,
+                              subtitle: 'Omset shift Anda',
+                            ),
+                            _buildMetricCard(
+                              'Transaksi Sukses',
+                              AnimatedCountText(
+                                count: myTodayTx.length,
+                                suffix: ' Nota',
+                                style: AppTheme.numericSmallStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                              Icons.receipt_long_rounded,
+                              AppTheme.primary,
+                              subtitle: 'Pelanggan terlayani',
+                            ),
+                            _buildMetricCard(
+                              'Item Terjual',
+                              AnimatedCountText(
+                                count: myTodayItems,
+                                suffix: ' Pcs',
+                                style: AppTheme.numericSmallStyle.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF0284C7),
+                                ),
+                              ),
+                              Icons.inventory_2_outlined,
+                              const Color(0xFF0284C7),
+                              subtitle: 'Total kuantitas barang',
+                            ),
+                            _buildMetricCard(
+                              'Status Shift',
+                              Text(
+                                shiftProvider.hasActiveShift
+                                    ? 'Shift Aktif'
+                                    : 'Belum Buka',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: shiftProvider.hasActiveShift
+                                      ? AppTheme.secondary
+                                      : AppTheme.outline,
+                                ),
+                              ),
+                              Icons.check_circle_rounded,
+                              shiftProvider.hasActiveShift
+                                  ? AppTheme.secondary
+                                  : AppTheme.outline,
+                              subtitle: shiftProvider.hasActiveShift
+                                  ? 'Siap melayani'
+                                  : 'Buka shift kasir',
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 22),
 
               // ─── Recent Shift Transactions Feed ────────────────────
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Riwayat Nota Shift Ini',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 290),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Riwayat Nota Shift Ini',
+                          style:
+                              Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                  ),
                         ),
-                  ),
-                  Text(
-                    '${myTodayTx.length} Transaksi',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.outline,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-
-              if (myTodayTx.isEmpty)
-                Container(
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    border: Border.all(
-                      color: AppTheme.outlineVariant.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.shopping_bag_outlined,
-                        size: 48,
-                        color: AppTheme.outline.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Belum ada transaksi di shift ini',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppTheme.onSurfaceVariant,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withValues(alpha: 0.08),
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusFull),
+                          ),
+                          child: Text(
+                            '${myTodayTx.length} Transaksi',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w700,
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    if (myTodayTx.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLowest,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusLg),
+                          border: Border.all(
+                            color:
+                                AppTheme.outlineVariant.withValues(alpha: 0.6),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: AppTheme.surfaceContainerLow,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 36,
+                                color: AppTheme.outline.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Belum ada transaksi di shift ini',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    color: AppTheme.onSurface,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Ketuk "Mulai Transaksi" di atas untuk melayani pelanggan pertama Anda.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppTheme.outline,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: myTodayTx.take(8).length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final tx = myTodayTx[index];
+                          return _CashierTxCard(
+                            transaction: tx,
+                            onTap: () =>
+                                TransactionDetailDialog.show(context, tx),
+                          );
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Klik "Mulai Transaksi" di atas untuk melayani pelanggan.',
-                        style: TextStyle(fontSize: 12, color: AppTheme.outline),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                )
-              else
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: myTodayTx.take(8).length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
-                  itemBuilder: (context, index) {
-                    final tx = myTodayTx[index];
-                    return _CashierTxCard(
-                      transaction: tx,
-                      onTap: () => TransactionDetailDialog.show(context, tx),
-                    );
-                  },
+                  ],
                 ),
-              const SizedBox(height: 60), // Space for FAB
+              ),
+              const SizedBox(height: 76), // Space for FAB
             ],
           ),
         ),
@@ -390,104 +546,111 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
   }
 
   Widget _buildShiftHeader(
-      BuildContext context, String name, String dateStr) {
+    BuildContext context,
+    String name,
+    String dateStr,
+    double myTodaySales,
+  ) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.containerPadding),
       decoration: BoxDecoration(
-        color: AppTheme.primary,
+        gradient: AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF002D54),
-            Color(0xFF00437A),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppTheme.elevatedShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: AppTheme.secondaryContainer,
-                    width: 2,
-                  ),
-                ),
-                child: CircleAvatar(
-                  radius: 22,
-                  backgroundColor: AppTheme.secondary,
-                  child: Text(
-                    (name.isNotEmpty ? name[0] : 'K').toUpperCase(),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+          Positioned(
+            right: -20,
+            top: -20,
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.secondary,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
-                          ),
-                          child: const Text(
-                            'KASIR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.35),
+                      width: 2,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 11,
+                  ),
+                  child: CircleAvatar(
+                    radius: 23,
+                    backgroundColor: AppTheme.secondary,
+                    child: Text(
+                      (name.isNotEmpty ? name[0] : 'K').toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              name,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondary,
+                              borderRadius:
+                                  BorderRadius.circular(AppTheme.radiusSm),
+                            ),
+                            child: const Text(
+                              'KASIR',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        dateStr,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -499,36 +662,38 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
     final shift = shiftProvider.activeShift;
     final isOpen = shiftProvider.hasActiveShift && shift != null;
 
-    final openTimeStr = isOpen
-        ? DateFormat('HH:mm').format(shift.openedAt)
-        : '-';
+    final openTimeStr =
+        isOpen ? DateFormat('HH:mm').format(shift.openedAt) : '-';
 
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: isOpen
-            ? AppTheme.secondary.withValues(alpha: 0.08)
-            : AppTheme.surfaceContainerLow,
+            ? AppTheme.secondary.withValues(alpha: 0.07)
+            : AppTheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
           color: isOpen
-              ? AppTheme.secondary.withValues(alpha: 0.4)
-              : AppTheme.outlineVariant.withValues(alpha: 0.6),
+              ? AppTheme.secondary.withValues(alpha: 0.35)
+              : AppTheme.outlineVariant.withValues(alpha: 0.8),
           width: isOpen ? 1.5 : 1.0,
         ),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: isOpen ? AppTheme.secondary : AppTheme.outlineVariant,
+              color: isOpen
+                  ? AppTheme.secondary
+                  : AppTheme.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
             child: Icon(
               isOpen ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
-              color: Colors.white,
-              size: 22,
+              color: isOpen ? Colors.white : AppTheme.primary,
+              size: 21,
             ),
           ),
           const SizedBox(width: 12),
@@ -536,21 +701,34 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  isOpen
-                      ? 'Shift Sedang Berjalan'
-                      : 'Shift Kasir Belum Dibuka',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: isOpen ? AppTheme.secondary : AppTheme.onSurface,
-                  ),
+                Row(
+                  children: [
+                    PulseIndicator(
+                      color: isOpen ? AppTheme.secondary : AppTheme.warning,
+                      size: 7,
+                      active: isOpen,
+                    ),
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        isOpen
+                            ? 'Shift Sedang Berjalan'
+                            : 'Shift Belum Dibuka',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color:
+                              isOpen ? AppTheme.secondary : AppTheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 3),
                 Text(
                   isOpen
-                      ? 'Buka: $openTimeStr • Modal Awal: ${CurrencyFormatter.format(shift.startingCash)}'
-                      : 'Buka shift dan masukkan modal awal uang kembalian di laci kasir.',
+                      ? 'Buka: $openTimeStr • Modal: ${CurrencyFormatter.format(shift.startingCash)}'
+                      : 'Buka shift & masukkan modal awal laci kasir.',
                   style: const TextStyle(fontSize: 11, color: AppTheme.outline),
                 ),
               ],
@@ -561,11 +739,14 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             ElevatedButton.icon(
               onPressed: () => ShiftClosingDialog.show(context, shift),
               icon: const Icon(Icons.fact_check_rounded, size: 16),
-              label: const Text('Tutup Kasir',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Tutup',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
+                minimumSize: Size.zero,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
@@ -574,11 +755,14 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             ElevatedButton.icon(
               onPressed: () => StartShiftDialog.show(context),
               icon: const Icon(Icons.lock_open_rounded, size: 16),
-              label: const Text('Buka Shift',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Buka Shift',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.secondary,
                 foregroundColor: Colors.white,
+                minimumSize: Size.zero,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
@@ -590,19 +774,20 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
 
   Widget _buildMetricCard(
     String title,
-    String value,
+    Widget valueWidget,
     IconData icon,
     Color color, {
     String? subtitle,
   }) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppTheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.4),
+          color: AppTheme.outlineVariant.withValues(alpha: 0.7),
         ),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -611,16 +796,20 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.onSurfaceVariant,
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.all(5),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -632,21 +821,14 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                value,
-                style: AppTheme.numericSmallStyle.copyWith(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  color: color,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              valueWidget,
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: const TextStyle(fontSize: 10, color: AppTheme.outline),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ],
@@ -667,67 +849,65 @@ class _CashierTxCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeStr = DateFormat('HH:mm').format(transaction.createdAt);
 
-    return Material(
-      color: AppTheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      elevation: 1,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(
-              color: AppTheme.outlineVariant.withValues(alpha: 0.4),
+    return ScaleTap(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(
+            color: AppTheme.outlineVariant.withValues(alpha: 0.6),
+          ),
+          boxShadow: AppTheme.cardShadow,
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppTheme.secondary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+              ),
+              child: const Icon(
+                Icons.receipt_rounded,
+                color: AppTheme.secondary,
+                size: 19,
+              ),
             ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppTheme.secondary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                ),
-                child: const Icon(
-                  Icons.receipt_rounded,
-                  color: AppTheme.secondary,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      transaction.invoiceNumber,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transaction.invoiceNumber,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppTheme.onSurface,
+                        ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '$timeStr • ${transaction.items.length} Item • ${transaction.paymentMethod.toUpperCase()}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppTheme.outline,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$timeStr • ${transaction.items.length} Item • ${transaction.paymentMethod.toUpperCase()}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppTheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              Text(
-                CurrencyFormatter.format(transaction.total),
-                style: AppTheme.numericSmallStyle.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primary,
-                ),
+            ),
+            Text(
+              CurrencyFormatter.format(transaction.total),
+              style: AppTheme.numericSmallStyle.copyWith(
+                fontWeight: FontWeight.w800,
+                color: AppTheme.primary,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

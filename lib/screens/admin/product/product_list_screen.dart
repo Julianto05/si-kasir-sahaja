@@ -7,6 +7,8 @@ import '../../../models/product_model.dart';
 import '../../../providers/category_provider.dart';
 import '../../../providers/product_provider.dart';
 import '../../../widgets/barcode_scanner_modal.dart';
+import '../../../widgets/motion_widgets.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'product_form_screen.dart';
 
@@ -39,6 +41,7 @@ class ProductListScreen extends StatelessWidget {
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'products'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'products'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => ProductFormScreen.navigate(context),
         icon: const Icon(Icons.add_rounded),
@@ -51,7 +54,7 @@ class ProductListScreen extends StatelessWidget {
             // Top Search & Category Filter Section
             _buildSearchAndFilters(context),
 
-            // Products Grid List
+            // Products Grid / List
             Expanded(
               child: Consumer<ProductProvider>(
                 builder: (context, provider, _) {
@@ -69,15 +72,19 @@ class ProductListScreen extends StatelessWidget {
 
                   return RefreshIndicator(
                     onRefresh: () async {
-                      // Real-time stream updates automatically
+                      await provider.refreshProducts();
                     },
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final isDesktop = constraints.maxWidth > 700;
                         if (isDesktop) {
                           return GridView.builder(
-                            padding:
-                                const EdgeInsets.all(AppTheme.containerPadding),
+                            padding: const EdgeInsets.fromLTRB(
+                              AppTheme.containerPadding,
+                              AppTheme.containerPadding,
+                              AppTheme.containerPadding,
+                              80,
+                            ),
                             gridDelegate:
                                 const SliverGridDelegateWithMaxCrossAxisExtent(
                               maxCrossAxisExtent: 360,
@@ -93,11 +100,15 @@ class ProductListScreen extends StatelessWidget {
                         }
 
                         return ListView.separated(
-                          padding:
-                              const EdgeInsets.all(AppTheme.containerPadding),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppTheme.containerPadding,
+                            AppTheme.containerPadding,
+                            AppTheme.containerPadding,
+                            80,
+                          ),
                           itemCount: products.length,
                           separatorBuilder: (_, _) =>
-                              const SizedBox(height: AppTheme.spacingMd),
+                              const SizedBox(height: 10),
                           itemBuilder: (context, index) {
                             return _ProductListCard(product: products[index]);
                           },
@@ -116,8 +127,15 @@ class ProductListScreen extends StatelessWidget {
 
   Widget _buildSearchAndFilters(BuildContext context) {
     return Container(
-      color: AppTheme.surfaceContainerLowest,
-      padding: const EdgeInsets.all(AppTheme.containerPadding),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceContainerLowest,
+        border: Border(
+          bottom: BorderSide(
+            color: AppTheme.outlineVariant.withValues(alpha: 0.7),
+          ),
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -130,14 +148,18 @@ class ProductListScreen extends StatelessWidget {
                       context.read<ProductProvider>().setSearchQuery(val),
                   decoration: InputDecoration(
                     hintText: 'Cari produk, SKU, atau barcode...',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 11,
+                    ),
                     suffixIcon: Consumer<ProductProvider>(
                       builder: (context, provider, _) {
                         if (provider.searchQuery.isEmpty) {
                           return const SizedBox.shrink();
                         }
                         return IconButton(
-                          icon: const Icon(Icons.clear_rounded),
+                          icon: const Icon(Icons.clear_rounded, size: 18),
                           onPressed: () => provider.setSearchQuery(''),
                         );
                       },
@@ -146,19 +168,33 @@ class ProductListScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              IconButton.filledTonal(
-                onPressed: () async {
+              ScaleTap(
+                onTap: () async {
                   final barcode = await BarcodeScannerModal.show(context);
                   if (barcode != null && context.mounted) {
                     context.read<ProductProvider>().setSearchQuery(barcode);
                   }
                 },
-                icon: const Icon(Icons.qr_code_scanner_rounded),
-                tooltip: 'Scan Barcode',
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    border: Border.all(
+                      color: AppTheme.primary.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: AppTheme.primary,
+                    size: 20,
+                  ),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
 
           // Low Stock Alert Banner (if any)
           Consumer<ProductProvider>(
@@ -168,28 +204,28 @@ class ProductListScreen extends StatelessWidget {
 
               final isFiltering = provider.showOnlyLowStock;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: InkWell(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: ScaleTap(
                   onTap: () => provider.toggleLowStockFilter(),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: isFiltering
                           ? AppTheme.errorContainer
-                          : AppTheme.errorContainer.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                          : AppTheme.errorContainer.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       border: Border.all(
-                        color: AppTheme.error.withValues(alpha: 0.3),
+                        color: AppTheme.error.withValues(alpha: 0.35),
                       ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(
-                          Icons.warning_amber_rounded,
-                          size: 18,
+                        const PulseIndicator(
                           color: AppTheme.error,
+                          size: 7,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
@@ -205,12 +241,13 @@ class ProductListScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          isFiltering ? 'Tampilkan Semua' : 'Filter Stok Menipis',
+                          isFiltering
+                              ? 'Tampilkan Semua'
+                              : 'Filter Stok Menipis',
                           style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             color: AppTheme.error,
-                            decoration: TextDecoration.underline,
                           ),
                         ),
                       ],
@@ -234,8 +271,15 @@ class ProductListScreen extends StatelessWidget {
                     FilterChip(
                       label: const Text('Semua Kategori'),
                       selected: selectedId == 'all',
-                      onSelected: (_) =>
-                          prodProvider.setCategoryFilter('all'),
+                      selectedColor: AppTheme.primary,
+                      labelStyle: TextStyle(
+                        color: selectedId == 'all'
+                            ? Colors.white
+                            : AppTheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      onSelected: (_) => prodProvider.setCategoryFilter('all'),
                     ),
                     const SizedBox(width: 8),
                     ...categories.map((cat) {
@@ -245,6 +289,14 @@ class ProductListScreen extends StatelessWidget {
                         child: FilterChip(
                           label: Text(cat.name),
                           selected: isSelected,
+                          selectedColor: AppTheme.primary,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? Colors.white
+                                : AppTheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
                           onSelected: (_) =>
                               prodProvider.setCategoryFilter(cat.id),
                         ),
@@ -271,10 +323,19 @@ class ProductListScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              isFiltering ? Icons.search_off_rounded : Icons.inventory_2_outlined,
-              size: 64,
-              color: AppTheme.outline,
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: const BoxDecoration(
+                color: AppTheme.surfaceContainerLow,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isFiltering
+                    ? Icons.search_off_rounded
+                    : Icons.inventory_2_outlined,
+                size: 48,
+                color: AppTheme.outline,
+              ),
             ),
             const SizedBox(height: 16),
             Text(
@@ -318,35 +379,46 @@ class _ProductListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: product.isLowStock
-              ? AppTheme.error.withValues(alpha: 0.4)
-              : AppTheme.outlineVariant.withValues(alpha: 0.5),
+    return ScaleTap(
+      onTap: () => ProductFormScreen.navigate(context, product: product),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(
+            color: product.isLowStock
+                ? AppTheme.error.withValues(alpha: 0.4)
+                : AppTheme.outlineVariant.withValues(alpha: 0.7),
+          ),
+          boxShadow: AppTheme.cardShadow,
         ),
-      ),
-      child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Thumbnail
             Container(
-              width: 64,
-              height: 64,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerHigh,
+                color: AppTheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? Image.network(product.imageUrl!, fit: BoxFit.cover)
-                    : const Icon(Icons.inventory_2_outlined,
-                        color: AppTheme.outline),
+                    ? Image.network(
+                        product.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => const Icon(
+                          Icons.inventory_2_outlined,
+                          color: AppTheme.outline,
+                        ),
+                      )
+                    : const Icon(
+                        Icons.inventory_2_outlined,
+                        color: AppTheme.outline,
+                      ),
               ),
             ),
             const SizedBox(width: 12),
@@ -363,7 +435,7 @@ class _ProductListCard extends StatelessWidget {
                           product.name,
                           style:
                               Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                   ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -372,7 +444,9 @@ class _ProductListCard extends StatelessWidget {
                       if (!product.isActive)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppTheme.errorContainer,
                             borderRadius:
@@ -389,7 +463,7 @@ class _ProductListCard extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 3),
 
                   // Code & Category
                   Row(
@@ -399,13 +473,21 @@ class _ProductListCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: AppTheme.primary,
+                              fontSize: 11.5,
                             ),
                       ),
                       if (product.categoryName.isNotEmpty) ...[
-                        const Text(' • '),
-                        Text(
-                          product.categoryName,
-                          style: Theme.of(context).textTheme.bodySmall,
+                        const Text(
+                          ' • ',
+                          style: TextStyle(color: AppTheme.outline),
+                        ),
+                        Expanded(
+                          child: Text(
+                            product.categoryName,
+                            style: Theme.of(context).textTheme.bodySmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ],
@@ -416,24 +498,23 @@ class _ProductListCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Selling Price formatted with JetBrains Mono
                       Text(
                         CurrencyFormatter.format(product.sellingPrice),
                         style: AppTheme.numericStyle.copyWith(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
                           color: AppTheme.secondary,
                         ),
                       ),
-
-                      // Stock Badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: product.isLowStock
                               ? AppTheme.errorContainer
-                              : AppTheme.surfaceContainerHigh,
+                              : AppTheme.surfaceContainerLow,
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusSm),
                         ),
@@ -441,10 +522,10 @@ class _ProductListCard extends StatelessWidget {
                           'Stok: ${product.stock} ${product.unit}',
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w700,
                             color: product.isLowStock
                                 ? AppTheme.error
-                                : AppTheme.onSurface,
+                                : AppTheme.onSurfaceVariant,
                           ),
                         ),
                       ),
@@ -489,7 +570,8 @@ class _ProductListCard extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, size: 20, color: AppTheme.error),
+                      Icon(Icons.delete_outline,
+                          size: 20, color: AppTheme.error),
                       SizedBox(width: 8),
                       Text('Hapus', style: TextStyle(color: AppTheme.error)),
                     ],

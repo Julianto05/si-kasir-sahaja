@@ -2,11 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/app_theme.dart';
 
-/// A reusable full-screen loading overlay.
-///
-/// Displays a centered [CircularProgressIndicator] with an optional
-/// [message] on a semi-transparent background. Used during auth
-/// checks, data loading, and transaction processing.
+/// A reusable full-screen modern loading overlay.
 class LoadingOverlay extends StatelessWidget {
   final String? message;
 
@@ -17,24 +13,40 @@ class LoadingOverlay extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.surface,
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(
-              color: AppTheme.primary,
-              strokeWidth: 3,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            border: Border.all(
+              color: AppTheme.outlineVariant.withValues(alpha: 0.7),
             ),
-            if (message != null) ...[
-              const SizedBox(height: AppTheme.spacingMd),
-              Text(
-                message!,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppTheme.onSurfaceVariant,
-                    ),
-                textAlign: TextAlign.center,
+            boxShadow: AppTheme.cardShadow,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  color: AppTheme.primary,
+                  strokeWidth: 3,
+                ),
               ),
+              if (message != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  message!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppTheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

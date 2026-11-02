@@ -6,8 +6,10 @@ import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/store_settings_provider.dart';
+import '../../widgets/motion_widgets.dart';
 
-/// Modal dialog displaying a clean, thermal-style receipt preview.
+/// Modal dialog displaying a clean, thermal-style receipt preview with
+/// animated success checkmark badge.
 class ReceiptDialog extends StatelessWidget {
   final TransactionModel transaction;
 
@@ -35,41 +37,30 @@ class ReceiptDialog extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppTheme.containerPadding),
+            padding: const EdgeInsets.all(22),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Top Check Icon
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: AppTheme.secondaryContainer,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: AppTheme.onSecondaryContainer,
-                      size: 28,
-                    ),
-                  ),
+                // Animated Top Success Check Icon
+                const Center(
+                  child: AnimatedSuccessBadge(size: 52),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Transaksi Berhasil',
+                    'Transaksi Berhasil!',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           color: AppTheme.secondary,
                         ),
                   ),
@@ -82,9 +73,10 @@ class ReceiptDialog extends StatelessWidget {
                     children: [
                       Text(
                         settings.storeName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                         textAlign: TextAlign.center,
                       ),
                       if (settings.storeAddress.isNotEmpty) ...[
@@ -133,7 +125,8 @@ class ReceiptDialog extends StatelessWidget {
                           item.productName,
                           style:
                               Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.onSurface,
                                   ),
                         ),
                         Row(
@@ -176,24 +169,35 @@ class ReceiptDialog extends StatelessWidget {
                   _buildTotalRow('Service Charge', transaction.serviceCharge),
                 const SizedBox(height: 8),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'TOTAL',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    Text(
-                      CurrencyFormatter.format(transaction.total),
-                      style: AppTheme.numericStyle.copyWith(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primary,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.06),
+                    borderRadius:
+                        BorderRadius.circular(AppTheme.radiusDefault),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'TOTAL',
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.primary,
+                                ),
                       ),
-                    ),
-                  ],
+                      Text(
+                        CurrencyFormatter.format(transaction.total),
+                        style: AppTheme.numericStyle.copyWith(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 8),
                 _buildTotalRow('Bayar (${transaction.paymentMethod})',
@@ -235,12 +239,15 @@ class ReceiptDialog extends StatelessWidget {
                         label: const Text('Cetak'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.done_all_rounded, size: 18),
                         label: const Text('Selesai'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.secondary,
+                        ),
                       ),
                     ),
                   ],
@@ -259,9 +266,11 @@ class ReceiptDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          Text(label,
+              style: const TextStyle(fontSize: 12, color: AppTheme.outline)),
           Text(value,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -285,7 +294,9 @@ class ReceiptDialog extends StatelessWidget {
           Text(
             CurrencyFormatter.format(amount),
             style: AppTheme.numericSmallStyle.copyWith(
-              color: isDiscount ? AppTheme.error : Colors.black87,
+              color: isDiscount
+                  ? AppTheme.error
+                  : (isChange ? AppTheme.secondary : Colors.black87),
               fontWeight: isChange ? FontWeight.bold : FontWeight.w500,
             ),
           ),
@@ -309,7 +320,7 @@ class ReceiptDialog extends StatelessWidget {
               width: dashWidth,
               height: dashHeight,
               child: DecoratedBox(
-                decoration: BoxDecoration(color: Colors.grey),
+                decoration: BoxDecoration(color: AppTheme.outlineVariant),
               ),
             );
           }),

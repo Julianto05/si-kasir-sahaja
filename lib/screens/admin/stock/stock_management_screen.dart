@@ -7,6 +7,7 @@ import '../../../models/product_model.dart';
 import '../../../models/stock_movement_model.dart';
 import '../../../providers/product_provider.dart';
 import '../../../providers/stock_provider.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'stock_adjustment_dialog.dart';
 
@@ -53,6 +54,7 @@ class _StockManagementScreenState extends State<StockManagementScreen>
         ),
       ),
       drawer: const AdminDrawer(currentRoute: 'stock'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'stock'),
       body: TabBarView(
         controller: _tabController,
         children: [

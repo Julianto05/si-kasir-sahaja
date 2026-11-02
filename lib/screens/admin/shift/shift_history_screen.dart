@@ -7,6 +7,7 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../models/shift_model.dart';
 import '../../../providers/shift_provider.dart';
 import '../../cashier/closing/shift_receipt_dialog.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 
 /// Screen for Admin to view and monitor all cashier shift closing records.
@@ -36,6 +37,7 @@ class ShiftHistoryScreen extends StatelessWidget {
         title: const Text('Rekap Closing Kasir'),
       ),
       drawer: const AdminDrawer(currentRoute: 'shifts'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'shifts'),
       body: SafeArea(
         child: Column(
           children: [

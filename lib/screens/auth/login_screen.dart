@@ -4,12 +4,12 @@ import 'package:provider/provider.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/motion_widgets.dart';
 
-/// Login screen for SiKasirSahaja POS.
+/// Modern mobile Login Screen for SiKasirSahaja POS.
 ///
-/// Validates email + password input, shows loading state during auth,
-/// and displays error messages via SnackBar. On success, [AuthProvider]
-/// automatically triggers role-based routing in [main.dart].
+/// Validates email + password input, shows smooth loading state during auth,
+/// and displays error messages via SnackBar.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -17,50 +17,24 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
 
-  late AnimationController _animationController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.1),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    ));
-    _animationController.forward();
-  }
-
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _animationController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
+    FocusScope.of(context).unfocus();
     setState(() => _isLoading = true);
 
     final authProvider = context.read<AuthProvider>();
@@ -77,7 +51,14 @@ class _LoginScreenState extends State<LoginScreen>
       if (!success && authProvider.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.errorMessage!),
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline_rounded,
+                    color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(authProvider.errorMessage!)),
+              ],
+            ),
             backgroundColor: AppTheme.error,
           ),
         );
@@ -92,58 +73,86 @@ class _LoginScreenState extends State<LoginScreen>
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            // Top Left Corner Logo (gambar 4)
-            Positioned(
-              top: 16,
-              left: 20,
-              child: Image.asset(
-                'assets/images/4.png',
-                height: 48,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+      body: Stack(
+        children: [
+          // Top ambient header accent
+          Positioned(
+            top: -110,
+            right: -60,
+            child: Container(
+              width: 280,
+              height: 280,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.primary.withValues(alpha: 0.1),
+                    AppTheme.primary.withValues(alpha: 0.0),
+                  ],
+                ),
               ),
             ),
+          ),
+          Positioned(
+            bottom: -90,
+            left: -60,
+            child: Container(
+              width: 260,
+              height: 260,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    AppTheme.secondary.withValues(alpha: 0.08),
+                    AppTheme.secondary.withValues(alpha: 0.0),
+                  ],
+                ),
+              ),
+            ),
+          ),
 
-            Center(
+          SafeArea(
+            child: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.containerPadding,
+                  horizontal: 20,
+                  vertical: 16,
                 ),
-                child: FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 400),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          SizedBox(height: isSmall ? 24 : 48),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      SizedBox(height: isSmall ? 12 : 28),
 
-                          // ─── Logo & Branding ─────────────
-                          _buildBranding(isSmall),
-                          SizedBox(height: isSmall ? 32 : 48),
-
-                          // ─── Login Card ──────────────────
-                          _buildLoginCard(),
-                          const SizedBox(height: AppTheme.spacingLg),
-
-                          // ─── Footer ──────────────────────
-                          _buildFooter(),
-                          SizedBox(height: isSmall ? 24 : 48),
-                        ],
+                      // ─── Logo & Branding ─────────────
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 50),
+                        child: _buildBranding(isSmall),
                       ),
-                    ),
+                      SizedBox(height: isSmall ? 24 : 32),
+
+                      // ─── Login Card ──────────────────
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 160),
+                        child: _buildLoginCard(),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // ─── Footer ──────────────────────
+                      FadeSlideIn(
+                        delay: const Duration(milliseconds: 260),
+                        child: _buildFooter(),
+                      ),
+                      SizedBox(height: isSmall ? 12 : 24),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -151,36 +160,45 @@ class _LoginScreenState extends State<LoginScreen>
   Widget _buildBranding(bool isSmall) {
     return Column(
       children: [
-        // App icon / Logo (gambar 4)
         Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            border: Border.all(
+              color: AppTheme.outlineVariant.withValues(alpha: 0.6),
+            ),
+            boxShadow: AppTheme.cardShadow,
+          ),
           constraints: BoxConstraints(
-            maxHeight: isSmall ? 70 : 88,
-            maxWidth: 180,
+            maxHeight: isSmall ? 76 : 92,
+            maxWidth: 160,
           ),
           child: Image.asset(
             'assets/images/4.png',
             fit: BoxFit.contain,
             errorBuilder: (_, _, _) => Container(
-              width: isSmall ? 64 : 80,
-              height: isSmall ? 64 : 80,
+              width: isSmall ? 56 : 68,
+              height: isSmall ? 56 : 68,
               decoration: BoxDecoration(
-                color: AppTheme.primary,
-                borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
               ),
               child: Icon(
                 Icons.point_of_sale_rounded,
-                size: isSmall ? 32 : 40,
+                size: isSmall ? 30 : 36,
                 color: AppTheme.onPrimary,
               ),
             ),
           ),
         ),
-        SizedBox(height: isSmall ? 10 : 14),
+        SizedBox(height: isSmall ? 12 : 16),
         Text(
           AppConstants.appName,
-          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppTheme.primary,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.w800,
+                letterSpacing: -0.3,
               ),
         ),
         const SizedBox(height: 4),
@@ -188,6 +206,7 @@ class _LoginScreenState extends State<LoginScreen>
           'Aplikasi Kasir Modern & Terpercaya',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppTheme.onSurfaceVariant,
+                fontWeight: FontWeight.w500,
               ),
         ),
       ],
@@ -200,33 +219,57 @@ class _LoginScreenState extends State<LoginScreen>
         color: AppTheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
         border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+          color: AppTheme.outlineVariant.withValues(alpha: 0.7),
         ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.onSurface.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 4),
+            color: AppTheme.primary.withValues(alpha: 0.06),
+            blurRadius: 28,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.containerPadding),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Masuk',
-                style: Theme.of(context).textTheme.headlineSmall,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                    ),
+                    child: const Icon(
+                      Icons.lock_person_rounded,
+                      color: AppTheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Selamat Datang',
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Masuk ke akun Admin atau Kasir Anda',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Masukkan email dan password untuk melanjutkan',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 22),
 
               // Email field
               TextFormField(
@@ -235,9 +278,9 @@ class _LoginScreenState extends State<LoginScreen>
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
                 decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'nama@example.com',
-                  prefixIcon: Icon(Icons.email_outlined),
+                  labelText: 'Alamat Email',
+                  hintText: 'nama@tokoanda.com',
+                  prefixIcon: Icon(Icons.email_outlined, size: 20),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -250,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen>
                   return null;
                 },
               ),
-              const SizedBox(height: AppTheme.spacingMd),
+              const SizedBox(height: 16),
 
               // Password field
               TextFormField(
@@ -260,14 +303,15 @@ class _LoginScreenState extends State<LoginScreen>
                 autofillHints: const [AutofillHints.password],
                 onFieldSubmitted: (_) => _handleLogin(),
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: 'Kata Sandi',
                   hintText: '••••••••',
-                  prefixIcon: const Icon(Icons.lock_outlined),
+                  prefixIcon: const Icon(Icons.lock_outline_rounded, size: 20),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
+                      size: 20,
                     ),
                     onPressed: () {
                       setState(() => _obscurePassword = !_obscurePassword);
@@ -284,23 +328,51 @@ class _LoginScreenState extends State<LoginScreen>
                   return null;
                 },
               ),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 24),
 
-              // Login button
-              SizedBox(
-                height: AppTheme.touchTarget,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: AppTheme.onPrimary,
-                          ),
-                        )
-                      : const Text('Masuk'),
+              // Login button with tactile scale
+              ScaleTap(
+                onTap: _isLoading ? null : _handleLogin,
+                child: SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      child: _isLoading
+                          ? const SizedBox(
+                              key: ValueKey('loading'),
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: AppTheme.onPrimary,
+                              ),
+                            )
+                          : const Row(
+                              key: ValueKey('label'),
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Masuk Sekarang',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(Icons.arrow_forward_rounded, size: 18),
+                              ],
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -311,12 +383,37 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildFooter() {
-    return Text(
-      '© 2026 ${AppConstants.appName}. Sederhana, Cepat, Terpercaya.',
-      textAlign: TextAlign.center,
-      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppTheme.outline,
-          ),
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.verified_user_outlined,
+              size: 14,
+              color: AppTheme.secondary.withValues(alpha: 0.8),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Koneksi Terenkripsi & Sinkronisasi Cloud',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppTheme.onSurfaceVariant,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          '© 2026 ${AppConstants.appName} v${AppConstants.appVersion}',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppTheme.outline,
+                fontSize: 11,
+              ),
+        ),
+      ],
     );
   }
 }

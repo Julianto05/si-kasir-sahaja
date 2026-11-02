@@ -7,6 +7,7 @@ import '../../../main.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/pos_provider.dart';
 import '../../../providers/product_provider.dart';
+import '../../../widgets/motion_widgets.dart';
 import '../../pos/pos_screen.dart';
 import '../admin_dashboard_screen.dart';
 import '../category/category_list_screen.dart';
@@ -34,23 +35,23 @@ class AdminDrawer extends StatelessWidget {
 
     return Drawer(
       backgroundColor: AppTheme.surfaceContainerLowest,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.horizontal(
+          right: Radius.circular(AppTheme.radiusXl),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
             // ─── Modern Profile Header ──────────────────────────────
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(AppTheme.containerPadding),
-              decoration: const BoxDecoration(
-                color: AppTheme.primary,
-                gradient: LinearGradient(
-                  colors: [
-                    Color(0xFF001F3B),
-                    Color(0xFF00386B),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+              margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                boxShadow: AppTheme.elevatedShadow,
               ),
               child: Row(
                 children: [
@@ -58,19 +59,12 @@ class AdminDrawer extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppTheme.secondaryContainer,
+                        color: Colors.white.withValues(alpha: 0.35),
                         width: 2,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
                     ),
                     child: CircleAvatar(
-                      radius: 24,
+                      radius: 23,
                       backgroundColor: AppTheme.secondary,
                       child: Text(
                         (user?.name.isNotEmpty == true ? user!.name[0] : 'A')
@@ -139,15 +133,18 @@ class AdminDrawer extends StatelessWidget {
             // ─── Menu Items ─────────────────────────────────────────
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 children: [
                   _buildMenuItem(
                     context,
-                    icon: Icons.dashboard_rounded,
-                    title: 'Dashboard',
+                    icon: Icons.grid_view_rounded,
+                    title: 'Beranda Dashboard',
                     isSelected: currentRoute == 'dashboard',
-                    onTap: () => _navigate(context, const AdminDashboardScreen()),
+                    onTap: () =>
+                        _navigate(context, const AdminDashboardScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.point_of_sale_rounded,
@@ -157,7 +154,7 @@ class AdminDrawer extends StatelessWidget {
                     onTap: () => _navigate(context, const PosScreen()),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   _buildSectionHeader('MASTER DATA'),
 
                   _buildMenuItem(
@@ -167,6 +164,7 @@ class AdminDrawer extends StatelessWidget {
                     isSelected: currentRoute == 'products',
                     onTap: () => _navigate(context, const ProductListScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.category_rounded,
@@ -175,20 +173,20 @@ class AdminDrawer extends StatelessWidget {
                     onTap: () => _navigate(context, const CategoryListScreen()),
                   ),
 
-                  const SizedBox(height: 8),
-                  _buildSectionHeader('MANAJEMEN'),
+                  const SizedBox(height: 12),
+                  _buildSectionHeader('MANAJEMEN & LAPORAN'),
 
                   _buildMenuItem(
                     context,
                     icon: Icons.warehouse_rounded,
                     title: 'Stok Barang',
                     isSelected: currentRoute == 'stock',
-                    badge: lowStockCount > 0
-                        ? '$lowStockCount menipis'
-                        : null,
+                    badge: lowStockCount > 0 ? '$lowStockCount menipis' : null,
                     badgeColor: AppTheme.error,
-                    onTap: () => _navigate(context, const StockManagementScreen()),
+                    onTap: () =>
+                        _navigate(context, const StockManagementScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.receipt_long_rounded,
@@ -197,13 +195,16 @@ class AdminDrawer extends StatelessWidget {
                     onTap: () =>
                         _navigate(context, const TransactionListScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.people_alt_rounded,
                     title: 'Pengguna / Kasir',
                     isSelected: currentRoute == 'users',
-                    onTap: () => _navigate(context, const UserManagementScreen()),
+                    onTap: () =>
+                        _navigate(context, const UserManagementScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.fact_check_rounded,
@@ -211,6 +212,7 @@ class AdminDrawer extends StatelessWidget {
                     isSelected: currentRoute == 'shifts',
                     onTap: () => _navigate(context, const ShiftHistoryScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.analytics_rounded,
@@ -218,12 +220,14 @@ class AdminDrawer extends StatelessWidget {
                     isSelected: currentRoute == 'reports',
                     onTap: () => _navigate(context, const ReportScreen()),
                   ),
+                  const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
                     icon: Icons.storefront_rounded,
                     title: 'Pengaturan Toko',
                     isSelected: currentRoute == 'settings',
-                    onTap: () => _navigate(context, const StoreSettingsScreen()),
+                    onTap: () =>
+                        _navigate(context, const StoreSettingsScreen()),
                   ),
                 ],
               ),
@@ -231,18 +235,18 @@ class AdminDrawer extends StatelessWidget {
 
             // ─── Footer with App Info & Logout ───────────────────────
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
                 color: AppTheme.surfaceContainerLow,
                 border: Border(
                   top: BorderSide(
-                    color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+                    color: AppTheme.outlineVariant.withValues(alpha: 0.6),
                   ),
                 ),
               ),
               child: ListTile(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
                 leading: Container(
                   padding: const EdgeInsets.all(8),
@@ -254,10 +258,10 @@ class AdminDrawer extends StatelessWidget {
                       color: AppTheme.error, size: 18),
                 ),
                 title: const Text(
-                  'Keluar',
+                  'Keluar Akun',
                   style: TextStyle(
                     color: AppTheme.error,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
                 ),
@@ -280,23 +284,23 @@ class AdminDrawer extends StatelessWidget {
   void _navigate(BuildContext context, Widget screen) {
     Navigator.pop(context);
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => screen),
+      SmoothPageRoute(page: screen),
       (route) => false,
     );
   }
 
   Widget _buildSectionHeader(String title) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Row(
         children: [
           Text(
             title,
             style: const TextStyle(
               fontSize: 10,
-              fontWeight: FontWeight.w700,
+              fontWeight: FontWeight.w800,
               color: AppTheme.outline,
-              letterSpacing: 1,
+              letterSpacing: 1.0,
             ),
           ),
           const SizedBox(width: 8),
@@ -320,20 +324,20 @@ class AdminDrawer extends StatelessWidget {
 
     return Material(
       color: isSelected
-          ? activeColor.withValues(alpha: 0.12)
+          ? activeColor.withValues(alpha: 0.1)
           : Colors.transparent,
-      borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: ListTile(
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         dense: true,
         leading: Container(
-          padding: const EdgeInsets.all(6),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             color: isSelected
-                ? activeColor.withValues(alpha: 0.2)
-                : AppTheme.surfaceContainerHigh,
-            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ? activeColor.withValues(alpha: 0.16)
+                : AppTheme.surfaceContainerLow,
+            borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
           ),
           child: Icon(
             icon,
@@ -345,30 +349,39 @@ class AdminDrawer extends StatelessWidget {
           title,
           style: TextStyle(
             color: isSelected ? activeColor : AppTheme.onSurface,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
             fontSize: 13,
           ),
         ),
         trailing: badge != null
             ? Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: badgeColor ?? AppTheme.secondary,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusFull),
                 ),
                 child: Text(
                   badge,
                   style: const TextStyle(
-                    fontSize: 9,
+                    fontSize: 9.5,
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               )
-            : null,
+            : (isSelected
+                ? Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: activeColor,
+                      shape: BoxShape.circle,
+                    ),
+                  )
+                : null),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
         onTap: onTap,
       ),
@@ -391,16 +404,12 @@ class AdminDrawer extends StatelessWidget {
             onPressed: () async {
               Navigator.pop(dialogCtx);
 
-              // 1. Reset state in providers
               context.read<PosProvider>().clearCart();
-
-              // 2. Sign out from Firebase
               await context.read<AuthProvider>().signOut();
 
-              // 3. Reset entire navigation stack back to AuthGate
               if (context.mounted) {
                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const AuthGate()),
+                  SmoothPageRoute(page: const AuthGate()),
                   (route) => false,
                 );
               }

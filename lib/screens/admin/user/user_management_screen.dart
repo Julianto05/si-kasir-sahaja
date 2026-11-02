@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/user_model.dart';
 import '../../../providers/user_provider.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'user_form_dialog.dart';
 
@@ -29,6 +30,7 @@ class UserManagementScreen extends StatelessWidget {
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'users'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'users'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => UserFormDialog.show(context),
         icon: const Icon(Icons.person_add_rounded),

@@ -1,27 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../core/utils/date_formatter.dart';
 import '../../main.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/category_provider.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../widgets/motion_widgets.dart';
 import '../pos/pos_screen.dart';
 import 'category/category_list_screen.dart';
 import 'product/product_form_screen.dart';
 import 'product/product_list_screen.dart';
 import 'report/report_screen.dart';
 import 'stock/stock_management_screen.dart';
+import 'transaction/transaction_detail_dialog.dart';
 import 'transaction/transaction_list_screen.dart';
+import 'widgets/admin_bottom_nav.dart';
 import 'widgets/admin_drawer.dart';
 import 'widgets/payment_donut_chart.dart';
 import 'widgets/sales_trend_chart.dart';
 
-/// Admin Dashboard Screen displaying live business metrics and quick navigation.
+/// Admin Dashboard Screen displaying live business metrics, animated charts,
+/// and quick mobile-first navigation.
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
@@ -41,16 +47,12 @@ class AdminDashboardScreen extends StatelessWidget {
             onPressed: () async {
               Navigator.of(dialogCtx).pop();
 
-              // Clear cart
               context.read<PosProvider>().clearCart();
-
-              // Sign out from Firebase
               await context.read<AuthProvider>().signOut();
 
-              // Navigate directly to AuthGate (LoginScreen)
               if (context.mounted) {
                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const AuthGate()),
+                  SmoothPageRoute(page: const AuthGate()),
                   (route) => false,
                 );
               }
@@ -68,11 +70,26 @@ class AdminDashboardScreen extends StatelessWidget {
     final authProvider = context.watch<AuthProvider>();
     final txProvider = context.watch<TransactionProvider>();
     final user = authProvider.currentUser;
+    final width = MediaQuery.of(context).size.width;
+    final isWide = width >= 700;
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
-        title: const Text(AppConstants.appName),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              ),
+              child: const Icon(Icons.storefront_rounded, size: 18),
+            ),
+            const SizedBox(width: 10),
+            const Text(AppConstants.appName),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.point_of_sale_rounded),
@@ -80,7 +97,7 @@ class AdminDashboardScreen extends StatelessWidget {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const PosScreen()),
+                SmoothPageRoute(page: const PosScreen()),
               );
             },
           ),
@@ -92,87 +109,112 @@ class AdminDashboardScreen extends StatelessWidget {
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'dashboard'),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const PosScreen()),
-          );
-        },
-        backgroundColor: AppTheme.secondary,
-        icon: const Icon(Icons.point_of_sale_rounded),
-        label: const Text('Buka Kasir / POS'),
-      ),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'dashboard'),
+      floatingActionButton: isWide
+          ? FloatingActionButton.extended(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  SmoothPageRoute(page: const PosScreen()),
+                );
+              },
+              backgroundColor: AppTheme.secondary,
+              icon: const Icon(Icons.point_of_sale_rounded),
+              label: const Text('Buka Kasir / POS'),
+            )
+          : null,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppTheme.containerPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Welcome Banner
-              _buildWelcomeBanner(context, user?.name ?? 'Admin'),
-              const SizedBox(height: AppTheme.spacingLg),
+              // Welcome Hero Banner
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 40),
+                child: _buildWelcomeBanner(
+                  context,
+                  user?.name ?? 'Admin',
+                  txProvider.todayTransactionCount,
+                ),
+              ),
+              const SizedBox(height: 18),
 
-              // Overview Cards (Produk, Kategori, Stok Menipis, Penjualan Hari Ini)
-              _buildOverviewGrid(context, txProvider),
-              const SizedBox(height: AppTheme.spacingLg),
+              // Overview Cards (Penjualan Hari Ini, Total Produk, Stok Menipis, Kategori)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 110),
+                child: _buildOverviewGrid(context, txProvider),
+              ),
+              const SizedBox(height: 20),
 
-              // Visual Analytics Charts (Tablet & Desktop only: width >= 600)
-              Builder(
-                builder: (context) {
-                  final width = MediaQuery.of(context).size.width;
-                  if (width < 600) return const SizedBox.shrink();
+              // Quick Actions Section
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Aksi Cepat',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    _buildQuickActions(context),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
 
-                  final isDesktop = width >= 900;
-                  return Column(
-                    children: [
-                      if (isDesktop)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 6,
-                              child: SalesTrendChart(
-                                transactions: txProvider.allTransactions,
-                              ),
+              // Visual Analytics Charts (Responsive for Mobile, Tablet & Desktop)
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 240),
+                child: Builder(
+                  builder: (context) {
+                    final isDesktop = width >= 900;
+                    if (isDesktop) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 6,
+                            child: SalesTrendChart(
+                              transactions: txProvider.allTransactions,
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              flex: 4,
-                              child: PaymentDonutChart(
-                                transactions: txProvider.allTransactions,
-                              ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 4,
+                            child: PaymentDonutChart(
+                              transactions: txProvider.allTransactions,
                             ),
-                          ],
-                        )
-                      else ...[
+                          ),
+                        ],
+                      );
+                    }
+
+                    return Column(
+                      children: [
                         SalesTrendChart(
                           transactions: txProvider.allTransactions,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 14),
                         PaymentDonutChart(
                           transactions: txProvider.allTransactions,
                         ),
                       ],
-                      const SizedBox(height: AppTheme.spacingLg),
-                    ],
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-
-              // Quick Actions Section
-              Text(
-                'Aksi Cepat',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-              const SizedBox(height: 12),
-              _buildQuickActions(context),
-              const SizedBox(height: AppTheme.spacingLg),
+              const SizedBox(height: 20),
 
               // Recent Transactions Section
-              _buildRecentTransactions(context, txProvider),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 300),
+                child: _buildRecentTransactions(context, txProvider),
+              ),
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -180,69 +222,128 @@ class AdminDashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWelcomeBanner(BuildContext context, String name) {
+  Widget _buildWelcomeBanner(
+    BuildContext context,
+    String name,
+    int todayTxCount,
+  ) {
+    final todayStr = DateFormatter.formatFullDate(DateTime.now());
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppTheme.containerPadding),
       decoration: BoxDecoration(
-        color: AppTheme.primary,
+        gradient: AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.primary.withValues(alpha: 0.25),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppTheme.elevatedShadow,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
-                ),
-                child: const Icon(
-                  Icons.admin_panel_settings_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
+          // Decorative ambient circles
+          Positioned(
+            right: -24,
+            top: -24,
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withValues(alpha: 0.06),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+          ),
+          Positioned(
+            right: 40,
+            bottom: -36,
+            child: Container(
+              width: 90,
+              height: 90,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.secondary.withValues(alpha: 0.18),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Text(
-                      'Selamat Datang kembali,',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        fontSize: 13,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.14),
+                        borderRadius:
+                            BorderRadius.circular(AppTheme.radiusFull),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const PulseIndicator(
+                            color: Color(0xFF34D399),
+                            size: 7,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            todayStr,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppTheme.secondary,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                      ),
+                      child: const Text(
+                        'ADMIN',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Kelola produk, stok, kategori, dan transaksi toko Anda secara efisien.',
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.85),
-              fontSize: 13,
+                const SizedBox(height: 14),
+                Text(
+                  'Halo, $name 👋',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  todayTxCount > 0
+                      ? 'Toko aktif melayani $todayTxCount transaksi hari ini. Pantau stok & laporan secara real-time.'
+                      : 'Kelola produk, stok, kategori, dan pantau performa toko Anda hari ini.',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -259,8 +360,8 @@ class AdminDashboardScreen extends StatelessWidget {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
     final isTablet = width >= 600 && width < 900;
-    final crossAxisCount = isDesktop ? 4 : (isTablet ? 3 : 2);
-    final aspectRatio = isDesktop ? 1.8 : (isTablet ? 1.6 : 1.45);
+    final crossAxisCount = isDesktop ? 4 : (isTablet ? 2 : 2);
+    final aspectRatio = isDesktop ? 1.75 : (isTablet ? 1.85 : 1.48);
 
     return GridView.count(
       shrinkWrap: true,
@@ -272,50 +373,82 @@ class AdminDashboardScreen extends StatelessWidget {
       children: [
         _StatCard(
           title: 'Penjualan Hari Ini',
-          value: CurrencyFormatter.format(txProvider.todaySales),
           icon: Icons.payments_rounded,
           color: AppTheme.secondary,
+          valueWidget: AnimatedCurrencyText(
+            value: txProvider.todaySales,
+            style: AppTheme.numericStyle.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: AppTheme.secondary,
+            ),
+          ),
+          subtitle: '${txProvider.todayTransactionCount} transaksi sukses',
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ReportScreen()),
+              SmoothPageRoute(page: const ReportScreen()),
             );
           },
         ),
         _StatCard(
           title: 'Total Produk',
-          value: '$prodCount Item',
           icon: Icons.inventory_2_rounded,
           color: AppTheme.primary,
+          valueWidget: AnimatedCountText(
+            count: prodCount,
+            suffix: ' Item',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.primary,
+                ),
+          ),
+          subtitle: 'Katalog terdaftar',
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const ProductListScreen()),
+              SmoothPageRoute(page: const ProductListScreen()),
             );
           },
         ),
         _StatCard(
           title: 'Stok Menipis',
-          value: '$lowStockCount Produk',
           icon: Icons.warning_amber_rounded,
           color: lowStockCount > 0 ? AppTheme.error : AppTheme.outline,
+          showPulse: lowStockCount > 0,
+          valueWidget: AnimatedCountText(
+            count: lowStockCount,
+            suffix: ' Produk',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: lowStockCount > 0 ? AppTheme.error : AppTheme.outline,
+                ),
+          ),
+          subtitle: lowStockCount > 0 ? 'Perlu restock segera' : 'Stok aman',
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(
-                  builder: (_) => const StockManagementScreen()),
+              SmoothPageRoute(page: const StockManagementScreen()),
             );
           },
         ),
         _StatCard(
           title: 'Kategori',
-          value: '$catCount Kategori',
           icon: Icons.category_rounded,
-          color: AppTheme.tertiary,
+          color: const Color(0xFF0284C7),
+          valueWidget: AnimatedCountText(
+            count: catCount,
+            suffix: ' Kategori',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0284C7),
+                ),
+          ),
+          subtitle: 'Kelompok barang',
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const CategoryListScreen()),
+              SmoothPageRoute(page: const CategoryListScreen()),
             );
           },
         ),
@@ -327,38 +460,51 @@ class AdminDashboardScreen extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _QuickActionButton(
+          child: _QuickActionCard(
             icon: Icons.point_of_sale_rounded,
-            label: 'Buka POS',
+            label: 'Kasir POS',
             color: AppTheme.secondary,
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const PosScreen()),
+                SmoothPageRoute(page: const PosScreen()),
               );
             },
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
-          child: _QuickActionButton(
-            icon: Icons.add_shopping_cart_rounded,
-            label: 'Tambah Produk',
+          child: _QuickActionCard(
+            icon: Icons.add_box_rounded,
+            label: 'Produk Baru',
             color: AppTheme.primary,
             onTap: () => ProductFormScreen.navigate(context),
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
-          child: _QuickActionButton(
-            icon: Icons.receipt_long_rounded,
-            label: 'Transaksi',
-            color: AppTheme.primaryContainer,
+          child: _QuickActionCard(
+            icon: Icons.warehouse_rounded,
+            label: 'Atur Stok',
+            color: const Color(0xFF0284C7),
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                    builder: (_) => const TransactionListScreen()),
+                SmoothPageRoute(page: const StockManagementScreen()),
+              );
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _QuickActionCard(
+            icon: Icons.category_rounded,
+            label: 'Kategori',
+            color: const Color(0xFF7C3AED),
+            onTap: () {
+              Navigator.push(
+                context,
+                SmoothPageRoute(page: const CategoryListScreen()),
               );
             },
           ),
@@ -380,39 +526,49 @@ class AdminDashboardScreen extends StatelessWidget {
             Text(
               'Transaksi Terbaru',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w700,
                   ),
             ),
-            TextButton(
+            TextButton.icon(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (_) => const TransactionListScreen()),
+                  SmoothPageRoute(page: const TransactionListScreen()),
                 );
               },
-              child: const Text('Lihat Semua'),
+              icon: const Text('Lihat Semua'),
+              label: const Icon(Icons.arrow_forward_ios_rounded, size: 12),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-
+        const SizedBox(height: 6),
         if (recent.isEmpty)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: AppTheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(AppTheme.radiusLg),
               border: Border.all(
-                color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+                color: AppTheme.outlineVariant.withValues(alpha: 0.6),
               ),
             ),
-            child: const Center(
-              child: Text(
-                'Belum ada transaksi penjualan.',
-                style: TextStyle(color: AppTheme.outline),
-              ),
+            child: Column(
+              children: [
+                Icon(
+                  Icons.receipt_long_outlined,
+                  size: 40,
+                  color: AppTheme.outline.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Belum ada transaksi penjualan.',
+                  style: TextStyle(
+                    color: AppTheme.outline,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -420,48 +576,85 @@ class AdminDashboardScreen extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: recent.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 6),
+            separatorBuilder: (_, _) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final tx = recent[index];
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceContainerLowest,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
-                  border: Border.all(
-                    color: AppTheme.outlineVariant.withValues(alpha: 0.4),
+              final timeStr = DateFormat('dd MMM, HH:mm').format(tx.createdAt);
+
+              return ScaleTap(
+                onTap: () => TransactionDetailDialog.show(context, tx),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
                   ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tx.invoiceNumber,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '${tx.cashierName} • ${tx.paymentMethod}',
-                          style: const TextStyle(
-                              fontSize: 10, color: AppTheme.outline),
-                        ),
-                      ],
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceContainerLowest,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                    border: Border.all(
+                      color: AppTheme.outlineVariant.withValues(alpha: 0.6),
                     ),
-                    Text(
-                      CurrencyFormatter.format(tx.total),
-                      style: AppTheme.numericSmallStyle.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: tx.isCompleted
-                            ? AppTheme.secondary
-                            : AppTheme.error,
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: tx.isCompleted
+                              ? AppTheme.secondary.withValues(alpha: 0.1)
+                              : AppTheme.errorContainer,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusDefault),
+                        ),
+                        child: Icon(
+                          tx.isCompleted
+                              ? Icons.receipt_rounded
+                              : Icons.cancel_outlined,
+                          color: tx.isCompleted
+                              ? AppTheme.secondary
+                              : AppTheme.error,
+                          size: 20,
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tx.invoiceNumber,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '${tx.cashierName} • ${tx.paymentMethod} • $timeStr',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.outline,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        CurrencyFormatter.format(tx.total),
+                        style: AppTheme.numericSmallStyle.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: tx.isCompleted
+                              ? AppTheme.primary
+                              : AppTheme.error,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -473,73 +666,114 @@ class AdminDashboardScreen extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   final String title;
-  final String value;
+  final Widget valueWidget;
+  final String subtitle;
   final IconData icon;
   final Color color;
+  final bool showPulse;
   final VoidCallback onTap;
 
   const _StatCard({
     required this.title,
-    required this.value,
+    required this.valueWidget,
+    required this.subtitle,
     required this.icon,
     required this.color,
+    this.showPulse = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+    return ScaleTap(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(
+            color: showPulse
+                ? AppTheme.error.withValues(alpha: 0.45)
+                : AppTheme.outlineVariant.withValues(alpha: 0.7),
+          ),
+          boxShadow: AppTheme.cardShadow,
         ),
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
                     title,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppTheme.onSurfaceVariant,
+                          fontSize: 11.5,
                         ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Icon(icon, size: 20, color: color),
-                ],
-              ),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: color,
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  ),
+                  child: Icon(icon, size: 17, color: color),
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                valueWidget,
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    if (showPulse) ...[
+                      const PulseIndicator(
+                        color: AppTheme.error,
+                        size: 6,
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Expanded(
+                      child: Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: showPulse ? AppTheme.error : AppTheme.outline,
+                          fontWeight:
+                              showPulse ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
+class _QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
   final VoidCallback onTap;
 
-  const _QuickActionButton({
+  const _QuickActionCard({
     required this.icon,
     required this.label,
     required this.color,
@@ -548,24 +782,43 @@ class _QuickActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        minimumSize: Size.zero,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+    return ScaleTap(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          border: Border.all(
+            color: AppTheme.outlineVariant.withValues(alpha: 0.7),
           ),
-        ],
+          boxShadow: AppTheme.cardShadow,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../providers/store_settings_provider.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 
 /// Screen for configuring store identity, taxes, and receipt footer message.
@@ -113,6 +114,7 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'settings'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'settings'),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(

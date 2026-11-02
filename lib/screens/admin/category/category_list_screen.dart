@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/category_model.dart';
 import '../../../providers/category_provider.dart';
+import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'category_form_dialog.dart';
 
@@ -26,6 +27,7 @@ class CategoryListScreen extends StatelessWidget {
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'categories'),
+      bottomNavigationBar: const AdminBottomNav(currentRoute: 'categories'),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => CategoryFormDialog.show(context),
         icon: const Icon(Icons.add_rounded),
