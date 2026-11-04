@@ -221,6 +221,60 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
+  /// Settles an unpaid transaction to completed status.
+  Future<bool> settleTransaction({
+    required TransactionModel transaction,
+    required double additionalPaidAmount,
+    required String paymentMethod,
+    String notes = '',
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _transactionService.settleUnpaidTransaction(
+        transaction: transaction,
+        additionalPaidAmount: additionalPaidAmount,
+        paymentMethod: paymentMethod,
+        notes: notes,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal mencatat pelunasan transaksi: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates transaction status and syncs with debts collection.
+  Future<bool> updateTransactionStatus({
+    required TransactionModel transaction,
+    required String newStatus,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _transactionService.updateTransactionStatus(
+        transaction: transaction,
+        newStatus: newStatus,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal memperbarui status transaksi: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Fetches subcollection items for detail views.
   Future<List<TransactionItemModel>> getTransactionItems(
       String transactionId) async {

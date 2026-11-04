@@ -376,22 +376,31 @@ class ShiftReceiptDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: Colors.black87,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: Colors.black87,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-              color: Colors.black87,
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: Colors.black87,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

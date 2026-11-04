@@ -21,16 +21,18 @@ class UserService {
     });
   }
 
-  /// Creates a new cashier user account in Firebase Auth AND Firestore.
+  /// Creates a new cashier/staff user account in Firebase Auth AND Firestore.
   ///
   /// Uses a secondary Firebase App instance so the current Admin session
-  /// remains authenticated while creating the cashier's auth credentials.
+  /// remains authenticated while creating the user's auth credentials.
   Future<UserModel> createCashierUser({
     required String email,
     required String password,
     required String name,
+    String phone = '',
+    String position = 'Kasir',
+    List<String> permissions = const [],
   }) async {
-    // 1. Initialize secondary app to prevent signing out the current admin
     FirebaseApp secondaryApp;
     try {
       secondaryApp = Firebase.app('SecondaryApp');
@@ -53,7 +55,7 @@ class UserService {
       if (user == null) {
         throw AppAuthException(
           code: 'creation-failed',
-          message: 'Gagal membuat akun kasir.',
+          message: 'Gagal membuat akun pegawai.',
         );
       }
 
@@ -63,15 +65,15 @@ class UserService {
         email: email.trim(),
         name: name.trim(),
         role: AppConstants.roleCashier,
+        phone: phone.trim(),
+        position: position.trim().isNotEmpty ? position.trim() : 'Kasir',
+        permissions: permissions,
         isActive: true,
         createdAt: now,
         updatedAt: now,
       );
 
-      // 2. Save user document in primary Firestore
       await _usersRef.doc(user.uid).set(userModel.toMap());
-
-      // Sign out from secondary auth
       await secondaryAuth.signOut();
 
       return userModel;
@@ -91,11 +93,22 @@ class UserService {
     });
   }
 
-  /// Updates user display name.
-  Future<void> updateUserProfile(String uid, {required String name}) async {
-    await _usersRef.doc(uid).update({
+  /// Updates user profile, position, phone, and granular permissions.
+  Future<void> updateUserProfile(
+    String uid, {
+    required String name,
+    String? phone,
+    String? position,
+    List<String>? permissions,
+  }) async {
+    final Map<String, dynamic> data = {
       'name': name.trim(),
       'updatedAt': Timestamp.fromDate(DateTime.now()),
-    });
+    };
+    if (phone != null) data['phone'] = phone.trim();
+    if (position != null) data['position'] = position.trim();
+    if (permissions != null) data['permissions'] = permissions;
+
+    await _usersRef.doc(uid).update(data);
   }
 }

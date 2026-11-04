@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../models/category_model.dart';
 import '../../../providers/category_provider.dart';
+import '../../../widgets/app_background.dart';
 import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'category_form_dialog.dart';
@@ -34,72 +35,79 @@ class CategoryListScreen extends StatelessWidget {
         label: const Text('Tambah Kategori'),
         backgroundColor: AppTheme.primary,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Search Bar & Stats Header
-            _buildTopBar(context),
+      body: AppBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Search Bar & Stats Header
+              _buildTopBar(context),
 
-            // Category Cards List
-            Expanded(
-              child: Consumer<CategoryProvider>(
-                builder: (context, provider, _) {
-                  if (provider.isLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    );
-                  }
+              // Category Cards List
+              Expanded(
+                child: Consumer<CategoryProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppTheme.primary),
+                      );
+                    }
 
-                  final categories = provider.filteredCategories;
+                    final categories = provider.filteredCategories;
 
-                  if (categories.isEmpty) {
-                    return _buildEmptyState(context, provider.searchQuery);
-                  }
+                    if (categories.isEmpty) {
+                      return _buildEmptyState(context, provider.searchQuery);
+                    }
 
-                  final width = MediaQuery.of(context).size.width;
-                  if (width >= 700) {
+                    final width = MediaQuery.of(context).size.width;
+                    if (width >= 700) {
+                      return RefreshIndicator(
+                        onRefresh: () async {
+                          await context
+                              .read<CategoryProvider>()
+                              .refreshCategories();
+                        },
+                        child: GridView.builder(
+                          padding: const EdgeInsets.all(
+                            AppTheme.containerPadding,
+                          ),
+                          gridDelegate:
+                              const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 360,
+                                mainAxisExtent: 110,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                              ),
+                          itemCount: categories.length,
+                          itemBuilder: (context, index) {
+                            final category = categories[index];
+                            return _CategoryCard(category: category);
+                          },
+                        ),
+                      );
+                    }
+
                     return RefreshIndicator(
                       onRefresh: () async {
-                        await context.read<CategoryProvider>().refreshCategories();
+                        await context
+                            .read<CategoryProvider>()
+                            .refreshCategories();
                       },
-                      child: GridView.builder(
-                        padding:
-                            const EdgeInsets.all(AppTheme.containerPadding),
-                        gridDelegate:
-                            const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 360,
-                          childAspectRatio: 2.6,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
+                      child: ListView.separated(
+                        padding: const EdgeInsets.all(AppTheme.containerPadding),
                         itemCount: categories.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppTheme.spacingMd),
                         itemBuilder: (context, index) {
                           final category = categories[index];
                           return _CategoryCard(category: category);
                         },
                       ),
                     );
-                  }
-
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      await context.read<CategoryProvider>().refreshCategories();
-                    },
-                    child: ListView.separated(
-                      padding: const EdgeInsets.all(AppTheme.containerPadding),
-                      itemCount: categories.length,
-                      separatorBuilder: (_, _) =>
-                          const SizedBox(height: AppTheme.spacingMd),
-                      itemBuilder: (context, index) {
-                        final category = categories[index];
-                        return _CategoryCard(category: category);
-                      },
-                    ),
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -120,7 +128,9 @@ class CategoryListScreen extends StatelessWidget {
               prefixIcon: const Icon(Icons.search_rounded),
               suffixIcon: Consumer<CategoryProvider>(
                 builder: (context, provider, _) {
-                  if (provider.searchQuery.isEmpty) return const SizedBox.shrink();
+                  if (provider.searchQuery.isEmpty) {
+                    return const SizedBox.shrink();
+                  }
                   return IconButton(
                     icon: const Icon(Icons.clear_rounded),
                     onPressed: () => provider.setSearchQuery(''),
@@ -141,13 +151,15 @@ class CategoryListScreen extends StatelessWidget {
                   Text(
                     'Total Kategori ($total)',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -155,9 +167,9 @@ class CategoryListScreen extends StatelessWidget {
                     child: Text(
                       '$active Aktif',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppTheme.onSecondaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: AppTheme.onSecondaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -178,9 +190,7 @@ class CategoryListScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              isSearching
-                  ? Icons.search_off_rounded
-                  : Icons.category_outlined,
+              isSearching ? Icons.search_off_rounded : Icons.category_outlined,
               size: 64,
               color: AppTheme.outline,
             ),
@@ -233,10 +243,7 @@ class _CategoryCard extends StatelessWidget {
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 8,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Container(
           width: 44,
           height: 44,
@@ -257,10 +264,11 @@ class _CategoryCard extends StatelessWidget {
               child: Text(
                 category.name,
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      decoration:
-                          category.isActive ? null : TextDecoration.lineThrough,
-                    ),
+                  fontWeight: FontWeight.bold,
+                  decoration: category.isActive
+                      ? null
+                      : TextDecoration.lineThrough,
+                ),
               ),
             ),
             Container(

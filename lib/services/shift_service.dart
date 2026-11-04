@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/shift_model.dart';
 
-/// Firestore Service managing Cashier Shifts and Closing records.
+/// Firestore Service managing Cashier Shifts, Petty Cash In/Out, and Closing records (PRD Section 5.3).
 class ShiftService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static const String _collection = 'shifts';
@@ -25,6 +25,18 @@ class ShiftService {
 
     await docRef.set(shift.toMap());
     return shift;
+  }
+
+  /// Adds a manual petty cash entry (Kas Masuk / Kas Keluar) during an active shift.
+  Future<void> addPettyCashEntry({
+    required String shiftId,
+    required ShiftCashEntry entry,
+  }) async {
+    final docRef = _firestore.collection(_collection).doc(shiftId);
+    final fieldName = entry.type == 'in' ? 'cashIn' : 'cashOut';
+    await docRef.update({
+      fieldName: FieldValue.arrayUnion([entry.toMap()]),
+    });
   }
 
   /// Closes an existing shift with final cash counting and variance calculation.
@@ -54,17 +66,20 @@ class ShiftService {
     });
   }
 
-  /// Gets the currently open shift for a specific cashier.
+  /// Gets the currently open shift for a specific cashier or admin.
   Future<ShiftModel?> getActiveShift(String cashierId) async {
     final query = await _firestore
         .collection(_collection)
         .where('cashierId', isEqualTo: cashierId)
-        .where('status', isEqualTo: 'open')
-        .limit(1)
         .get();
 
-    if (query.docs.isEmpty) return null;
-    return ShiftModel.fromFirestore(query.docs.first);
+    final openShifts = query.docs
+        .map((doc) => ShiftModel.fromFirestore(doc))
+        .where((s) => s.isOpen)
+        .toList();
+    if (openShifts.isEmpty) return null;
+    openShifts.sort((a, b) => b.openedAt.compareTo(a.openedAt));
+    return openShifts.first;
   }
 
   /// Real-time stream of all shift records for Admin monitoring.
@@ -73,7 +88,6 @@ class ShiftService {
       final list = snapshot.docs
           .map((doc) => ShiftModel.fromFirestore(doc))
           .toList();
-      // Sort newest first
       list.sort((a, b) => b.openedAt.compareTo(a.openedAt));
       return list;
     });

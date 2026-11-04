@@ -105,7 +105,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppTheme.containerPadding),
           child: Form(
             key: _formKey,

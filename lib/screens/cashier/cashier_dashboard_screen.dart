@@ -13,6 +13,7 @@ import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/shift_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../widgets/app_background.dart';
 import '../../widgets/barcode_scanner_modal.dart';
 import '../../widgets/motion_widgets.dart';
 import '../admin/transaction/transaction_detail_dialog.dart';
@@ -142,7 +143,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
     final myTodayTx = txProvider.allTransactions.where((tx) {
       final isMine = tx.cashierId == user?.id || tx.cashierName == user?.name;
       final isToday = tx.createdAt.isAfter(today);
-      return isMine && isToday && tx.isCompleted;
+      return isMine && isToday && !tx.isCancelled;
     }).toList();
 
     // Summary calculations
@@ -171,21 +172,25 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
               child: const Icon(Icons.storefront_rounded, size: 19),
             ),
             const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  AppConstants.appName,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  'Kasir: ${user?.name ?? "User"}',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.white.withValues(alpha: 0.8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    AppConstants.appName,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ],
+                  Text(
+                    'Kasir: ${user?.name ?? "User"}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Colors.white.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -206,10 +211,11 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           style: TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppTheme.containerPadding),
-          child: Column(
+      body: AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.containerPadding),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ─── Header Card: Cashier Shift Info ───────────────────
@@ -344,18 +350,18 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                         final width = MediaQuery.of(context).size.width;
                         final isDesktop = width >= 900;
                         final isTablet = width >= 600 && width < 900;
-                        final crossAxisCount =
-                            isDesktop ? 4 : (isTablet ? 2 : 2);
-                        final aspectRatio =
-                            isDesktop ? 1.8 : (isTablet ? 1.75 : 1.48);
+                        final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+                        final crossAxisCount = isDesktop ? 4 : (isTablet || isLandscape ? 4 : 2);
 
-                        return GridView.count(
+                        return GridView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: crossAxisCount,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: aspectRatio,
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: crossAxisCount,
+                            mainAxisExtent: 108,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
                           children: [
                             _buildMetricCard(
                               'Total Penjualan',
@@ -542,6 +548,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -735,7 +742,21 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          if (isOpen)
+          if (isOpen) ...[
+            OutlinedButton.icon(
+              onPressed: () => _showPettyCashDialog(context),
+              icon: const Icon(Icons.account_balance_wallet_outlined, size: 15),
+              label: const Text(
+                'Kas Kecil',
+                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+              ),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size.zero,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              ),
+            ),
+            const SizedBox(width: 6),
             ElevatedButton.icon(
               onPressed: () => ShiftClosingDialog.show(context, shift),
               icon: const Icon(Icons.fact_check_rounded, size: 16),
@@ -750,8 +771,8 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
-            )
-          else
+            ),
+          ] else
             ElevatedButton.icon(
               onPressed: () => StartShiftDialog.show(context),
               icon: const Icon(Icons.lock_open_rounded, size: 16),
@@ -768,6 +789,122 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  void _showPettyCashDialog(BuildContext context) {
+    bool isCashIn = false;
+    final amountCtrl = TextEditingController();
+    final noteCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setStateDialog) => Dialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Kas Kecil Laci Kasir (Manual)',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Kas Keluar'),
+                          selected: !isCashIn,
+                          selectedColor: AppTheme.errorContainer,
+                          onSelected: (_) =>
+                              setStateDialog(() => isCashIn = false),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ChoiceChip(
+                          label: const Text('Kas Masuk'),
+                          selected: isCashIn,
+                          selectedColor: AppTheme.secondaryContainer,
+                          onSelected: (_) =>
+                              setStateDialog(() => isCashIn = true),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: amountCtrl,
+                    keyboardType: TextInputType.number,
+                    autofocus: true,
+                    inputFormatters: [ThousandsSeparatorInputFormatter()],
+                    decoration: const InputDecoration(
+                      labelText: 'Nominal (Rp) *',
+                      prefixIcon: Icon(Icons.payments_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: noteCtrl,
+                    decoration: InputDecoration(
+                      labelText: isCashIn
+                          ? 'Keterangan (e.g. Tambahan uang receh)'
+                          : 'Keterangan (e.g. Beli es batu / plastik)',
+                      prefixIcon: const Icon(Icons.notes_rounded),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('Batal'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            final amt = CurrencyFormatter.parse(amountCtrl.text);
+                            if (amt <= 0) return;
+                            await context
+                                .read<ShiftProvider>()
+                                .addManualCashEntry(
+                                  isCashIn: isCashIn,
+                                  amount: amt,
+                                  note: noteCtrl.text.trim(),
+                                );
+                            if (ctx.mounted) {
+                              Navigator.pop(ctx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(isCashIn
+                                      ? 'Kas masuk manual berhasil dicatat'
+                                      : 'Kas keluar manual berhasil dicatat'),
+                                  backgroundColor: AppTheme.secondary,
+                                ),
+                              );
+                            }
+                          },
+                          child: const Text('Simpan'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -820,8 +957,13 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              valueWidget,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: valueWidget,
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 2),
                 Text(
@@ -867,12 +1009,24 @@ class _CashierTxCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: AppTheme.secondary.withValues(alpha: 0.1),
+                color: transaction.isCompleted
+                    ? AppTheme.secondary.withValues(alpha: 0.1)
+                    : (transaction.isUnpaid
+                        ? Colors.amber.withValues(alpha: 0.15)
+                        : AppTheme.errorContainer),
                 borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
               ),
-              child: const Icon(
-                Icons.receipt_rounded,
-                color: AppTheme.secondary,
+              child: Icon(
+                transaction.isCompleted
+                    ? Icons.receipt_rounded
+                    : (transaction.isUnpaid
+                        ? Icons.pending_actions_rounded
+                        : Icons.cancel_outlined),
+                color: transaction.isCompleted
+                    ? AppTheme.secondary
+                    : (transaction.isUnpaid
+                        ? Colors.amber[900]
+                        : AppTheme.error),
                 size: 19,
               ),
             ),
@@ -888,23 +1042,37 @@ class _CashierTxCard extends StatelessWidget {
                           fontSize: 13,
                           color: AppTheme.onSurface,
                         ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '$timeStr • ${transaction.items.length} Item • ${transaction.paymentMethod.toUpperCase()}',
-                    style: const TextStyle(
+                    '$timeStr • ${transaction.items.length} Item • ${transaction.paymentMethod.toUpperCase()}${transaction.isUnpaid ? " • BELUM LUNAS" : ""}',
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppTheme.outline,
+                      color: transaction.isUnpaid
+                          ? Colors.amber[900]
+                          : AppTheme.outline,
+                      fontWeight: transaction.isUnpaid
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               CurrencyFormatter.format(transaction.total),
               style: AppTheme.numericSmallStyle.copyWith(
                 fontWeight: FontWeight.w800,
-                color: AppTheme.primary,
+                color: transaction.isCompleted
+                    ? AppTheme.primary
+                    : (transaction.isUnpaid
+                        ? Colors.amber[900]
+                        : AppTheme.error),
               ),
             ),
           ],

@@ -6,17 +6,19 @@ import '../../core/constants/app_constants.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_formatter.dart';
-import '../../main.dart';
 import '../../providers/auth_provider.dart';
-import '../../providers/category_provider.dart';
-import '../../providers/pos_provider.dart';
+import '../../providers/finance_provider.dart';
 import '../../providers/product_provider.dart';
+import '../../providers/shift_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../../widgets/app_background.dart';
 import '../../widgets/motion_widgets.dart';
+import '../cashier/closing/start_shift_dialog.dart';
 import '../pos/pos_screen.dart';
-import 'category/category_list_screen.dart';
+import 'finance/finance_management_screen.dart';
 import 'product/product_form_screen.dart';
 import 'product/product_list_screen.dart';
+import 'purchase/purchase_management_screen.dart';
 import 'report/report_screen.dart';
 import 'stock/stock_management_screen.dart';
 import 'transaction/transaction_detail_dialog.dart';
@@ -31,38 +33,24 @@ import 'widgets/sales_trend_chart.dart';
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Konfirmasi Keluar'),
-        content: const Text('Apakah Anda yakin ingin keluar dari akun admin?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: const Text('Batal'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.of(dialogCtx).pop();
+  Future<void> _openPos(BuildContext context) async {
+    final auth = context.read<AuthProvider>();
+    final shiftProvider = context.read<ShiftProvider>();
+    if (!shiftProvider.hasActiveShift && auth.currentUser != null) {
+      await shiftProvider.loadActiveShift(auth.currentUser!.id);
+    }
+    if (!context.mounted) return;
+    if (!shiftProvider.hasActiveShift) {
+      final opened = await StartShiftDialog.show(context);
+      if (opened != true) return;
+    }
 
-              context.read<PosProvider>().clearCart();
-              await context.read<AuthProvider>().signOut();
-
-              if (context.mounted) {
-                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                  SmoothPageRoute(page: const AuthGate()),
-                  (route) => false,
-                );
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Keluar'),
-          ),
-        ],
-      ),
-    );
+    if (context.mounted) {
+      Navigator.push(
+        context,
+        SmoothPageRoute(page: const PosScreen()),
+      );
+    }
   }
 
   @override
@@ -87,24 +75,20 @@ class AdminDashboardScreen extends StatelessWidget {
               child: const Icon(Icons.storefront_rounded, size: 18),
             ),
             const SizedBox(width: 10),
-            const Text(AppConstants.appName),
+            const Flexible(
+              child: Text(
+                AppConstants.appName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.point_of_sale_rounded),
             tooltip: 'Buka Kasir POS',
-            onPressed: () {
-              Navigator.push(
-                context,
-                SmoothPageRoute(page: const PosScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            tooltip: 'Keluar',
-            onPressed: () => _confirmLogout(context),
+            onPressed: () => _openPos(context),
           ),
         ],
       ),
@@ -112,23 +96,19 @@ class AdminDashboardScreen extends StatelessWidget {
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'dashboard'),
       floatingActionButton: isWide
           ? FloatingActionButton.extended(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  SmoothPageRoute(page: const PosScreen()),
-                );
-              },
+              onPressed: () => _openPos(context),
               backgroundColor: AppTheme.secondary,
               icon: const Icon(Icons.point_of_sale_rounded),
               label: const Text('Buka Kasir / POS'),
             )
           : null,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppTheme.containerPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      body: AppBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppTheme.containerPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Welcome Hero Banner
               FadeSlideIn(
                 delay: const Duration(milliseconds: 40),
@@ -140,11 +120,15 @@ class AdminDashboardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 18),
 
-              // Overview Cards (Penjualan Hari Ini, Total Produk, Stok Menipis, Kategori)
+              // Overview Cards (Penjualan Hari Ini, Pengeluaran Hari Ini, Stok & Expired, Produk)
               FadeSlideIn(
                 delay: const Duration(milliseconds: 110),
                 child: _buildOverviewGrid(context, txProvider),
               ),
+              const SizedBox(height: 16),
+
+              // Expiry / Empty Stock Alert Banner (PRD Section 5.5)
+              _buildInventoryAlertBanner(context),
               const SizedBox(height: 20),
 
               // Quick Actions Section
@@ -219,6 +203,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -353,23 +338,27 @@ class AdminDashboardScreen extends StatelessWidget {
 
   Widget _buildOverviewGrid(
       BuildContext context, TransactionProvider txProvider) {
-    final catCount = context.watch<CategoryProvider>().allCategories.length;
-    final prodCount = context.watch<ProductProvider>().allProducts.length;
-    final lowStockCount = context.watch<ProductProvider>().lowStockCount;
+    final financeProv = context.watch<FinanceProvider>();
+    final prodProvider = context.watch<ProductProvider>();
+    final prodCount = prodProvider.products.length;
+    final lowStockCount = prodProvider.lowStockCount;
 
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width >= 900;
     final isTablet = width >= 600 && width < 900;
-    final crossAxisCount = isDesktop ? 4 : (isTablet ? 2 : 2);
-    final aspectRatio = isDesktop ? 1.75 : (isTablet ? 1.85 : 1.48);
+    final isLandscape =
+        MediaQuery.of(context).orientation == Orientation.landscape;
+    final crossAxisCount = isDesktop ? 4 : (isTablet || isLandscape ? 4 : 2);
 
-    return GridView.count(
+    return GridView(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: crossAxisCount,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: aspectRatio,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisExtent: 112,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
       children: [
         _StatCard(
           title: 'Penjualan Hari Ini',
@@ -392,27 +381,27 @@ class AdminDashboardScreen extends StatelessWidget {
           },
         ),
         _StatCard(
-          title: 'Total Produk',
-          icon: Icons.inventory_2_rounded,
-          color: AppTheme.primary,
-          valueWidget: AnimatedCountText(
-            count: prodCount,
-            suffix: ' Item',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                ),
+          title: 'Pengeluaran Hari Ini',
+          icon: Icons.account_balance_wallet_rounded,
+          color: const Color(0xFFD97706),
+          valueWidget: AnimatedCurrencyText(
+            value: financeProv.todayExpenses,
+            style: AppTheme.numericStyle.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFFD97706),
+            ),
           ),
-          subtitle: 'Katalog terdaftar',
+          subtitle: 'Biaya operasional toko',
           onTap: () {
             Navigator.push(
               context,
-              SmoothPageRoute(page: const ProductListScreen()),
+              SmoothPageRoute(page: const FinanceManagementScreen()),
             );
           },
         ),
         _StatCard(
-          title: 'Stok Menipis',
+          title: 'Stok Menipis / Kosong',
           icon: Icons.warning_amber_rounded,
           color: lowStockCount > 0 ? AppTheme.error : AppTheme.outline,
           showPulse: lowStockCount > 0,
@@ -433,26 +422,77 @@ class AdminDashboardScreen extends StatelessWidget {
           },
         ),
         _StatCard(
-          title: 'Kategori',
-          icon: Icons.category_rounded,
-          color: const Color(0xFF0284C7),
+          title: 'Total Produk Aktif',
+          icon: Icons.inventory_2_rounded,
+          color: AppTheme.primary,
           valueWidget: AnimatedCountText(
-            count: catCount,
-            suffix: ' Kategori',
+            count: prodCount,
+            suffix: ' Item',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0284C7),
+                  color: AppTheme.primary,
                 ),
           ),
-          subtitle: 'Kelompok barang',
+          subtitle: 'Katalog terdaftar',
           onTap: () {
             Navigator.push(
               context,
-              SmoothPageRoute(page: const CategoryListScreen()),
+              SmoothPageRoute(page: const ProductListScreen()),
             );
           },
         ),
       ],
+    );
+  }
+
+  Widget _buildInventoryAlertBanner(BuildContext context) {
+    final prodProvider = context.watch<ProductProvider>();
+    final expiring = prodProvider.expiringOrExpiredProducts;
+    final emptyStock =
+        prodProvider.products.where((p) => p.stock <= 0).toList();
+
+    if (expiring.isEmpty && emptyStock.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: ScaleTap(
+        onTap: () {
+          Navigator.push(
+            context,
+            SmoothPageRoute(page: const StockManagementScreen()),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppTheme.errorContainer.withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(
+              color: AppTheme.error.withValues(alpha: 0.4),
+            ),
+          ),
+          child: Row(
+            children: [
+              const PulseIndicator(color: AppTheme.error, size: 8),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Peringatan Inventori: ${emptyStock.length} produk stok kosong & ${expiring.length} produk hampir/sudah kedaluwarsa.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.onErrorContainer,
+                  ),
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  size: 13, color: AppTheme.error),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -464,12 +504,7 @@ class AdminDashboardScreen extends StatelessWidget {
             icon: Icons.point_of_sale_rounded,
             label: 'Kasir POS',
             color: AppTheme.secondary,
-            onTap: () {
-              Navigator.push(
-                context,
-                SmoothPageRoute(page: const PosScreen()),
-              );
-            },
+            onTap: () => _openPos(context),
           ),
         ),
         const SizedBox(width: 10),
@@ -498,13 +533,13 @@ class AdminDashboardScreen extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
           child: _QuickActionCard(
-            icon: Icons.category_rounded,
-            label: 'Kategori',
+            icon: Icons.local_shipping_rounded,
+            label: 'Pembelian',
             color: const Color(0xFF7C3AED),
             onTap: () {
               Navigator.push(
                 context,
-                SmoothPageRoute(page: const CategoryListScreen()),
+                SmoothPageRoute(page: const PurchaseManagementScreen()),
               );
             },
           ),
@@ -604,17 +639,23 @@ class AdminDashboardScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: tx.isCompleted
                               ? AppTheme.secondary.withValues(alpha: 0.1)
-                              : AppTheme.errorContainer,
+                              : (tx.isUnpaid
+                                  ? Colors.amber.withValues(alpha: 0.15)
+                                  : AppTheme.errorContainer),
                           borderRadius:
                               BorderRadius.circular(AppTheme.radiusDefault),
                         ),
                         child: Icon(
                           tx.isCompleted
                               ? Icons.receipt_rounded
-                              : Icons.cancel_outlined,
+                              : (tx.isUnpaid
+                                  ? Icons.pending_actions_rounded
+                                  : Icons.cancel_outlined),
                           color: tx.isCompleted
                               ? AppTheme.secondary
-                              : AppTheme.error,
+                              : (tx.isUnpaid
+                                  ? Colors.amber[900]
+                                  : AppTheme.error),
                           size: 20,
                         ),
                       ),
@@ -623,12 +664,41 @@ class AdminDashboardScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              tx.invoiceNumber,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                              ),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    tx.invoiceNumber,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (tx.isUnpaid) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 1),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.amber.withValues(alpha: 0.2),
+                                      borderRadius: BorderRadius.circular(
+                                          AppTheme.radiusSm),
+                                    ),
+                                    child: Text(
+                                      'Belum Lunas',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.amber[900],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
                             const SizedBox(height: 2),
                             Text(
@@ -650,7 +720,9 @@ class AdminDashboardScreen extends StatelessWidget {
                           fontWeight: FontWeight.w800,
                           color: tx.isCompleted
                               ? AppTheme.primary
-                              : AppTheme.error,
+                              : (tx.isUnpaid
+                                  ? Colors.amber[900]
+                                  : AppTheme.error),
                         ),
                       ),
                     ],
@@ -731,8 +803,13 @@ class _StatCard extends StatelessWidget {
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                valueWidget,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: valueWidget,
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [

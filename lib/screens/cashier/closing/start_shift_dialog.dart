@@ -24,7 +24,7 @@ class StartShiftDialog extends StatefulWidget {
 
 class _StartShiftDialogState extends State<StartShiftDialog> {
   final TextEditingController _cashController =
-      TextEditingController(text: '100000');
+      TextEditingController(text: '100.000');
   bool _isSubmitting = false;
 
   final List<double> _presetAmounts = [
@@ -42,7 +42,7 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
   }
 
   Future<void> _handleStartShift() async {
-    final amount = double.tryParse(_cashController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0.0;
+    final amount = CurrencyFormatter.parse(_cashController.text);
     if (amount < 0) return;
 
     setState(() => _isSubmitting = true);
@@ -81,14 +81,18 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().currentUser;
+    final roleLabel = (user?.isAdmin ?? false) ? 'Admin' : 'Kasir';
+
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -114,16 +118,16 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Buka Shift Kasir',
+                          'Buka Shift Kasir ($roleLabel)',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
                         ),
                         const SizedBox(height: 2),
-                        const Text(
-                          'Masukkan modal awal uang kembalian di laci kasir',
-                          style: TextStyle(
+                        Text(
+                          'Operator: ${user?.name ?? roleLabel} • Masukkan modal awal laci kasir untuk mulai bertransaksi',
+                          style: const TextStyle(
                             fontSize: 11,
                             color: AppTheme.outline,
                           ),
@@ -140,6 +144,7 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                 controller: _cashController,
                 keyboardType: TextInputType.number,
                 autofocus: true,
+                inputFormatters: [ThousandsSeparatorInputFormatter()],
                 decoration: const InputDecoration(
                   labelText: 'Modal Awal Kasir (Rp)',
                   prefixIcon: Icon(Icons.payments_outlined),
@@ -157,7 +162,7 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                     label: Text(CurrencyFormatter.format(amt)),
                     labelStyle: const TextStyle(fontSize: 11),
                     onPressed: () {
-                      _cashController.text = amt.toInt().toString();
+                      _cashController.text = CurrencyFormatter.formatCompact(amt);
                     },
                   );
                 }).toList(),

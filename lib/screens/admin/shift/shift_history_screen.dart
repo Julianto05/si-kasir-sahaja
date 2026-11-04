@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/shift_model.dart';
 import '../../../providers/shift_provider.dart';
+import '../../../widgets/app_background.dart';
 import '../../cashier/closing/shift_receipt_dialog.dart';
 import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
@@ -38,100 +39,109 @@ class ShiftHistoryScreen extends StatelessWidget {
       ),
       drawer: const AdminDrawer(currentRoute: 'shifts'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'shifts'),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Summary Bar
-            Container(
-              color: AppTheme.surfaceContainerLowest,
-              padding: const EdgeInsets.all(AppTheme.containerPadding),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSummaryBox(
-                      'Shift Ditutup',
-                      '$closedCount Shift',
-                      AppTheme.primary,
-                      Icons.history_rounded,
+      body: AppBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Summary Bar
+              Container(
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLowest.withValues(alpha: 0.9),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.outlineVariant.withValues(alpha: 0.4),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSummaryBox(
-                      'Total Omset Rekap',
-                      CurrencyFormatter.format(totalOmset),
-                      AppTheme.secondary,
-                      Icons.payments_rounded,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSummaryBox(
-                      'Total Selisih',
-                      CurrencyFormatter.format(totalVariance),
-                      totalVariance == 0
-                          ? AppTheme.secondary
-                          : (totalVariance < 0 ? AppTheme.error : Colors.blue),
-                      Icons.balance_rounded,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Shifts List
-            Expanded(
-              child: allShifts.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.point_of_sale_outlined,
-                              size: 48, color: AppTheme.outline),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Belum ada riwayat closing shift kasir',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                        ],
+                ),
+                padding: const EdgeInsets.all(AppTheme.containerPadding),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryBox(
+                        'Shift Ditutup',
+                        '$closedCount Shift',
+                        AppTheme.primary,
+                        Icons.history_rounded,
                       ),
-                    )
-                  : LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isDesktop = constraints.maxWidth >= 700;
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildSummaryBox(
+                        'Total Omset Rekap',
+                        CurrencyFormatter.format(totalOmset),
+                        AppTheme.secondary,
+                        Icons.payments_rounded,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildSummaryBox(
+                        'Total Selisih',
+                        CurrencyFormatter.format(totalVariance),
+                        totalVariance == 0
+                            ? AppTheme.secondary
+                            : (totalVariance < 0 ? AppTheme.error : Colors.blue),
+                        Icons.balance_rounded,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                        if (isDesktop) {
-                          return GridView.builder(
-                            padding: const EdgeInsets.all(12),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 400,
-                              childAspectRatio: 2.1,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
+              // Shifts List
+              Expanded(
+                child: allShifts.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.point_of_sale_outlined,
+                                size: 48, color: AppTheme.outline),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Belum ada riwayat closing shift kasir',
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
+                          ],
+                        ),
+                      )
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isDesktop = constraints.maxWidth >= 700;
+
+                          if (isDesktop) {
+                            return GridView.builder(
+                              padding: const EdgeInsets.all(12),
+                              gridDelegate:
+                                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                                maxCrossAxisExtent: 400,
+                                mainAxisExtent: 135,
+                                crossAxisSpacing: 10,
+                                mainAxisSpacing: 10,
+                              ),
+                              itemCount: allShifts.length,
+                              itemBuilder: (context, index) {
+                                final shift = allShifts[index];
+                                return _ShiftHistoryCard(shift: shift);
+                              },
+                            );
+                          }
+
+                          return ListView.separated(
+                            padding: const EdgeInsets.all(12),
                             itemCount: allShifts.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 8),
                             itemBuilder: (context, index) {
                               final shift = allShifts[index];
                               return _ShiftHistoryCard(shift: shift);
                             },
                           );
-                        }
-
-                        return ListView.separated(
-                          padding: const EdgeInsets.all(12),
-                          itemCount: allShifts.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final shift = allShifts[index];
-                            return _ShiftHistoryCard(shift: shift);
-                          },
-                        );
-                      },
-                    ),
-            ),
-          ],
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -163,14 +173,17 @@ class ShiftHistoryScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: AppTheme.numericSmallStyle.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              fontSize: 12,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: AppTheme.numericSmallStyle.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+                fontSize: 12,
+              ),
             ),
-            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -219,37 +232,43 @@ class _ShiftHistoryCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: shift.isOpen
-                              ? AppTheme.secondaryContainer
-                              : AppTheme.surfaceContainerHigh,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSm),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: shift.isOpen
+                                ? AppTheme.secondaryContainer
+                                : AppTheme.surfaceContainerHigh,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusSm),
+                          ),
+                          child: Icon(
+                            shift.isOpen
+                                ? Icons.lock_open_rounded
+                                : Icons.lock_rounded,
+                            size: 16,
+                            color: shift.isOpen
+                                ? AppTheme.secondary
+                                : AppTheme.outline,
+                          ),
                         ),
-                        child: Icon(
-                          shift.isOpen
-                              ? Icons.lock_open_rounded
-                              : Icons.lock_rounded,
-                          size: 16,
-                          color: shift.isOpen
-                              ? AppTheme.secondary
-                              : AppTheme.outline,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            shift.cashierName,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        shift.cashierName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -290,43 +309,57 @@ class _ShiftHistoryCard extends StatelessWidget {
               Text(
                 'Buka: $openStr • Tutup: $closeStr',
                 style: const TextStyle(fontSize: 11, color: AppTheme.outline),
+                overflow: TextOverflow.ellipsis,
               ),
 
               // Metrics Row
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Total Omset',
-                          style:
-                              TextStyle(fontSize: 10, color: AppTheme.outline)),
-                      Text(
-                        CurrencyFormatter.format(shift.totalSales),
-                        style: AppTheme.numericSmallStyle.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.primary,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Total Omset',
+                            style:
+                                TextStyle(fontSize: 10, color: AppTheme.outline)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            CurrencyFormatter.format(shift.totalSales),
+                            style: AppTheme.numericSmallStyle.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primary,
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('Selisih Kas',
-                          style:
-                              TextStyle(fontSize: 10, color: AppTheme.outline)),
-                      Text(
-                        CurrencyFormatter.format(shift.cashDifference),
-                        style: AppTheme.numericSmallStyle.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isBalanced
-                              ? AppTheme.secondary
-                              : (isShortage ? AppTheme.error : Colors.blue),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('Selisih Kas',
+                            style:
+                                TextStyle(fontSize: 10, color: AppTheme.outline)),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            CurrencyFormatter.format(shift.cashDifference),
+                            style: AppTheme.numericSmallStyle.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isBalanced
+                                  ? AppTheme.secondary
+                                  : (isShortage ? AppTheme.error : Colors.blue),
+                            ),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),

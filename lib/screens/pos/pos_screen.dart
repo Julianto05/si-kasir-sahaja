@@ -4,19 +4,25 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/currency_formatter.dart';
+import '../../models/customer_model.dart';
+import '../../models/discount_model.dart';
 import '../../models/product_model.dart';
 import '../../models/transaction_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/category_provider.dart';
+import '../../providers/customer_provider.dart';
+import '../../providers/discount_provider.dart';
 import '../../providers/pos_provider.dart';
 import '../../providers/product_provider.dart';
 import '../../providers/shift_provider.dart';
 import '../../providers/store_settings_provider.dart';
+import '../../widgets/app_background.dart';
 import '../../widgets/barcode_scanner_modal.dart';
 import '../../widgets/motion_widgets.dart';
 import '../admin/product/product_form_screen.dart';
 import '../admin/widgets/admin_drawer.dart';
 import '../cashier/closing/shift_closing_dialog.dart';
+import '../cashier/closing/start_shift_dialog.dart';
 import 'checkout_dialog.dart';
 
 /// Point of Sale (POS) Screen with modern mobile layout, tactile product cards,
@@ -34,11 +40,19 @@ class _PosScreenState extends State<PosScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<ProductProvider>().resetFilters();
-        context.read<ProductProvider>().refreshProducts();
-        context.read<CategoryProvider>().refreshCategories();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      context.read<ProductProvider>().resetFilters();
+      context.read<ProductProvider>().refreshProducts();
+      context.read<CategoryProvider>().refreshCategories();
+
+      final user = context.read<AuthProvider>().currentUser;
+      final shiftProv = context.read<ShiftProvider>();
+      if (user != null) {
+        await shiftProv.loadActiveShift(user.id);
+      }
+      if (mounted && !shiftProv.hasActiveShift) {
+        StartShiftDialog.show(context);
       }
     });
   }
@@ -50,6 +64,11 @@ class _PosScreenState extends State<PosScreen> {
   }
 
   Future<void> _scanBarcode() async {
+    final shiftProv = context.read<ShiftProvider>();
+    if (!shiftProv.hasActiveShift) {
+      StartShiftDialog.show(context);
+      return;
+    }
     final barcode = await BarcodeScannerModal.show(context);
     if (barcode != null && barcode.isNotEmpty && mounted) {
       final product =
@@ -128,6 +147,7 @@ class _PosScreenState extends State<PosScreen> {
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(6),
@@ -137,11 +157,53 @@ class _PosScreenState extends State<PosScreen> {
               ),
               child: const Icon(Icons.point_of_sale_rounded, size: 19),
             ),
-            const SizedBox(width: 10),
-            const Text('Kasir / POS'),
+            const SizedBox(width: 8),
+            const Flexible(
+              child: Text(
+                'Kasir / POS',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         actions: [
+          Consumer<PosProvider>(
+            builder: (context, pos, _) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.pause_circle_outline_rounded),
+                    tooltip: 'Daftar Transaksi Tersimpan (Hold Order)',
+                    onPressed: () => _showHeldOrdersDialog(context),
+                  ),
+                  if (pos.heldOrdersCount > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: AppTheme.error,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusFull),
+                        ),
+                        child: Text(
+                          '${pos.heldOrdersCount}',
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner_rounded),
             tooltip: 'Scan Barcode',
@@ -154,6 +216,12 @@ class _PosScreenState extends State<PosScreen> {
               tooltip: 'Tutup Shift Kasir (Closing)',
               onPressed: () => ShiftClosingDialog.show(
                   context, shiftProvider.activeShift!),
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.lock_open_rounded),
+              tooltip: 'Buka Shift Kasir',
+              onPressed: () => StartShiftDialog.show(context),
             ),
           Consumer<PosProvider>(
             builder: (context, pos, _) {
@@ -168,47 +236,173 @@ class _PosScreenState extends State<PosScreen> {
         ],
       ),
       drawer: isAdmin ? const AdminDrawer(currentRoute: 'pos') : null,
-      body: SafeArea(
-        child: isTabletOrDesktop
-            ? Row(
-                children: [
-                  Expanded(
-                    flex: 6,
-                    child: Column(
+      body: AppBackground(
+        child: SafeArea(
+          child: !shiftProvider.hasActiveShift
+              ? _buildShiftRequiredLockView(context, isAdmin)
+              : (isTabletOrDesktop
+                  ? Row(
                       children: [
-                        _buildSearchAndCategoryBar(context),
-                        Expanded(child: _buildProductGrid(context)),
-                      ],
-                    ),
-                  ),
-                  const VerticalDivider(width: 1, thickness: 1),
-                  Expanded(
-                    flex: 4,
-                    child: _buildCartSection(context),
-                  ),
-                ],
-              )
-            : Stack(
-                children: [
-                  Column(
-                    children: [
-                      _buildSearchAndCategoryBar(context),
-                      Expanded(
-                        child: _buildProductGrid(
-                          context,
-                          bottomPadding: 92,
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            children: [
+                              _buildSearchAndCategoryBar(context),
+                              Expanded(child: _buildProductGrid(context)),
+                            ],
+                          ),
                         ),
+                        const VerticalDivider(width: 1, thickness: 1),
+                        Expanded(
+                          flex: 4,
+                          child: _buildCartSection(context),
+                        ),
+                      ],
+                    )
+                  : Stack(
+                      children: [
+                        Column(
+                          children: [
+                            _buildSearchAndCategoryBar(context),
+                            Expanded(
+                              child: _buildProductGrid(
+                                context,
+                                bottomPadding: 92,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: _buildMobileCartBar(context),
+                        ),
+                      ],
+                    )),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildShiftRequiredLockView(BuildContext context, bool isAdmin) {
+    final userName =
+        context.read<AuthProvider>().currentUser?.name ?? (isAdmin ? 'Admin' : 'Kasir');
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+              border: Border.all(
+                color: AppTheme.outlineVariant.withValues(alpha: 0.7),
+              ),
+              boxShadow: AppTheme.elevatedShadow,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primary.withValues(alpha: 0.25),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    child: _buildMobileCartBar(context),
+                  child: const Icon(
+                    Icons.lock_clock_rounded,
+                    color: Colors.white,
+                    size: 34,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.shade50,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusFull),
+                    border: Border.all(color: Colors.amber.shade300),
+                  ),
+                  child: Text(
+                    'SHIFT KASIR BELUM AKTIF',
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.amber.shade900,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Wajib Buka Shift Terlebih Dahulu',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Halo $userName (${isAdmin ? "Admin" : "Kasir"}), sebelum memilih barang dan melakukan transaksi penjualan di Kasir / POS, Anda diwajibkan membuka shift kasir dan mengisi modal awal laci kasir terlebih dahulu.',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: AppTheme.onSurfaceVariant,
+                    height: 1.45,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () => StartShiftDialog.show(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.secondary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                      ),
+                    ),
+                    icon: const Icon(Icons.lock_open_rounded, size: 20),
+                    label: const Text(
+                      'Buka Shift Kasir Sekarang',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                if (Navigator.canPop(context)) ...[
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.arrow_back_rounded, size: 18),
+                      label: const Text('Kembali ke Dashboard'),
+                    ),
                   ),
                 ],
-              ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -442,6 +636,11 @@ class _PosScreenState extends State<PosScreen> {
               return _PosProductCard(
                 product: product,
                 onTap: () {
+                  final shiftProv = context.read<ShiftProvider>();
+                  if (!shiftProv.hasActiveShift) {
+                    StartShiftDialog.show(context);
+                    return;
+                  }
                   final pos = context.read<PosProvider>();
                   final added = pos.addToCart(product);
                   if (!added && pos.errorMessage != null) {
@@ -544,6 +743,120 @@ class _PosScreenState extends State<PosScreen> {
                 ),
               ),
 
+              // Customer & Promo Quick Selector Strip (PRD Section 5.2)
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceContainerLow,
+                  border: Border(
+                    bottom: BorderSide(
+                      color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _showSelectCustomerDialog(context),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: posProvider.selectedCustomer != null
+                                ? AppTheme.secondaryContainer
+                                : AppTheme.surfaceContainerLowest,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusSm),
+                            border: Border.all(
+                              color: AppTheme.outlineVariant
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.person_pin_rounded,
+                                size: 15,
+                                color: posProvider.selectedCustomer != null
+                                    ? AppTheme.secondary
+                                    : AppTheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  posProvider.selectedCustomer?.name ??
+                                      'Pelanggan Umum',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: posProvider.selectedCustomer != null
+                                        ? AppTheme.onSecondaryContainer
+                                        : AppTheme.onSurface,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => _showPromoDiscountDialog(context),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: (posProvider.appliedPromo != null ||
+                                    posProvider.discount > 0)
+                                ? AppTheme.primary.withValues(alpha: 0.1)
+                                : AppTheme.surfaceContainerLowest,
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusSm),
+                            border: Border.all(
+                              color: AppTheme.outlineVariant
+                                  .withValues(alpha: 0.6),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.discount_outlined,
+                                size: 15,
+                                color: AppTheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  posProvider.appliedPromo?.name ??
+                                      (posProvider.discount > 0
+                                          ? 'Diskon Aktif'
+                                          : 'Diskon / Promo'),
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppTheme.primary,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
               // Items List
               Expanded(
                 child: cartItems.isEmpty
@@ -611,8 +924,10 @@ class _PosScreenState extends State<PosScreen> {
                 child: Column(
                   children: [
                     _buildSummaryRow('Subtotal', posProvider.subtotal),
-                    if (posProvider.discount > 0)
-                      _buildSummaryRow('Diskon', -posProvider.discount,
+                    if (posProvider.calculateTotalDiscount(settings) > 0)
+                      _buildSummaryRow(
+                          'Total Diskon',
+                          -posProvider.calculateTotalDiscount(settings),
                           isDiscount: true),
                     if (tax > 0)
                       _buildSummaryRow(
@@ -641,35 +956,74 @@ class _PosScreenState extends State<PosScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Pay Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton.icon(
-                        onPressed: posProvider.isCartEmpty
-                            ? null
-                            : () {
-                                if (isBottomSheet) {
-                                  Navigator.pop(context);
-                                }
-                                CheckoutDialog.show(context);
-                              },
-                        icon: const Icon(Icons.payments_rounded, size: 20),
-                        label: const Text(
-                          'Bayar Sekarang',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
+                    // Hold & Pay Buttons Row
+                    Row(
+                      children: [
+                        SizedBox(
+                          height: 50,
+                          child: OutlinedButton.icon(
+                            onPressed: posProvider.isCartEmpty
+                                ? null
+                                : () {
+                                    final user = context
+                                        .read<AuthProvider>()
+                                        .currentUser;
+                                    if (user == null) return;
+                                    posProvider.holdCurrentOrder(
+                                      cashier: user,
+                                      settings: settings,
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Transaksi disimpan sementara (Hold Order)'),
+                                        backgroundColor: AppTheme.primary,
+                                      ),
+                                    );
+                                  },
+                            icon: const Icon(Icons.pause_rounded, size: 18),
+                            label: const Text('Hold'),
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.secondary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusMd),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: ElevatedButton.icon(
+                              onPressed: posProvider.isCartEmpty
+                                  ? null
+                                  : () {
+                                      final shiftProv =
+                                          context.read<ShiftProvider>();
+                                      if (!shiftProv.hasActiveShift) {
+                                        StartShiftDialog.show(context);
+                                        return;
+                                      }
+                                      if (isBottomSheet) {
+                                        Navigator.pop(context);
+                                      }
+                                      CheckoutDialog.show(context);
+                                    },
+                              icon:
+                                  const Icon(Icons.payments_rounded, size: 20),
+                              label: const Text(
+                                'Bayar Sekarang',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppTheme.secondary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(AppTheme.radiusMd),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -910,6 +1264,366 @@ class _PosScreenState extends State<PosScreen> {
       ),
     );
   }
+
+  void _showHeldOrdersDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Consumer<PosProvider>(
+        builder: (ctx, pos, _) {
+          final orders = pos.heldOrders;
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460, maxHeight: 500),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Transaksi Tersimpan (Hold Order)',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(ctx),
+                        ),
+                      ],
+                    ),
+                    const Divider(),
+                    Expanded(
+                      child: orders.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Belum ada transaksi yang di-hold.',
+                                style: TextStyle(color: AppTheme.outline),
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: orders.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (_, idx) {
+                                final h = orders[idx];
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.surfaceContainerLow,
+                                    borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusMd),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              h.label,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.w800,
+                                                  fontSize: 13),
+                                            ),
+                                            Text(
+                                              '${h.items.length} produk • Total: ${CurrencyFormatter.format(h.subtotal)}',
+                                              style: const TextStyle(
+                                                  fontSize: 11.5,
+                                                  color: AppTheme.outline),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline,
+                                            color: AppTheme.error),
+                                        onPressed: () =>
+                                            pos.removeHeldOrder(h.id),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () {
+                                          pos.resumeHeldOrder(h.id);
+                                          Navigator.pop(ctx);
+                                        },
+                                        child: const Text('Lanjutkan'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showSelectCustomerDialog(BuildContext context) {
+    final searchCtrl = TextEditingController();
+    final nameCtrl = TextEditingController();
+    final phoneCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Consumer2<CustomerProvider, PosProvider>(
+        builder: (ctx, custProv, posProv, _) {
+          final customers = custProv.filteredCustomers;
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 460, maxHeight: 540),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Pilih / Daftar Pelanggan POS',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w800, fontSize: 15),
+                        ),
+                        if (posProv.selectedCustomer != null)
+                          TextButton(
+                            onPressed: () {
+                              posProv.selectCustomer(null);
+                              Navigator.pop(ctx);
+                            },
+                            child: const Text('Reset Umum'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: searchCtrl,
+                      onChanged: (v) => custProv.setSearchQuery(v),
+                      decoration: const InputDecoration(
+                        hintText: 'Cari nama atau No. HP member...',
+                        prefixIcon: Icon(Icons.search_rounded),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: customers.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (_, idx) {
+                          final CustomerModel c = customers[idx];
+                          return ListTile(
+                            dense: true,
+                            leading: CircleAvatar(
+                              radius: 16,
+                              backgroundColor: c.isMember
+                                  ? AppTheme.secondaryContainer
+                                  : AppTheme.surfaceContainerHigh,
+                              child: Icon(
+                                c.isMember
+                                    ? Icons.workspace_premium_rounded
+                                    : Icons.person_outline,
+                                size: 16,
+                                color: c.isMember
+                                    ? AppTheme.secondary
+                                    : AppTheme.primary,
+                              ),
+                            ),
+                            title: Text(
+                              '${c.name}${c.isMember ? " (MEMBER)" : ""}',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            subtitle:
+                                Text('${c.phone} • ${c.points} Poin Loyalitas'),
+                            onTap: () {
+                              posProv.selectCustomer(c);
+                              Navigator.pop(ctx);
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const Divider(),
+                    const Text(
+                      'Daftar Cepat Member Baru:',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: nameCtrl,
+                            decoration: const InputDecoration(
+                              hintText: 'Nama',
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: TextField(
+                            controller: phoneCtrl,
+                            keyboardType: TextInputType.phone,
+                            decoration: const InputDecoration(
+                              hintText: 'No. HP',
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        ElevatedButton(
+                          onPressed: () async {
+                            if (nameCtrl.text.trim().isEmpty) return;
+                            final created = await custProv.saveCustomer(
+                              name: nameCtrl.text.trim(),
+                              phone: phoneCtrl.text.trim(),
+                              isMember: true,
+                            );
+                            if (created != null && ctx.mounted) {
+                              posProv.selectCustomer(created);
+                              Navigator.pop(ctx);
+                            }
+                          },
+                          child: const Text('Pilih'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  void _showPromoDiscountDialog(BuildContext context) {
+    final posProv = context.read<PosProvider>();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Consumer<DiscountProvider>(
+        builder: (ctx, discProv, _) {
+          final promos = discProv.validDiscounts;
+          return Dialog(
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Pilih Voucher & Promo Resmi Toko',
+                      style:
+                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Diskon hanya dapat diterapkan melalui promo/voucher resmi yang telah dibuat oleh Admin di sistem.',
+                      style: TextStyle(fontSize: 11.5, color: AppTheme.outline),
+                    ),
+                    const SizedBox(height: 14),
+                    if (promos.isEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLow,
+                          borderRadius:
+                              BorderRadius.circular(AppTheme.radiusMd),
+                        ),
+                        child: const Text(
+                          'Tidak ada promo atau voucher diskon yang sedang aktif.',
+                          style: TextStyle(color: AppTheme.outline),
+                          textAlign: TextAlign.center,
+                        ),
+                      )
+                    else ...[
+                      ...promos.map((DiscountModel p) {
+                        final selected = posProv.appliedPromo?.id == p.id;
+                        return ListTile(
+                          dense: true,
+                          tileColor: selected
+                              ? AppTheme.secondaryContainer
+                              : AppTheme.surfaceContainerLow,
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppTheme.radiusMd),
+                          ),
+                          leading: const Icon(Icons.local_offer_rounded,
+                              color: AppTheme.primary, size: 18),
+                          title: Text(
+                            '${p.name} (${p.code})',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700, fontSize: 12.5),
+                          ),
+                          subtitle: Text(
+                            p.type == 'percentage'
+                                ? 'Diskon ${p.value.toStringAsFixed(0)}% • Min. ${CurrencyFormatter.format(p.minPurchase)}'
+                                : 'Potongan ${CurrencyFormatter.format(p.value)} • Min. ${CurrencyFormatter.format(p.minPurchase)}',
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                          trailing: selected
+                              ? const Icon(Icons.check_circle,
+                                  color: AppTheme.secondary)
+                              : null,
+                          onTap: () {
+                            posProv.applyPromo(selected ? null : p);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      }),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      children: [
+                        if (posProv.appliedPromo != null)
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                posProv.setDiscount(0);
+                                posProv.applyPromo(null);
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text('Hapus Promo'),
+                            ),
+                          ),
+                        if (posProv.appliedPromo != null)
+                          const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Tutup'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _CategoryPill extends StatelessWidget {
@@ -975,7 +1689,7 @@ class _PosProductCard extends StatelessWidget {
         final isSelected = cartQty > 0;
 
         return ScaleTap(
-          onTap: isOut ? null : onTap,
+          onTap: onTap,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
@@ -1241,10 +1955,13 @@ class _CartItemRow extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                '${CurrencyFormatter.format(item.price)} / ${item.unit}',
+                '${CurrencyFormatter.format(item.price)} / ${item.unit}'
+                '${item.itemDiscount > 0 ? " (Diskon -${CurrencyFormatter.format(item.itemDiscount)})" : ""}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontSize: 11,
-                      color: AppTheme.outline,
+                      color: item.itemDiscount > 0
+                          ? AppTheme.error
+                          : AppTheme.outline,
                     ),
               ),
             ],
@@ -1273,12 +1990,19 @@ class _CartItemRow extends StatelessWidget {
                   child: Icon(Icons.remove_rounded, size: 16),
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  '${item.quantity}',
-                  style: AppTheme.numericSmallStyle.copyWith(
-                    fontWeight: FontWeight.w800,
+              InkWell(
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                onTap: () => _showEditQuantityDialog(context, item),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  child: Text(
+                    '${item.quantity}',
+                    style: AppTheme.numericSmallStyle.copyWith(
+                      fontWeight: FontWeight.w800,
+                      decoration: TextDecoration.underline,
+                      decorationStyle: TextDecorationStyle.dotted,
+                    ),
                   ),
                 ),
               ),
@@ -1314,6 +2038,60 @@ class _CartItemRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _showEditQuantityDialog(BuildContext context, TransactionItemModel item) {
+    final controller = TextEditingController(text: item.quantity.toString());
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(
+          'Ubah Jumlah: ${item.productName}',
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Masukkan kuantitas item yang dibeli:',
+              style: TextStyle(fontSize: 12, color: AppTheme.outline),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: 'Jumlah (${item.unit})',
+                suffixText: item.unit,
+                border: const OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final val = int.tryParse(controller.text);
+              if (val != null && val >= 0) {
+                context.read<PosProvider>().setItemQuantity(
+                      item.productId,
+                      val,
+                      999999,
+                    );
+              }
+              Navigator.pop(ctx);
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
     );
   }
 }
