@@ -42,8 +42,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
     1000: TextEditingController(text: '0'),
   };
 
-  final TextEditingController _coinsController =
-      TextEditingController(text: '0');
+  final TextEditingController _coinsController = TextEditingController(
+    text: '0',
+  );
   final TextEditingController _notesController = TextEditingController();
 
   bool _isSubmitting = false;
@@ -61,7 +62,10 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
   double get _totalPhysicalCash {
     double total = 0.0;
     _denominationControllers.forEach((val, controller) {
-      final text = controller.text.replaceAll('.', '').replaceAll(',', '').trim();
+      final text = controller.text
+          .replaceAll('.', '')
+          .replaceAll(',', '')
+          .trim();
       final qty = int.tryParse(text) ?? 0;
       total += val * qty;
     });
@@ -73,7 +77,10 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
   Map<String, int> get _denominationMap {
     final map = <String, int>{};
     _denominationControllers.forEach((val, controller) {
-      final text = controller.text.replaceAll('.', '').replaceAll(',', '').trim();
+      final text = controller.text
+          .replaceAll('.', '')
+          .replaceAll(',', '')
+          .trim();
       final qty = int.tryParse(text) ?? 0;
       if (qty > 0) {
         map[val.toString()] = qty;
@@ -92,16 +99,20 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
       if (tx.shiftId != null && tx.shiftId!.isNotEmpty) {
         return tx.shiftId == widget.shift.id;
       }
-      final isCashier = tx.cashierId == widget.shift.cashierId ||
+      final isCashier =
+          tx.cashierId == widget.shift.cashierId ||
           tx.cashierName == widget.shift.cashierName;
       final afterOpen = tx.createdAt.isAfter(
-          widget.shift.openedAt.subtract(const Duration(minutes: 1)));
+        widget.shift.openedAt.subtract(const Duration(minutes: 1)),
+      );
       return isCashier && afterOpen;
     }).toList();
   }
 
   Future<void> _handleConfirmClosing(
-      double cashSales, double expectedCash) async {
+    double cashSales,
+    double expectedCash,
+  ) async {
     var physicalCash = _totalPhysicalCash;
 
     // Peringatan jika kasir belum memasukkan rincian fisik sama sekali (fisik = 0 padahal sistem > 0)
@@ -132,7 +143,8 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                 backgroundColor: AppTheme.primary,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () => Navigator.pop(ctx, false), // Kembali untuk mengisi
+              onPressed: () =>
+                  Navigator.pop(ctx, false), // Kembali untuk mengisi
               child: const Text('Hitung Uang Fisik'),
             ),
           ],
@@ -243,7 +255,10 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
             children: [
               Text(
                 'Terjadi kekurangan fisik kas sebesar ${CurrencyFormatter.format(minusNominal)}.',
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -307,7 +322,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                   : '$currentNotes | $addInfo';
 
               // Tambahkan ke uang koin / fisik kas agar seimbang
-              final currentCoins = CurrencyFormatter.parse(_coinsController.text);
+              final currentCoins = CurrencyFormatter.parse(
+                _coinsController.text,
+              );
               final newCoins = currentCoins + coveredAmount;
               _coinsController.text = CurrencyFormatter.formatCompact(newCoins);
 
@@ -338,8 +355,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
     final physicalCash = _totalPhysicalCash;
     final variance = physicalCash - expectedCash;
 
-    final openTimeStr =
-        DateFormat('dd MMM yyyy, HH:mm').format(widget.shift.openedAt);
+    final openTimeStr = DateFormat(
+      'dd MMM yyyy, HH:mm',
+    ).format(widget.shift.openedAt);
 
     return Dialog(
       shape: RoundedRectangleBorder(
@@ -367,8 +385,11 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                     ),
-                    child: const Icon(Icons.point_of_sale_rounded,
-                        color: Colors.white, size: 22),
+                    child: const Icon(
+                      Icons.point_of_sale_rounded,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -412,7 +433,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                   children: [
                     // 1. System Sales Recap Card
                     _buildSectionTitle(
-                        '1. Rekapitulasi Sistem', Icons.analytics_outlined),
+                      '1. Rekapitulasi Sistem',
+                      Icons.analytics_outlined,
+                    ),
                     const SizedBox(height: 8),
                     Container(
                       padding: const EdgeInsets.all(14),
@@ -425,30 +448,49 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                       ),
                       child: Column(
                         children: [
-                          _buildRecapRow('Modal Awal Kasir',
-                              widget.shift.startingCash, isMuted: true),
                           _buildRecapRow(
-                              'Penjualan Tunai (Kas Masuk)', cashSales),
+                            'Modal Awal Kasir',
+                            widget.shift.startingCash,
+                            isMuted: true,
+                          ),
                           _buildRecapRow(
-                              'Penjualan Non-Tunai (QRIS/EDC)', nonCashSales),
+                            'Penjualan Tunai (Kas Masuk)',
+                            cashSales,
+                          ),
+                          _buildRecapRow(
+                            'Penjualan Non-Tunai (QRIS/EDC)',
+                            nonCashSales,
+                          ),
                           if (unpaidSales > 0)
                             _buildRecapRow(
-                                'Penjualan Belum Lunas (Piutang)', unpaidSales,
-                                color: Colors.amber.shade900),
+                              'Penjualan Belum Lunas (Piutang)',
+                              unpaidSales,
+                              color: Colors.amber.shade900,
+                            ),
                           if (manualCashIn > 0)
-                            _buildRecapRow('Kas Masuk Manual (Petty Cash)',
-                                manualCashIn,
-                                color: AppTheme.secondary),
+                            _buildRecapRow(
+                              'Kas Masuk Manual (Petty Cash)',
+                              manualCashIn,
+                              color: AppTheme.secondary,
+                            ),
                           if (manualCashOut > 0)
-                            _buildRecapRow('Kas Keluar Manual (Petty Cash)',
-                                -manualCashOut,
-                                color: AppTheme.error),
+                            _buildRecapRow(
+                              'Kas Keluar Manual (Petty Cash)',
+                              -manualCashOut,
+                              color: AppTheme.error,
+                            ),
                           const Divider(height: 16),
-                          _buildRecapRow('Total Omset Shift', totalSales,
-                              isBold: true, color: AppTheme.primary),
                           _buildRecapRow(
-                              'Jumlah Transaksi', shiftTxs.length.toDouble(),
-                              isCount: true),
+                            'Total Omset Shift',
+                            totalSales,
+                            isBold: true,
+                            color: AppTheme.primary,
+                          ),
+                          _buildRecapRow(
+                            'Jumlah Transaksi',
+                            shiftTxs.length.toDouble(),
+                            isCount: true,
+                          ),
                           const Divider(height: 16),
                           _buildRecapRow(
                             'Wajib Ada di Laci (Sistem)',
@@ -463,8 +505,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
 
                     // 2. Physical Cash Calculator (Denominasi)
                     _buildSectionTitle(
-                        '2. Hitung Fisik Uang Kas (Laci Kasir)',
-                        Icons.payments_outlined),
+                      '2. Hitung Fisik Uang Kas (Laci Kasir)',
+                      Icons.payments_outlined,
+                    ),
                     const SizedBox(height: 4),
                     const Text(
                       'Hitung dan masukkan jumlah lembar uang fisik di laci kasir saat ini:',
@@ -473,8 +516,15 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                     const SizedBox(height: 10),
 
                     // Denomination Inputs Grid
-                    ...[100000, 50000, 20000, 10000, 5000, 2000, 1000]
-                        .map((denom) => _buildDenominationInput(denom)),
+                    ...[
+                      100000,
+                      50000,
+                      20000,
+                      10000,
+                      5000,
+                      2000,
+                      1000,
+                    ].map((denom) => _buildDenominationInput(denom)),
 
                     // Coins input
                     _buildCoinsInput(),
@@ -488,8 +538,8 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                         color: variance == 0
                             ? AppTheme.secondary.withValues(alpha: 0.1)
                             : (variance < 0
-                                ? AppTheme.error.withValues(alpha: 0.1)
-                                : Colors.blue.withValues(alpha: 0.1)),
+                                  ? AppTheme.error.withValues(alpha: 0.1)
+                                  : Colors.blue.withValues(alpha: 0.1)),
                         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
                         border: Border.all(
                           color: variance == 0
@@ -534,16 +584,16 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                                   variance == 0
                                       ? 'STATUS: SEIMBANG (MATCH)'
                                       : (variance < 0
-                                          ? 'STATUS: SELISIH KURANG (MINUS)'
-                                          : 'STATUS: SELISIH LEBIH (PLUS)'),
+                                            ? 'STATUS: SELISIH KURANG (MINUS)'
+                                            : 'STATUS: SELISIH LEBIH (PLUS)'),
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12,
                                     color: variance == 0
                                         ? AppTheme.secondary
                                         : (variance < 0
-                                            ? AppTheme.error
-                                            : Colors.blue.shade700),
+                                              ? AppTheme.error
+                                              : Colors.blue.shade700),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -558,8 +608,8 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                                   color: variance == 0
                                       ? AppTheme.secondary
                                       : (variance < 0
-                                          ? AppTheme.error
-                                          : Colors.blue.shade700),
+                                            ? AppTheme.error
+                                            : Colors.blue.shade700),
                                 ),
                               ),
                             ],
@@ -600,8 +650,9 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                   ),
@@ -612,7 +663,7 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                       onPressed: _isSubmitting
                           ? null
                           : () =>
-                              _handleConfirmClosing(cashSales, expectedCash),
+                                _handleConfirmClosing(cashSales, expectedCash),
                       icon: _isSubmitting
                           ? const SizedBox(
                               width: 18,
@@ -659,11 +710,14 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
     );
   }
 
-  Widget _buildRecapRow(String label, double amount,
-      {bool isBold = false,
-      bool isMuted = false,
-      bool isCount = false,
-      Color? color}) {
+  Widget _buildRecapRow(
+    String label,
+    double amount, {
+    bool isBold = false,
+    bool isMuted = false,
+    bool isCount = false,
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -774,10 +828,7 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
             ),
             child: const Text(
               'Uang Koin',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
             ),
           ),
           const SizedBox(width: 16),
@@ -790,8 +841,10 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                 inputFormatters: [ThousandsSeparatorInputFormatter()],
                 decoration: const InputDecoration(
                   hintText: 'Total nominal koin (Rp)',
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   isDense: true,
                 ),
                 onChanged: (_) => setState(() {}),

@@ -6,12 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../providers/product_provider.dart';
 import '../../../../services/data_reset_service.dart';
 
-enum ResetPeriod {
-  oneDay,
-  weekly,
-  monthly,
-  custom,
-}
+enum ResetPeriod { oneDay, weekly, monthly, custom }
 
 /// Dialog for resetting operational store data with granular checkboxes for each module.
 class ResetDataDialog extends StatefulWidget {
@@ -95,7 +90,9 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 1)),
       initialDateRange: DateTimeRange(
-        start: _startDate.isBefore(DateTime(2020)) ? DateTime(2020) : _startDate,
+        start: _startDate.isBefore(DateTime(2020))
+            ? DateTime(2020)
+            : _startDate,
         end: _endDate,
       ),
       builder: (context, child) {
@@ -249,8 +246,9 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: AppTheme.errorContainer,
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusDefault),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusDefault,
+                      ),
                     ),
                     child: const Icon(
                       Icons.restore_page_rounded,
@@ -265,9 +263,7 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                       children: [
                         Text(
                           'Reset Data Operasional Toko',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleMedium
+                          style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppTheme.error,
@@ -276,16 +272,19 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                         const SizedBox(height: 2),
                         const Text(
                           'Pilih rentang waktu & centang data yang akan direset',
-                          style:
-                              TextStyle(fontSize: 11, color: AppTheme.outline),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close_rounded),
-                    onPressed:
-                        _isProcessing ? null : () => Navigator.pop(context),
+                    onPressed: _isProcessing
+                        ? null
+                        : () => Navigator.pop(context),
                   ),
                 ],
               ),
@@ -312,8 +311,11 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.warning_amber_rounded,
-                              color: AppTheme.error, size: 20),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            color: AppTheme.error,
+                            size: 20,
+                          ),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
@@ -371,19 +373,25 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                     // Date Range Indicator
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
                       decoration: BoxDecoration(
                         color: AppTheme.surfaceContainerLow,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusDefault),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusDefault,
+                        ),
                         border: Border.all(
                           color: AppTheme.outlineVariant.withValues(alpha: 0.6),
                         ),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.date_range_rounded,
-                              size: 18, color: AppTheme.outline),
+                          const Icon(
+                            Icons.date_range_rounded,
+                            size: 18,
+                            color: AppTheme.outline,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -402,8 +410,10 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('Ubah',
-                                  style: TextStyle(fontSize: 11)),
+                              child: const Text(
+                                'Ubah',
+                                style: TextStyle(fontSize: 11),
+                              ),
                             ),
                         ],
                       ),
@@ -438,12 +448,18 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('Pilih Semua',
-                                  style: TextStyle(fontSize: 11)),
+                              child: const Text(
+                                'Pilih Semua',
+                                style: TextStyle(fontSize: 11),
+                              ),
                             ),
-                            const Text(' | ',
-                                style: TextStyle(
-                                    fontSize: 11, color: AppTheme.outline)),
+                            const Text(
+                              ' | ',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.outline,
+                              ),
+                            ),
                             TextButton(
                               onPressed: _isProcessing
                                   ? null
@@ -453,8 +469,10 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                                 minimumSize: Size.zero,
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-                              child: const Text('Batal Semua',
-                                  style: TextStyle(fontSize: 11)),
+                              child: const Text(
+                                'Batal Semua',
+                                style: TextStyle(fontSize: 11),
+                              ),
                             ),
                           ],
                         ),
@@ -561,7 +579,8 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
 
                     // 11. Reset product stock
                     _buildCheckboxItem(
-                      title: '11. Nol-kan (0) Stok Fisik Seluruh Katalog Produk',
+                      title:
+                          '11. Nol-kan (0) Stok Fisik Seluruh Katalog Produk',
                       subtitle:
                           'Mengubah nilai stok katalog produk menjadi 0 untuk persiapan stock opname baru',
                       value: _resetProductStock,
@@ -586,8 +605,10 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                       controller: _confirmController,
                       decoration: const InputDecoration(
                         hintText: 'Ketik "HAPUS" untuk menyetujui',
-                        prefixIcon:
-                            Icon(Icons.security_rounded, color: AppTheme.error),
+                        prefixIcon: Icon(
+                          Icons.security_rounded,
+                          color: AppTheme.error,
+                        ),
                         isDense: true,
                       ),
                     ),
@@ -604,8 +625,9 @@ class _ResetDataDialogState extends State<ResetDataDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _isProcessing ? null : () => Navigator.pop(context),
+                      onPressed: _isProcessing
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                   ),

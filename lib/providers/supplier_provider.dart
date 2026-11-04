@@ -44,21 +44,24 @@ class SupplierProvider extends ChangeNotifier {
         .collection(AppConstants.suppliersCollection)
         .snapshots()
         .listen(
-      (snap) {
-        final list =
-            snap.docs.map((doc) => SupplierModel.fromFirestore(doc)).toList();
-        list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-        _suppliers = list;
-        _isLoading = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (e) {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat data supplier: $e';
-        notifyListeners();
-      },
-    );
+          (snap) {
+            final list = snap.docs
+                .map((doc) => SupplierModel.fromFirestore(doc))
+                .toList();
+            list.sort(
+              (a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()),
+            );
+            _suppliers = list;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (e) {
+            _isLoading = false;
+            _errorMessage = 'Gagal memuat data supplier: $e';
+            notifyListeners();
+          },
+        );
   }
 
   void setSearchQuery(String query) {
@@ -77,8 +80,9 @@ class SupplierProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.suppliersCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.suppliersCollection)
+          .doc();
       final supplier = SupplierModel(
         id: docRef.id,
         name: name.trim(),
@@ -130,4 +134,3 @@ class SupplierProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

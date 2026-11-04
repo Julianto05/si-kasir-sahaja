@@ -17,8 +17,7 @@ class CategoryService {
           .map((doc) => CategoryModel.fromFirestore(doc))
           .where((c) => !onlyActive || c.isActive)
           .toList();
-      list.sort((a, b) =>
-          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       return list;
     });
   }
@@ -30,8 +29,7 @@ class CategoryService {
         .map((doc) => CategoryModel.fromFirestore(doc))
         .where((c) => !onlyActive || c.isActive)
         .toList();
-    list.sort((a, b) =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return list;
   }
 
@@ -48,7 +46,9 @@ class CategoryService {
     final snapshot = await _collection.get();
     for (final doc in snapshot.docs) {
       if (excludeId != null && doc.id == excludeId) continue;
-      final docName = (doc.data()['name'] as String? ?? '').trim().toLowerCase();
+      final docName = (doc.data()['name'] as String? ?? '')
+          .trim()
+          .toLowerCase();
       if (docName == cleanName) {
         return true;
       }

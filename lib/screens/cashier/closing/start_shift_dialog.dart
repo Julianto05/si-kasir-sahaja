@@ -23,17 +23,12 @@ class StartShiftDialog extends StatefulWidget {
 }
 
 class _StartShiftDialogState extends State<StartShiftDialog> {
-  final TextEditingController _cashController =
-      TextEditingController(text: '100.000');
+  final TextEditingController _cashController = TextEditingController(
+    text: '100.000',
+  );
   bool _isSubmitting = false;
 
-  final List<double> _presetAmounts = [
-    50000,
-    100000,
-    200000,
-    300000,
-    500000,
-  ];
+  final List<double> _presetAmounts = [50000, 100000, 200000, 300000, 500000];
 
   @override
   void dispose() {
@@ -119,10 +114,8 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                       children: [
                         Text(
                           'Buka Shift Kasir ($roleLabel)',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -162,7 +155,9 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                     label: Text(CurrencyFormatter.format(amt)),
                     labelStyle: const TextStyle(fontSize: 11),
                     onPressed: () {
-                      _cashController.text = CurrencyFormatter.formatCompact(amt);
+                      _cashController.text = CurrencyFormatter.formatCompact(
+                        amt,
+                      );
                     },
                   );
                 }).toList(),
@@ -174,8 +169,9 @@ class _StartShiftDialogState extends State<StartShiftDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                   ),

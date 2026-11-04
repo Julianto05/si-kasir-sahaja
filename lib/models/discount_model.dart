@@ -92,7 +92,8 @@ class DiscountModel {
       minPurchase: (data['minPurchase'] as num?)?.toDouble() ?? 0.0,
       productIds: parsedProducts,
       startDate: (data['startDate'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      endDate: (data['endDate'] as Timestamp?)?.toDate() ??
+      endDate:
+          (data['endDate'] as Timestamp?)?.toDate() ??
           DateTime.now().add(const Duration(days: 30)),
       isActive: data['isActive'] as bool? ?? true,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
@@ -145,4 +146,3 @@ class DiscountModel {
     );
   }
 }
-

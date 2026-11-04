@@ -25,7 +25,9 @@ class ReportScreen extends StatelessWidget {
 
     // Operational expenses in the selected date filter
     final periodExpenses = financeProvider.expensesInRange(
-        txProvider.startDate, txProvider.endDate);
+      txProvider.startDate,
+      txProvider.endDate,
+    );
     final grossProfit = txProvider.totalProfit;
     final netProfit = grossProfit - periodExpenses;
 
@@ -71,9 +73,7 @@ class ReportScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        title: const Text('Laporan & Analitik Keuangan'),
-      ),
+      appBar: AppBar(title: const Text('Laporan & Analitik Keuangan')),
       drawer: const AdminDrawer(currentRoute: 'reports'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'reports'),
       body: AppBackground(
@@ -90,7 +90,11 @@ class ReportScreen extends StatelessWidget {
                     children: [
                       _buildChip(context, 'today', 'Hari Ini', txProvider),
                       _buildChip(
-                          context, 'week', 'Minggu Ini (7 Hari)', txProvider),
+                        context,
+                        'week',
+                        'Minggu Ini (7 Hari)',
+                        txProvider,
+                      ),
                       _buildChip(context, 'month', 'Bulan Ini', txProvider),
                       _buildChip(context, 'all', 'Semua Waktu', txProvider),
                     ],
@@ -119,10 +123,12 @@ class ReportScreen extends StatelessWidget {
                       final width = MediaQuery.of(context).size.width;
                       final isDesktop = width >= 900;
                       final isTablet = width >= 600 && width < 900;
-                      final isLandscape = MediaQuery.of(context).orientation ==
+                      final isLandscape =
+                          MediaQuery.of(context).orientation ==
                           Orientation.landscape;
-                      final crossAxisCount =
-                          isDesktop ? 4 : (isTablet || isLandscape ? 4 : 2);
+                      final crossAxisCount = isDesktop
+                          ? 4
+                          : (isTablet || isLandscape ? 4 : 2);
 
                       return GridView(
                         shrinkWrap: true,
@@ -134,370 +140,395 @@ class ReportScreen extends StatelessWidget {
                           mainAxisSpacing: 12,
                         ),
                         children: [
-                        _buildMetricCard(
-                          'Total Modal / HPP',
-                          AnimatedCurrencyText(
-                            value: txProvider.totalCost,
-                            style: AppTheme.numericStyle.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: AppTheme.primary,
-                            ),
-                          ),
-                          Icons.account_balance_wallet_outlined,
-                          AppTheme.primary,
-                        ),
-                        _buildMetricCard(
-                          'Pengeluaran Toko',
-                          AnimatedCurrencyText(
-                            value: periodExpenses,
-                            style: AppTheme.numericStyle.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: AppTheme.error,
-                            ),
-                          ),
-                          Icons.trending_down_rounded,
-                          AppTheme.error,
-                        ),
-                        _buildMetricCard(
-                          'Total Transaksi',
-                          AnimatedCountText(
-                            count: completedTx.length,
-                            suffix: ' Nota',
-                            style: AppTheme.numericStyle.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: AppTheme.secondary,
-                            ),
-                          ),
-                          Icons.receipt_long_rounded,
-                          AppTheme.secondary,
-                        ),
-                        _buildMetricCard(
-                          'Produk Terjual',
-                          AnimatedCountText(
-                            count: txProvider.totalItemsSold,
-                            suffix: ' Item',
-                            style: AppTheme.numericStyle.copyWith(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                              color: const Color(0xFF0284C7),
-                            ),
-                          ),
-                          Icons.inventory_2_outlined,
-                          const Color(0xFF0284C7),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              // Payment Methods Breakdown
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 190),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Metode Pembayaran',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                        border: Border.all(
-                          color: AppTheme.outlineVariant.withValues(alpha: 0.7),
-                        ),
-                        boxShadow: AppTheme.cardShadow,
-                      ),
-                      child: paymentBreakdown.isEmpty
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Text(
-                                  'Belum ada transaksi pada periode ini',
-                                  style: TextStyle(color: AppTheme.outline),
-                                ),
-                              ),
-                            )
-                          : Column(
-                              children: paymentBreakdown.entries.map((entry) {
-                                final percent = txProvider.totalRevenue > 0
-                                    ? (entry.value / txProvider.totalRevenue) *
-                                        100
-                                    : 0.0;
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 6),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary
-                                              .withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(
-                                              AppTheme.radiusDefault),
-                                        ),
-                                        child: const Icon(
-                                          Icons.payments_rounded,
-                                          size: 17,
-                                          color: AppTheme.primary,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          entry.key,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.end,
-                                        children: [
-                                          Text(
-                                            CurrencyFormatter.format(
-                                                entry.value),
-                                            style: AppTheme.numericSmallStyle
-                                                .copyWith(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          Text(
-                                            '${percent.toStringAsFixed(1)}%',
-                                            style: const TextStyle(
-                                              fontSize: 10.5,
-                                              color: AppTheme.outline,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              // Sales per Cashier Breakdown (PRD Section 5.5)
-              if (cashierSales.isNotEmpty) ...[
-                Text(
-                  'Penjualan per Kasir',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                      ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    border: Border.all(
-                      color: AppTheme.outlineVariant.withValues(alpha: 0.7),
-                    ),
-                    boxShadow: AppTheme.cardShadow,
-                  ),
-                  child: Column(
-                    children: cashierSales.entries.map((entry) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  const Icon(Icons.person_outline_rounded,
-                                      size: 18, color: AppTheme.secondary),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      entry.key,
-                                      style: const TextStyle(
-                                          fontWeight: FontWeight.w700),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              CurrencyFormatter.format(entry.value),
-                              style: AppTheme.numericSmallStyle.copyWith(
+                          _buildMetricCard(
+                            'Total Modal / HPP',
+                            AnimatedCurrencyText(
+                              value: txProvider.totalCost,
+                              style: AppTheme.numericStyle.copyWith(
                                 fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: AppTheme.primary,
+                              ),
+                            ),
+                            Icons.account_balance_wallet_outlined,
+                            AppTheme.primary,
+                          ),
+                          _buildMetricCard(
+                            'Pengeluaran Toko',
+                            AnimatedCurrencyText(
+                              value: periodExpenses,
+                              style: AppTheme.numericStyle.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: AppTheme.error,
+                              ),
+                            ),
+                            Icons.trending_down_rounded,
+                            AppTheme.error,
+                          ),
+                          _buildMetricCard(
+                            'Total Transaksi',
+                            AnimatedCountText(
+                              count: completedTx.length,
+                              suffix: ' Nota',
+                              style: AppTheme.numericStyle.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
                                 color: AppTheme.secondary,
                               ),
                             ),
-                          ],
-                        ),
+                            Icons.receipt_long_rounded,
+                            AppTheme.secondary,
+                          ),
+                          _buildMetricCard(
+                            'Produk Terjual',
+                            AnimatedCountText(
+                              count: txProvider.totalItemsSold,
+                              suffix: ' Item',
+                              style: AppTheme.numericStyle.copyWith(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                                color: const Color(0xFF0284C7),
+                              ),
+                            ),
+                            Icons.inventory_2_outlined,
+                            const Color(0xFF0284C7),
+                          ),
+                        ],
                       );
-                    }).toList(),
+                    },
                   ),
                 ),
                 const SizedBox(height: 22),
-              ],
 
-              // Top 5 Products
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 260),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Top 5 Produk Terlaris',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                        border: Border.all(
-                          color: AppTheme.outlineVariant.withValues(alpha: 0.7),
-                        ),
-                        boxShadow: AppTheme.cardShadow,
+                // Payment Methods Breakdown
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 190),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Metode Pembayaran',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      child: top5.isEmpty
-                          ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(12),
-                                child: Text(
-                                  'Belum ada produk terjual pada periode ini',
-                                  style: TextStyle(color: AppTheme.outline),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLowest,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
+                          border: Border.all(
+                            color: AppTheme.outlineVariant.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                          boxShadow: AppTheme.cardShadow,
+                        ),
+                        child: paymentBreakdown.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Text(
+                                    'Belum ada transaksi pada periode ini',
+                                    style: TextStyle(color: AppTheme.outline),
+                                  ),
                                 ),
-                              ),
-                            )
-                          : Column(
-                              children: top5.asMap().entries.map((entry) {
-                                final rank = entry.key + 1;
-                                final item = entry.value;
-                                return Padding(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 6),
-                                  child: Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 13,
-                                        backgroundColor: rank == 1
-                                            ? AppTheme.secondaryContainer
-                                            : AppTheme.surfaceContainerLow,
-                                        child: Text(
-                                          '$rank',
-                                          style: TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            color: rank == 1
-                                                ? AppTheme.onSecondaryContainer
-                                                : AppTheme.onSurface,
+                              )
+                            : Column(
+                                children: paymentBreakdown.entries.map((entry) {
+                                  final percent = txProvider.totalRevenue > 0
+                                      ? (entry.value /
+                                                txProvider.totalRevenue) *
+                                            100
+                                      : 0.0;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primary.withValues(
+                                              alpha: 0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              AppTheme.radiusDefault,
+                                            ),
                                           ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          item.key,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppTheme.primary
-                                              .withValues(alpha: 0.08),
-                                          borderRadius: BorderRadius.circular(
-                                              AppTheme.radiusSm),
-                                        ),
-                                        child: Text(
-                                          '${item.value} terjual',
-                                          style: AppTheme.numericSmallStyle
-                                              .copyWith(
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 11.5,
+                                          child: const Icon(
+                                            Icons.payments_rounded,
+                                            size: 17,
                                             color: AppTheme.primary,
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 22),
-
-              // Dead Stock / Unsold Products (PRD Section 5.5)
-              if (deadStockProducts.isNotEmpty) ...[
-                Text(
-                  'Produk Tidak Laku / Dead Stock (Periode Ini)',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            entry.key,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
+                                          children: [
+                                            Text(
+                                              CurrencyFormatter.format(
+                                                entry.value,
+                                              ),
+                                              style: AppTheme.numericSmallStyle
+                                                  .copyWith(
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                            Text(
+                                              '${percent.toStringAsFixed(1)}%',
+                                              style: const TextStyle(
+                                                fontSize: 10.5,
+                                                color: AppTheme.outline,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
                       ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceContainerLowest,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    border: Border.all(
-                      color: AppTheme.outlineVariant.withValues(alpha: 0.7),
+                const SizedBox(height: 22),
+
+                // Sales per Cashier Breakdown (PRD Section 5.5)
+                if (cashierSales.isNotEmpty) ...[
+                  Text(
+                    'Penjualan per Kasir',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: deadStockProducts
-                        .map((p) => Chip(
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      border: Border.all(
+                        color: AppTheme.outlineVariant.withValues(alpha: 0.7),
+                      ),
+                      boxShadow: AppTheme.cardShadow,
+                    ),
+                    child: Column(
+                      children: cashierSales.entries.map((entry) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.person_outline_rounded,
+                                      size: 18,
+                                      color: AppTheme.secondary,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        entry.key,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                CurrencyFormatter.format(entry.value),
+                                style: AppTheme.numericSmallStyle.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppTheme.secondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  const SizedBox(height: 22),
+                ],
+
+                // Top 5 Products
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 260),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Top 5 Produk Terlaris',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceContainerLowest,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
+                          border: Border.all(
+                            color: AppTheme.outlineVariant.withValues(
+                              alpha: 0.7,
+                            ),
+                          ),
+                          boxShadow: AppTheme.cardShadow,
+                        ),
+                        child: top5.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child: Text(
+                                    'Belum ada produk terjual pada periode ini',
+                                    style: TextStyle(color: AppTheme.outline),
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: top5.asMap().entries.map((entry) {
+                                  final rank = entry.key + 1;
+                                  final item = entry.value;
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 6,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        CircleAvatar(
+                                          radius: 13,
+                                          backgroundColor: rank == 1
+                                              ? AppTheme.secondaryContainer
+                                              : AppTheme.surfaceContainerLow,
+                                          child: Text(
+                                            '$rank',
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.bold,
+                                              color: rank == 1
+                                                  ? AppTheme
+                                                        .onSecondaryContainer
+                                                  : AppTheme.onSurface,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            item.key,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 3,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primary.withValues(
+                                              alpha: 0.08,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              AppTheme.radiusSm,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${item.value} terjual',
+                                            style: AppTheme.numericSmallStyle
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w700,
+                                                  fontSize: 11.5,
+                                                  color: AppTheme.primary,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
+
+                // Dead Stock / Unsold Products (PRD Section 5.5)
+                if (deadStockProducts.isNotEmpty) ...[
+                  Text(
+                    'Produk Tidak Laku / Dead Stock (Periode Ini)',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceContainerLowest,
+                      borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      border: Border.all(
+                        color: AppTheme.outlineVariant.withValues(alpha: 0.7),
+                      ),
+                    ),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: deadStockProducts
+                          .map(
+                            (p) => Chip(
                               label: Text(
                                 '${p.name} (Stok: ${p.stock})',
                                 style: const TextStyle(fontSize: 11.5),
                               ),
                               backgroundColor: AppTheme.surfaceContainerLow,
-                            ))
-                        .toList(),
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
-                ),
+                ],
+                const SizedBox(height: 16),
               ],
-              const SizedBox(height: 16),
-            ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
-  Widget _buildChip(BuildContext context, String range, String label,
-      TransactionProvider provider) {
+  Widget _buildChip(
+    BuildContext context,
+    String range,
+    String label,
+    TransactionProvider provider,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
@@ -612,8 +643,10 @@ class ReportScreen extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: netProfit >= 0 ? AppTheme.secondary : AppTheme.error,
                   borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -636,7 +669,11 @@ class ReportScreen extends StatelessWidget {
   }
 
   Widget _buildMetricCard(
-      String title, Widget valueWidget, IconData icon, Color color) {
+    String title,
+    Widget valueWidget,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(

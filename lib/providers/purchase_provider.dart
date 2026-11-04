@@ -63,21 +63,22 @@ class PurchaseProvider extends ChangeNotifier {
         .collection(AppConstants.purchasesCollection)
         .snapshots()
         .listen(
-      (snap) {
-        final list =
-            snap.docs.map((doc) => PurchaseModel.fromFirestore(doc)).toList();
-        list.sort((a, b) => b.date.compareTo(a.date));
-        _purchases = list;
-        _isLoading = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (e) {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat riwayat pembelian: $e';
-        notifyListeners();
-      },
-    );
+          (snap) {
+            final list = snap.docs
+                .map((doc) => PurchaseModel.fromFirestore(doc))
+                .toList();
+            list.sort((a, b) => b.date.compareTo(a.date));
+            _purchases = list;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (e) {
+            _isLoading = false;
+            _errorMessage = 'Gagal memuat riwayat pembelian: $e';
+            notifyListeners();
+          },
+        );
   }
 
   void setSupplierFilter(String supplierId) {
@@ -114,8 +115,9 @@ class PurchaseProvider extends ChangeNotifier {
     try {
       final now = DateTime.now();
       final dateStr = DateFormat('yyyyMMdd').format(now);
-      final randomSuffix =
-          (now.millisecondsSinceEpoch % 10000).toString().padLeft(4, '0');
+      final randomSuffix = (now.millisecondsSinceEpoch % 10000)
+          .toString()
+          .padLeft(4, '0');
       final purchaseNo = 'PO-$dateStr-$randomSuffix';
 
       final total = items.fold(0.0, (acc, item) => acc + item.subtotal);
@@ -127,8 +129,9 @@ class PurchaseProvider extends ChangeNotifier {
       final batch = _firestore.batch();
 
       // 1. Purchase Document
-      final purchaseRef =
-          _firestore.collection(AppConstants.purchasesCollection).doc();
+      final purchaseRef = _firestore
+          .collection(AppConstants.purchasesCollection)
+          .doc();
       final purchase = PurchaseModel(
         id: purchaseRef.id,
         purchaseNo: purchaseNo,
@@ -177,8 +180,9 @@ class PurchaseProvider extends ChangeNotifier {
 
       // 3. If not fully paid, create Supplier Payable (Utang Supplier) in `debts`
       if (clampedPaid < total) {
-        final debtRef =
-            _firestore.collection(AppConstants.debtsCollection).doc();
+        final debtRef = _firestore
+            .collection(AppConstants.debtsCollection)
+            .doc();
         final debt = DebtModel(
           id: debtRef.id,
           type: 'utang',
@@ -197,8 +201,9 @@ class PurchaseProvider extends ChangeNotifier {
       }
 
       // 4. Activity Audit Log
-      final logRef =
-          _firestore.collection(AppConstants.activityLogsCollection).doc();
+      final logRef = _firestore
+          .collection(AppConstants.activityLogsCollection)
+          .doc();
       batch.set(logRef, {
         'userId': userId,
         'userName': userName,
@@ -227,4 +232,3 @@ class PurchaseProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

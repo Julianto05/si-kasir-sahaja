@@ -90,8 +90,12 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
         label: AnimatedBuilder(
           animation: _tabController,
           builder: (context, _) {
-            if (_tabController.index == 0) return const Text('Catat Pengeluaran');
-            if (_tabController.index == 1) return const Text('Catat Utang/Piutang');
+            if (_tabController.index == 0) {
+              return const Text('Catat Pengeluaran');
+            }
+            if (_tabController.index == 1) {
+              return const Text('Catat Utang/Piutang');
+            }
             return const Text('Setor Modal');
           },
         ),
@@ -220,8 +224,11 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                   color: AppTheme.errorContainer,
                   borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
                 ),
-                child: const Icon(Icons.trending_down_rounded,
-                    color: AppTheme.error, size: 20),
+                child: const Icon(
+                  Icons.trending_down_rounded,
+                  color: AppTheme.error,
+                  size: 20,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -231,18 +238,19 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                     Text(
                       AppConstants.expenseCategoryLabel(exp.category),
                       style: const TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 13),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                      ),
                     ),
                     if (exp.note.isNotEmpty)
-                      Text(
-                        exp.note,
-                        style: const TextStyle(fontSize: 12),
-                      ),
+                      Text(exp.note, style: const TextStyle(fontSize: 12)),
                     const SizedBox(height: 2),
                     Text(
                       '$dateStr • Oleh: ${exp.createdByName}',
                       style: const TextStyle(
-                          fontSize: 10.5, color: AppTheme.outline),
+                        fontSize: 10.5,
+                        color: AppTheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -259,8 +267,11 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        size: 18, color: AppTheme.outline),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      size: 18,
+                      color: AppTheme.outline,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: () => financeProv.deleteExpense(exp.id),
@@ -295,7 +306,8 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                 child: _buildCashSummaryBox(
                   'Piutang Pelanggan',
                   CurrencyFormatter.format(
-                      financeProv.totalUnpaidCustomerReceivable),
+                    financeProv.totalUnpaidCustomerReceivable,
+                  ),
                   const Color(0xFFD97706),
                 ),
               ),
@@ -325,15 +337,17 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
                           border: Border.all(
                             color: d.isPaid
                                 ? AppTheme.outlineVariant.withValues(alpha: 0.5)
                                 : (isUtang
-                                    ? AppTheme.error.withValues(alpha: 0.35)
-                                    : const Color(0xFFD97706)
-                                        .withValues(alpha: 0.35)),
+                                      ? AppTheme.error.withValues(alpha: 0.35)
+                                      : const Color(
+                                          0xFFD97706,
+                                        ).withValues(alpha: 0.35)),
                           ),
                           boxShadow: AppTheme.cardShadow,
                         ),
@@ -345,13 +359,16 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: isUtang
                                         ? AppTheme.errorContainer
                                         : const Color(0xFFFEF3C7),
                                     borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusSm),
+                                      AppTheme.radiusSm,
+                                    ),
                                   ),
                                   child: Text(
                                     isUtang
@@ -389,7 +406,9 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                             Text(
                               '${d.partyName} (${d.referenceNo})',
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w700, fontSize: 13.5),
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13.5,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -397,7 +416,9 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                             Text(
                               'Total: ${CurrencyFormatter.format(d.amount)} • Terbayar: ${CurrencyFormatter.format(d.paidAmount)}',
                               style: const TextStyle(
-                                  fontSize: 11.5, color: AppTheme.outline),
+                                fontSize: 11.5,
+                                color: AppTheme.outline,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -408,10 +429,14 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                                 child: OutlinedButton.icon(
                                   onPressed: () =>
                                       _showPayDebtDialog(context, d),
-                                  icon: const Icon(Icons.payments_outlined,
-                                      size: 16),
-                                  label: const Text('Bayar / Cicil',
-                                      style: TextStyle(fontSize: 12)),
+                                  icon: const Icon(
+                                    Icons.payments_outlined,
+                                    size: 16,
+                                  ),
+                                  label: const Text(
+                                    'Bayar / Cicil',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
                                 ),
                               ),
                             ],
@@ -457,8 +482,10 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       ),
-                      leading: const Icon(Icons.savings_rounded,
-                          color: AppTheme.secondary),
+                      leading: const Icon(
+                        Icons.savings_rounded,
+                        color: AppTheme.secondary,
+                      ),
                       title: Text(
                         CurrencyFormatter.format(cap.amount),
                         style: const TextStyle(fontWeight: FontWeight.w800),
@@ -486,8 +513,9 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
       isScrollControlled: true,
       backgroundColor: AppTheme.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXl)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusXl),
+        ),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setModalState) => Padding(
@@ -514,10 +542,12 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                     prefixIcon: Icon(Icons.category_outlined),
                   ),
                   items: AppConstants.expenseCategories
-                      .map((c) => DropdownMenuItem(
-                            value: c,
-                            child: Text(AppConstants.expenseCategoryLabel(c)),
-                          ))
+                      .map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Text(AppConstants.expenseCategoryLabel(c)),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) {
                     if (v != null) setModalState(() => selectedCat = v);
@@ -538,7 +568,8 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                 TextField(
                   controller: noteCtrl,
                   decoration: const InputDecoration(
-                    labelText: 'Keterangan (e.g. Token Listrik, Plastik Kresek)',
+                    labelText:
+                        'Keterangan (e.g. Token Listrik, Plastik Kresek)',
                     prefixIcon: Icon(Icons.notes_rounded),
                   ),
                 ),
@@ -549,17 +580,18 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                     if (amt <= 0) return;
                     final user = context.read<AuthProvider>().currentUser;
                     await context.read<FinanceProvider>().addExpense(
-                          category: selectedCat,
-                          amount: amt,
-                          note: noteCtrl.text,
-                          date: DateTime.now(),
-                          userId: user?.uid ?? 'admin',
-                          userName: user?.name ?? 'Admin',
-                        );
+                      category: selectedCat,
+                      amount: amt,
+                      note: noteCtrl.text,
+                      date: DateTime.now(),
+                      userId: user?.uid ?? 'admin',
+                      userName: user?.name ?? 'Admin',
+                    );
                     if (ctx.mounted) Navigator.pop(ctx);
                   },
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.error),
+                    backgroundColor: AppTheme.error,
+                  ),
                   child: const Text('Simpan Pengeluaran'),
                 ),
               ],
@@ -579,8 +611,9 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
       isScrollControlled: true,
       backgroundColor: AppTheme.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXl)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusXl),
+        ),
       ),
       builder: (ctx) => Padding(
         padding: EdgeInsets.only(
@@ -624,16 +657,17 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                   if (amt <= 0) return;
                   final user = context.read<AuthProvider>().currentUser;
                   await context.read<FinanceProvider>().addCapitalEntry(
-                        amount: amt,
-                        note: noteCtrl.text,
-                        date: DateTime.now(),
-                        userId: user?.uid ?? 'admin',
-                        userName: user?.name ?? 'Admin',
-                      );
+                    amount: amt,
+                    note: noteCtrl.text,
+                    date: DateTime.now(),
+                    userId: user?.uid ?? 'admin',
+                    userName: user?.name ?? 'Admin',
+                  );
                   if (ctx.mounted) Navigator.pop(ctx);
                 },
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.secondary),
+                  backgroundColor: AppTheme.secondary,
+                ),
                 child: const Text('Simpan Modal'),
               ),
             ],
@@ -644,15 +678,17 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
   }
 
   void _showPayDebtDialog(BuildContext context, DebtModel debt) {
-    final payCtrl =
-        TextEditingController(text: CurrencyFormatter.formatCompact(debt.remainingAmount));
+    final payCtrl = TextEditingController(
+      text: CurrencyFormatter.formatCompact(debt.remainingAmount),
+    );
     final noteCtrl = TextEditingController(text: 'Cicilan / Pelunasan');
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
@@ -664,7 +700,9 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                 Text(
                   'Bayar ${debt.type == "utang" ? "Utang Supplier" : "Piutang Pelanggan"}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 16),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -705,20 +743,20 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                         onPressed: () async {
                           final amt = CurrencyFormatter.parse(payCtrl.text);
                           if (amt <= 0) return;
-                          final user =
-                              context.read<AuthProvider>().currentUser;
+                          final user = context.read<AuthProvider>().currentUser;
                           await context.read<FinanceProvider>().payDebt(
-                                debt: debt,
-                                payAmount: amt,
-                                method: 'Cash',
-                                note: noteCtrl.text,
-                                userId: user?.uid ?? 'admin',
-                                userName: user?.name ?? 'Admin',
-                              );
+                            debt: debt,
+                            payAmount: amt,
+                            method: 'Cash',
+                            note: noteCtrl.text,
+                            userId: user?.uid ?? 'admin',
+                            userName: user?.name ?? 'Admin',
+                          );
                           if (ctx.mounted) Navigator.pop(ctx);
                         },
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.secondary),
+                          backgroundColor: AppTheme.secondary,
+                        ),
                         child: const Text('Simpan Bayar'),
                       ),
                     ),
@@ -743,7 +781,8 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDialog) => Dialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: SingleChildScrollView(
@@ -762,10 +801,13 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                     decoration: const InputDecoration(labelText: 'Jenis'),
                     items: const [
                       DropdownMenuItem(
-                          value: 'piutang',
-                          child: Text('Piutang Pelanggan (Kasbon)')),
+                        value: 'piutang',
+                        child: Text('Piutang Pelanggan (Kasbon)'),
+                      ),
                       DropdownMenuItem(
-                          value: 'utang', child: Text('Utang ke Supplier')),
+                        value: 'utang',
+                        child: Text('Utang ke Supplier'),
+                      ),
                     ],
                     onChanged: (v) {
                       if (v != null) setStateDialog(() => debtType = v);
@@ -801,11 +843,11 @@ class _FinanceManagementScreenState extends State<FinanceManagementScreen>
                       final amt = CurrencyFormatter.parse(amtCtrl.text);
                       if (nameCtrl.text.trim().isEmpty || amt <= 0) return;
                       await context.read<FinanceProvider>().addManualDebt(
-                            type: debtType,
-                            partyName: nameCtrl.text.trim(),
-                            referenceNo: refCtrl.text.trim(),
-                            amount: amt,
-                          );
+                        type: debtType,
+                        partyName: nameCtrl.text.trim(),
+                        referenceNo: refCtrl.text.trim(),
+                        amount: amt,
+                      );
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
                     child: const Text('Simpan Utang/Piutang'),

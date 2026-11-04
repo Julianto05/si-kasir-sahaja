@@ -34,9 +34,7 @@ class ShiftHistoryScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        title: const Text('Rekap Closing Kasir'),
-      ),
+      appBar: AppBar(title: const Text('Rekap Closing Kasir')),
       drawer: const AdminDrawer(currentRoute: 'shifts'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'shifts'),
       body: AppBackground(
@@ -80,7 +78,9 @@ class ShiftHistoryScreen extends StatelessWidget {
                         CurrencyFormatter.format(totalVariance),
                         totalVariance == 0
                             ? AppTheme.secondary
-                            : (totalVariance < 0 ? AppTheme.error : Colors.blue),
+                            : (totalVariance < 0
+                                  ? AppTheme.error
+                                  : Colors.blue),
                         Icons.balance_rounded,
                       ),
                     ),
@@ -95,8 +95,11 @@ class ShiftHistoryScreen extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.point_of_sale_outlined,
-                                size: 48, color: AppTheme.outline),
+                            const Icon(
+                              Icons.point_of_sale_outlined,
+                              size: 48,
+                              color: AppTheme.outline,
+                            ),
                             const SizedBox(height: 12),
                             Text(
                               'Belum ada riwayat closing shift kasir',
@@ -114,11 +117,11 @@ class ShiftHistoryScreen extends StatelessWidget {
                               padding: const EdgeInsets.all(12),
                               gridDelegate:
                                   const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 400,
-                                mainAxisExtent: 135,
-                                crossAxisSpacing: 10,
-                                mainAxisSpacing: 10,
-                              ),
+                                    maxCrossAxisExtent: 400,
+                                    mainAxisExtent: 135,
+                                    crossAxisSpacing: 10,
+                                    mainAxisSpacing: 10,
+                                  ),
                               itemCount: allShifts.length,
                               itemBuilder: (context, index) {
                                 final shift = allShifts[index];
@@ -148,7 +151,11 @@ class ShiftHistoryScreen extends StatelessWidget {
   }
 
   Widget _buildSummaryBox(
-      String label, String value, Color color, IconData icon) {
+    String label,
+    String value,
+    Color color,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -241,8 +248,9 @@ class _ShiftHistoryCard extends StatelessWidget {
                             color: shift.isOpen
                                 ? AppTheme.secondaryContainer
                                 : AppTheme.surfaceContainerHigh,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: Icon(
                             shift.isOpen
@@ -270,35 +278,36 @@ class _ShiftHistoryCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: shift.isOpen
                           ? AppTheme.secondaryContainer
                           : (isBalanced
-                              ? Colors.green.shade50
-                              : (isShortage
-                                  ? AppTheme.errorContainer
-                                  : Colors.blue.shade50)),
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusFull),
+                                ? Colors.green.shade50
+                                : (isShortage
+                                      ? AppTheme.errorContainer
+                                      : Colors.blue.shade50)),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusFull),
                     ),
                     child: Text(
                       shift.isOpen
                           ? 'AKTIF'
                           : (isBalanced
-                              ? 'MATCH'
-                              : (isShortage ? 'MINUS' : 'PLUS')),
+                                ? 'MATCH'
+                                : (isShortage ? 'MINUS' : 'PLUS')),
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         color: shift.isOpen
-                          ? AppTheme.secondary
-                          : (isBalanced
-                              ? Colors.green.shade800
-                              : (isShortage
-                                  ? AppTheme.error
-                                  : Colors.blue.shade800)),
+                            ? AppTheme.secondary
+                            : (isBalanced
+                                  ? Colors.green.shade800
+                                  : (isShortage
+                                        ? AppTheme.error
+                                        : Colors.blue.shade800)),
                       ),
                     ),
                   ),
@@ -320,9 +329,13 @@ class _ShiftHistoryCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Total Omset',
-                            style:
-                                TextStyle(fontSize: 10, color: AppTheme.outline)),
+                        const Text(
+                          'Total Omset',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.outline,
+                          ),
+                        ),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerLeft,
@@ -342,9 +355,13 @@ class _ShiftHistoryCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        const Text('Selisih Kas',
-                            style:
-                                TextStyle(fontSize: 10, color: AppTheme.outline)),
+                        const Text(
+                          'Selisih Kas',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: AppTheme.outline,
+                          ),
+                        ),
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           alignment: Alignment.centerRight,

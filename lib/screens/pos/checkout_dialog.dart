@@ -51,15 +51,18 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     posProvider.setPaidAmount(total);
     posProvider.clearSplitPayments();
 
-    _paidController =
-        TextEditingController(text: CurrencyFormatter.formatCompact(total));
+    _paidController = TextEditingController(
+      text: CurrencyFormatter.formatCompact(total),
+    );
     _notesController = TextEditingController(text: posProvider.notes);
 
     final half = (total / 2).roundToDouble();
-    _splitAmount1Ctrl =
-        TextEditingController(text: CurrencyFormatter.formatCompact(half));
-    _splitAmount2Ctrl =
-        TextEditingController(text: CurrencyFormatter.formatCompact(total - half));
+    _splitAmount1Ctrl = TextEditingController(
+      text: CurrencyFormatter.formatCompact(half),
+    );
+    _splitAmount2Ctrl = TextEditingController(
+      text: CurrencyFormatter.formatCompact(total - half),
+    );
   }
 
   @override
@@ -133,16 +136,21 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
 
     final methods = <String>[
       ...settings.activePaymentMethods,
-      if (customer != null && !settings.activePaymentMethods.contains('Piutang'))
+      if (customer != null &&
+          !settings.activePaymentMethods.contains('Piutang'))
         'Piutang',
     ];
 
     // Status Belum Lunas jika dipilih atau pembayaran via Piutang
-    final isUnpaid = _transactionStatus == AppConstants.statusUnpaid ||
+    final isUnpaid =
+        _transactionStatus == AppConstants.statusUnpaid ||
         posProvider.paymentMethod == 'Piutang';
 
     // Nilai sisa belum bayar
-    final unpaidBalance = (total - posProvider.paidAmount).clamp(0.0, double.infinity);
+    final unpaidBalance = (total - posProvider.paidAmount).clamp(
+      0.0,
+      double.infinity,
+    );
 
     return Dialog(
       backgroundColor: AppTheme.surfaceContainerLowest,
@@ -163,8 +171,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                   Text(
                     'Pembayaran Kasir',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -191,10 +199,10 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                     Text(
                       'TOTAL TAGIHAN',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppTheme.primary,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
+                        color: AppTheme.primary,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -210,9 +218,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       '${totalDiscount > 0 ? " • Diskon: -${CurrencyFormatter.format(totalDiscount)}" : ""}'
                       '${posProvider.calculateTax(settings) > 0 ? " • PPN: +${CurrencyFormatter.format(posProvider.calculateTax(settings))}" : ""}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            fontSize: 11,
-                            color: AppTheme.onSurfaceVariant,
-                          ),
+                        fontSize: 11,
+                        color: AppTheme.onSurfaceVariant,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -223,9 +231,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
               // Status Transaksi: Lunas vs Belum Lunas
               Text(
                 'Status Transaksi',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Row(
@@ -243,13 +251,16 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: !isUnpaid
                               ? AppTheme.secondary.withValues(alpha: 0.15)
                               : AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
                           border: Border.all(
                             color: !isUnpaid
                                 ? AppTheme.secondary
@@ -293,13 +304,16 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: isUnpaid
                               ? Colors.amber.withValues(alpha: 0.2)
                               : AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
                           border: Border.all(
                             color: isUnpaid
                                 ? Colors.amber[800]!
@@ -341,32 +355,39 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                   settings.enableLoyaltyPoints &&
                   customer.points > 0) ...[
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.secondaryContainer.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.stars_rounded,
-                          color: AppTheme.secondary, size: 20),
+                      const Icon(
+                        Icons.stars_rounded,
+                        color: AppTheme.secondary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Tukar ${customer.points} Poin Member (-${CurrencyFormatter.format(customer.points * settings.pointRedeemValue)})',
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
                       Switch(
                         value: posProvider.redeemedPoints > 0,
                         activeThumbColor: AppTheme.secondary,
                         onChanged: (val) {
-                          posProvider
-                              .setRedeemedPoints(val ? customer.points : 0);
-                          final newTotal =
-                              posProvider.calculateTotal(settings);
+                          posProvider.setRedeemedPoints(
+                            val ? customer.points : 0,
+                          );
+                          final newTotal = posProvider.calculateTotal(settings);
                           if (!isUnpaid) {
                             _paidController.text =
                                 CurrencyFormatter.formatCompact(newTotal);
@@ -387,8 +408,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                   Text(
                     'Metode Pembayaran',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -443,10 +464,16 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _splitMethod1,
                               decoration: const InputDecoration(
-                                  labelText: 'Metode 1', isDense: true),
+                                labelText: 'Metode 1',
+                                isDense: true,
+                              ),
                               items: settings.activePaymentMethods
-                                  .map((m) => DropdownMenuItem(
-                                      value: m, child: Text(m)))
+                                  .map(
+                                    (m) => DropdownMenuItem(
+                                      value: m,
+                                      child: Text(m),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (v) {
                                 if (v != null) {
@@ -463,7 +490,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                               controller: _splitAmount1Ctrl,
                               keyboardType: TextInputType.number,
                               inputFormatters: [
-                                ThousandsSeparatorInputFormatter()
+                                ThousandsSeparatorInputFormatter(),
                               ],
                               decoration: const InputDecoration(
                                 labelText: 'Nominal 1 (Rp)',
@@ -471,8 +498,10 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                               ),
                               onChanged: (v) {
                                 final a1 = CurrencyFormatter.parse(v);
-                                final rem =
-                                    (total - a1).clamp(0.0, double.infinity);
+                                final rem = (total - a1).clamp(
+                                  0.0,
+                                  double.infinity,
+                                );
                                 _splitAmount2Ctrl.text =
                                     CurrencyFormatter.formatCompact(rem);
                                 _syncSplitPayments();
@@ -489,10 +518,16 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                             child: DropdownButtonFormField<String>(
                               initialValue: _splitMethod2,
                               decoration: const InputDecoration(
-                                  labelText: 'Metode 2', isDense: true),
+                                labelText: 'Metode 2',
+                                isDense: true,
+                              ),
                               items: settings.activePaymentMethods
-                                  .map((m) => DropdownMenuItem(
-                                      value: m, child: Text(m)))
+                                  .map(
+                                    (m) => DropdownMenuItem(
+                                      value: m,
+                                      child: Text(m),
+                                    ),
+                                  )
                                   .toList(),
                               onChanged: (v) {
                                 if (v != null) {
@@ -509,7 +544,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                               controller: _splitAmount2Ctrl,
                               keyboardType: TextInputType.number,
                               inputFormatters: [
-                                ThousandsSeparatorInputFormatter()
+                                ThousandsSeparatorInputFormatter(),
                               ],
                               decoration: const InputDecoration(
                                 labelText: 'Nominal 2 (Rp)',
@@ -555,15 +590,15 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                           avatar: Icon(
                             icon,
                             size: 16,
-                            color:
-                                isSelected ? Colors.white : AppTheme.primary,
+                            color: isSelected ? Colors.white : AppTheme.primary,
                           ),
                           label: Text(method),
                           selected: isSelected,
                           selectedColor: AppTheme.primary,
                           labelStyle: TextStyle(
-                            color:
-                                isSelected ? Colors.white : AppTheme.onSurface,
+                            color: isSelected
+                                ? Colors.white
+                                : AppTheme.onSurface,
                             fontWeight: FontWeight.w600,
                           ),
                           onSelected: (selected) {
@@ -597,18 +632,16 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                   isUnpaid
                       ? 'Uang Muka / Nominal yang Sudah Dibayar (DP)'
                       : 'Nominal Uang Pembayaran',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
 
                 TextField(
                   controller: _paidController,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    ThousandsSeparatorInputFormatter(),
-                  ],
+                  inputFormatters: [ThousandsSeparatorInputFormatter()],
                   decoration: const InputDecoration(
                     prefixText: 'Rp ',
                     hintText: '0',
@@ -627,8 +660,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.amber.withValues(alpha: 0.15),
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusDefault),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusDefault,
+                      ),
                       border: Border.all(color: Colors.amber[800]!),
                     ),
                     child: Row(
@@ -666,8 +700,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       color: change >= 0
                           ? AppTheme.secondaryContainer.withValues(alpha: 0.4)
                           : AppTheme.errorContainer,
-                      borderRadius:
-                          BorderRadius.circular(AppTheme.radiusDefault),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusDefault,
+                      ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -718,7 +753,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
               SizedBox(
                 height: AppTheme.touchTarget,
                 child: ElevatedButton.icon(
-                  onPressed: posProvider.isProcessing ||
+                  onPressed:
+                      posProvider.isProcessing ||
                           (!isUnpaid && posProvider.paidAmount < total)
                       ? null
                       : _handleCompleteTransaction,
@@ -742,8 +778,8 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       posProvider.isProcessing
                           ? 'Memproses...'
                           : (isUnpaid
-                              ? 'Simpan Transaksi (Belum Lunas)'
-                              : 'Selesaikan & Cetak Struk (Lunas)'),
+                                ? 'Simpan Transaksi (Belum Lunas)'
+                                : 'Selesaikan & Cetak Struk (Lunas)'),
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),

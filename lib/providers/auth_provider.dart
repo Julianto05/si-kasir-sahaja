@@ -143,17 +143,22 @@ class AuthProvider extends ChangeNotifier {
         if (parts.length == 2) {
           final startHour = int.tryParse(parts[0]) ?? 8;
           final startMin = int.tryParse(parts[1]) ?? 0;
-          final scheduledStart =
-              DateTime(now.year, now.month, now.day, startHour, startMin)
-                  .add(const Duration(minutes: 15)); // 15 min grace period
+          final scheduledStart = DateTime(
+            now.year,
+            now.month,
+            now.day,
+            startHour,
+            startMin,
+          ).add(const Duration(minutes: 15)); // 15 min grace period
           if (now.isAfter(scheduledStart)) {
             status = 'terlambat';
           }
         }
       }
 
-      final docRef =
-          _firestore.collection(AppConstants.attendanceLogsCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.attendanceLogsCollection)
+          .doc();
       await docRef.set({
         'userId': user.uid,
         'userName': user.name,
@@ -175,9 +180,7 @@ class AuthProvider extends ChangeNotifier {
         await _firestore
             .collection(AppConstants.attendanceLogsCollection)
             .doc(_activeAttendanceId)
-            .update({
-          'logoutAt': Timestamp.fromDate(DateTime.now()),
-        });
+            .update({'logoutAt': Timestamp.fromDate(DateTime.now())});
         _activeAttendanceId = null;
       }
     } catch (_) {}

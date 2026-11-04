@@ -18,24 +18,17 @@ import '../transaction/transaction_list_screen.dart';
 class AdminBottomNav extends StatelessWidget {
   final String currentRoute;
 
-  const AdminBottomNav({
-    super.key,
-    required this.currentRoute,
-  });
+  const AdminBottomNav({super.key, required this.currentRoute});
 
   void _navigateTo(BuildContext context, String route, Widget screen) {
     if (currentRoute == route) return;
     HapticFeedback.selectionClick();
-    Navigator.of(context).pushReplacement(
-      SmoothPageRoute(page: screen),
-    );
+    Navigator.of(context).pushReplacement(SmoothPageRoute(page: screen));
   }
 
   void _openPos(BuildContext context) {
     HapticFeedback.lightImpact();
-    Navigator.of(context).push(
-      SmoothPageRoute(page: const PosScreen()),
-    );
+    Navigator.of(context).push(SmoothPageRoute(page: const PosScreen()));
   }
 
   @override
@@ -150,11 +143,8 @@ class AdminBottomNav extends StatelessWidget {
                   activeIcon: Icons.analytics_rounded,
                   label: 'Laporan',
                   isSelected: currentRoute == 'reports',
-                  onTap: () => _navigateTo(
-                    context,
-                    'reports',
-                    const ReportScreen(),
-                  ),
+                  onTap: () =>
+                      _navigateTo(context, 'reports', const ReportScreen()),
                 ),
               ],
             ),
@@ -222,4 +212,3 @@ class _NavTabItem extends StatelessWidget {
     );
   }
 }
-

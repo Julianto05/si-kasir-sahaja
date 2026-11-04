@@ -47,7 +47,9 @@ class TransactionListScreen extends StatelessWidget {
                   builder: (context, provider, _) {
                     if (provider.isLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(color: AppTheme.primary),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
                       );
                     }
 
@@ -86,11 +88,11 @@ class TransactionListScreen extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         gridDelegate:
                             const SliverGridDelegateWithMaxCrossAxisExtent(
-                          maxCrossAxisExtent: 380,
-                          mainAxisExtent: 110,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
+                              maxCrossAxisExtent: 380,
+                              mainAxisExtent: 110,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
                         itemCount: transactions.length,
                         itemBuilder: (context, index) {
                           final tx = transactions[index];
@@ -215,8 +217,12 @@ class TransactionListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(BuildContext context, String range, String label,
-      TransactionProvider provider) {
+  Widget _buildChip(
+    BuildContext context,
+    String range,
+    String label,
+    TransactionProvider provider,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
@@ -267,8 +273,9 @@ class _TransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr =
-        DateFormat('dd/MM/yyyy HH:mm').format(transaction.createdAt);
+    final dateStr = DateFormat(
+      'dd/MM/yyyy HH:mm',
+    ).format(transaction.createdAt);
     final isCompleted = transaction.isCompleted;
     final isUnpaid = transaction.isUnpaid;
 
@@ -286,8 +293,8 @@ class _TransactionCard extends StatelessWidget {
             color: isCompleted
                 ? AppTheme.outlineVariant.withValues(alpha: 0.7)
                 : (isUnpaid
-                    ? Colors.amber.withValues(alpha: 0.5)
-                    : AppTheme.error.withValues(alpha: 0.35)),
+                      ? Colors.amber.withValues(alpha: 0.5)
+                      : AppTheme.error.withValues(alpha: 0.35)),
           ),
           boxShadow: AppTheme.cardShadow,
         ),
@@ -302,16 +309,16 @@ class _TransactionCard extends StatelessWidget {
                 color: isCompleted
                     ? AppTheme.primary.withValues(alpha: 0.1)
                     : (isUnpaid
-                        ? Colors.amber.withValues(alpha: 0.15)
-                        : AppTheme.errorContainer),
+                          ? Colors.amber.withValues(alpha: 0.15)
+                          : AppTheme.errorContainer),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
               child: Icon(
                 isCompleted
                     ? Icons.receipt_long_rounded
                     : (isUnpaid
-                        ? Icons.pending_actions_rounded
-                        : Icons.cancel_outlined),
+                          ? Icons.pending_actions_rounded
+                          : Icons.cancel_outlined),
                 color: badgeColor,
                 size: 22,
               ),
@@ -343,15 +350,18 @@ class _TransactionCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 6, vertical: 2),
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: isCompleted
                                     ? AppTheme.secondaryContainer
                                     : (isUnpaid
-                                        ? Colors.amber.withValues(alpha: 0.2)
-                                        : AppTheme.errorContainer),
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusSm),
+                                          ? Colors.amber.withValues(alpha: 0.2)
+                                          : AppTheme.errorContainer),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
+                                ),
                               ),
                               child: Text(
                                 isCompleted
@@ -363,8 +373,8 @@ class _TransactionCard extends StatelessWidget {
                                   color: isCompleted
                                       ? AppTheme.secondary
                                       : (isUnpaid
-                                          ? Colors.amber[900]
-                                          : AppTheme.error),
+                                            ? Colors.amber[900]
+                                            : AppTheme.error),
                                 ),
                               ),
                             ),
@@ -381,7 +391,9 @@ class _TransactionCard extends StatelessWidget {
                             fontWeight: FontWeight.w800,
                             color: isCompleted
                                 ? AppTheme.secondary
-                                : (isUnpaid ? Colors.amber[900] : AppTheme.error),
+                                : (isUnpaid
+                                      ? Colors.amber[900]
+                                      : AppTheme.error),
                           ),
                         ),
                       ),

@@ -199,7 +199,8 @@ class ShiftModel {
 
 /// Rincian penjualan dan arus kas aktual selama sesi shift berjalan.
 class ShiftSalesBreakdown {
-  final double cashSales; // Total uang kas nyata yang diterima laci kasir (setelah dipotong kembalian)
+  final double
+  cashSales; // Total uang kas nyata yang diterima laci kasir (setelah dipotong kembalian)
   final double nonCashSales; // Total pembayaran digital (QRIS, Transfer, EDC)
   final double unpaidSales; // Total penjualan belum lunas (piutang / bon)
   final double totalSales; // Total seluruh omset penjualan

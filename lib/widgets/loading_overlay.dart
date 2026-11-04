@@ -39,9 +39,9 @@ class LoadingOverlay extends StatelessWidget {
                 Text(
                   message!,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                      ),
+                    color: AppTheme.onSurface,
+                    fontWeight: FontWeight.w600,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],

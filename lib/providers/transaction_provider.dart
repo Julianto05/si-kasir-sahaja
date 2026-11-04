@@ -167,7 +167,11 @@ class TransactionProvider extends ChangeNotifier {
         break;
       case 'week':
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        _startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        _startDate = DateTime(
+          startOfWeek.year,
+          startOfWeek.month,
+          startOfWeek.day,
+        );
         _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
         break;
       case 'month':
@@ -277,7 +281,8 @@ class TransactionProvider extends ChangeNotifier {
 
   /// Fetches subcollection items for detail views.
   Future<List<TransactionItemModel>> getTransactionItems(
-      String transactionId) async {
+    String transactionId,
+  ) async {
     return await _transactionService.getTransactionItems(transactionId);
   }
 

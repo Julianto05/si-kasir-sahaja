@@ -39,35 +39,37 @@ class AttendanceProvider extends ChangeNotifier {
         .collection(AppConstants.attendanceLogsCollection)
         .snapshots()
         .listen((snap) {
-      final list = snap.docs
-          .map((doc) => AttendanceLogModel.fromFirestore(doc))
-          .toList();
-      list.sort((a, b) => b.loginAt.compareTo(a.loginAt));
-      _attendanceLogs = list;
-      _isLoading = false;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => AttendanceLogModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.loginAt.compareTo(a.loginAt));
+          _attendanceLogs = list;
+          _isLoading = false;
+          notifyListeners();
+        });
 
     _scheduleSub = _firestore
         .collection(AppConstants.workSchedulesCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => WorkScheduleModel.fromFirestore(doc)).toList();
-      _schedules = list;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => WorkScheduleModel.fromFirestore(doc))
+              .toList();
+          _schedules = list;
+          notifyListeners();
+        });
 
     _activitySub = _firestore
         .collection(AppConstants.activityLogsCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => ActivityLogModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _activityLogs = list;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => ActivityLogModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _activityLogs = list;
+          notifyListeners();
+        });
   }
 
   /// Saves or updates a work schedule for an employee.
@@ -174,8 +176,9 @@ class AttendanceProvider extends ChangeNotifier {
   }) async {
     try {
       final firestore = FirebaseFirestore.instance;
-      final docRef =
-          firestore.collection(AppConstants.activityLogsCollection).doc();
+      final docRef = firestore
+          .collection(AppConstants.activityLogsCollection)
+          .doc();
       await docRef.set({
         'userId': userId,
         'userName': userName,
@@ -197,4 +200,3 @@ class AttendanceProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

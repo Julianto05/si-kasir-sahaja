@@ -38,8 +38,9 @@ class ShiftProvider extends ChangeNotifier {
         _allShifts = shifts;
         // Keep activeShift in sync if updated or deleted
         if (_activeShift != null) {
-          final updated =
-              shifts.where((s) => s.id == _activeShift!.id).firstOrNull;
+          final updated = shifts
+              .where((s) => s.id == _activeShift!.id)
+              .firstOrNull;
           if (updated != null && updated.isOpen) {
             _activeShift = updated;
           } else {
@@ -178,7 +179,8 @@ class ShiftProvider extends ChangeNotifier {
     required String notes,
     String? shiftId,
   }) async {
-    final targetShift = _activeShift ??
+    final targetShift =
+        _activeShift ??
         (shiftId != null
             ? _allShifts.where((s) => s.id == shiftId && s.isOpen).firstOrNull
             : null);
@@ -201,7 +203,8 @@ class ShiftProvider extends ChangeNotifier {
       final totalSales = breakdown.totalSales;
       final transactionCount = breakdown.transactionCount;
 
-      final expectedCash = targetShift.startingCash +
+      final expectedCash =
+          targetShift.startingCash +
           cashSales +
           targetShift.totalCashIn -
           targetShift.totalCashOut;

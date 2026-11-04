@@ -143,8 +143,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withValues(alpha: 0.1),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusDefault),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusDefault,
+                        ),
                       ),
                       child: Icon(
                         _isEditMode
@@ -160,16 +161,15 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         _isEditMode
                             ? 'Edit Profil & Hak Akses Karyawan'
                             : 'Tambah Karyawan / Kasir',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed:
-                          _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -255,11 +255,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
                       hintText: 'Minimal 6 karakter',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined),
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
                         onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword),
+                          () => _obscurePassword = !_obscurePassword,
+                        ),
                       ),
                     ),
                     validator: (val) {
@@ -278,7 +281,8 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 // Work Schedule Selector
                 if (schedules.isNotEmpty) ...[
                   DropdownButtonFormField<String?>(
-                    initialValue: schedules.any((s) => s.id == _selectedScheduleId)
+                    initialValue:
+                        schedules.any((s) => s.id == _selectedScheduleId)
                         ? _selectedScheduleId
                         : null,
                     decoration: const InputDecoration(
@@ -290,11 +294,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
                         value: null,
                         child: Text('Jadwal Fleksibel (Tanpa Shift Tetap)'),
                       ),
-                      ...schedules.map((s) => DropdownMenuItem<String?>(
-                            value: s.id,
-                            child: Text(
-                                '${s.name} (${s.startTime} - ${s.endTime})'),
-                          )),
+                      ...schedules.map(
+                        (s) => DropdownMenuItem<String?>(
+                          value: s.id,
+                          child: Text(
+                            '${s.name} (${s.startTime} - ${s.endTime})',
+                          ),
+                        ),
+                      ),
                     ],
                     onChanged: (v) => setState(() => _selectedScheduleId = v),
                   ),
@@ -329,7 +336,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                           title: Text(
                             AppConstants.permissionLabel(perm),
                             style: const TextStyle(
-                                fontSize: 12.5, fontWeight: FontWeight.w600),
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           value: checked,
                           activeColor: AppTheme.primary,
@@ -354,8 +363,9 @@ class _UserFormDialogState extends State<UserFormDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed:
-                            _isSubmitting ? null : () => Navigator.pop(context),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Batal'),
                       ),
                     ),

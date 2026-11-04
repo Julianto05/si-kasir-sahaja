@@ -27,10 +27,7 @@ import '../user/user_management_screen.dart';
 class AdminDrawer extends StatelessWidget {
   final String currentRoute;
 
-  const AdminDrawer({
-    super.key,
-    required this.currentRoute,
-  });
+  const AdminDrawer({super.key, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -114,8 +111,9 @@ class AdminDrawer extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.secondary,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: const Text(
                             'ADMINISTRATOR',
@@ -137,8 +135,10 @@ class AdminDrawer extends StatelessWidget {
             // ─── Menu Items ─────────────────────────────────────────
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
                 children: [
                   _buildMenuItem(
                     context,
@@ -294,8 +294,11 @@ class AdminDrawer extends StatelessWidget {
                     color: AppTheme.errorContainer,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
-                  child: const Icon(Icons.logout_rounded,
-                      color: AppTheme.error, size: 18),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: AppTheme.error,
+                    size: 18,
+                  ),
                 ),
                 title: const Text(
                   'Keluar Akun',
@@ -322,10 +325,9 @@ class AdminDrawer extends StatelessWidget {
 
   void _navigate(BuildContext context, Widget screen) {
     Navigator.pop(context);
-    Navigator.of(context).pushAndRemoveUntil(
-      SmoothPageRoute(page: screen),
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushAndRemoveUntil(SmoothPageRoute(page: screen), (route) => false);
   }
 
   Widget _buildSectionHeader(String title) {
@@ -367,8 +369,7 @@ class AdminDrawer extends StatelessWidget {
           : Colors.transparent,
       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         dense: true,
         leading: Container(
           padding: const EdgeInsets.all(7),
@@ -394,8 +395,7 @@ class AdminDrawer extends StatelessWidget {
         ),
         trailing: badge != null
             ? Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: badgeColor ?? AppTheme.secondary,
                   borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -410,15 +410,15 @@ class AdminDrawer extends StatelessWidget {
                 ),
               )
             : (isSelected
-                ? Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: activeColor,
-                      shape: BoxShape.circle,
-                    ),
-                  )
-                : null),
+                  ? Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: activeColor,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  : null),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),

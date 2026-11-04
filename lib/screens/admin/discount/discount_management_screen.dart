@@ -22,9 +22,7 @@ class DiscountManagementScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(
-        title: const Text('Kelola Diskon & Promo'),
-      ),
+      appBar: AppBar(title: const Text('Kelola Diskon & Promo')),
       drawer: const AdminDrawer(currentRoute: 'discounts'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'discounts'),
       floatingActionButton: FloatingActionButton.extended(
@@ -54,16 +52,21 @@ class DiscountManagementScreen extends StatelessWidget {
                         : CurrencyFormatter.format(d.value);
 
                     return ScaleTap(
-                      onTap: () => _showDiscountFormDialog(context, discount: d),
+                      onTap: () =>
+                          _showDiscountFormDialog(context, discount: d),
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
                           border: Border.all(
                             color: d.isValidNow
                                 ? AppTheme.secondary.withValues(alpha: 0.4)
-                                : AppTheme.outlineVariant.withValues(alpha: 0.6),
+                                : AppTheme.outlineVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
                           ),
                           boxShadow: AppTheme.cardShadow,
                         ),
@@ -75,8 +78,9 @@ class DiscountManagementScreen extends StatelessWidget {
                                 color: d.isValidNow
                                     ? AppTheme.secondaryContainer
                                     : AppTheme.surfaceContainerHigh,
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusDefault),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusDefault,
+                                ),
                               ),
                               child: Icon(
                                 Icons.local_offer_rounded,
@@ -106,12 +110,16 @@ class DiscountManagementScreen extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 2),
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
                                         decoration: BoxDecoration(
-                                          color: AppTheme.primary
-                                              .withValues(alpha: 0.1),
+                                          color: AppTheme.primary.withValues(
+                                            alpha: 0.1,
+                                          ),
                                           borderRadius: BorderRadius.circular(
-                                              AppTheme.radiusSm),
+                                            AppTheme.radiusSm,
+                                          ),
                                         ),
                                         child: Text(
                                           d.typeLabel,
@@ -139,7 +147,9 @@ class DiscountManagementScreen extends StatelessWidget {
                                   Text(
                                     'Periode: ${dateFmt.format(d.startDate)} - ${dateFmt.format(d.endDate)}${d.code.isNotEmpty ? " • Kode: ${d.code}" : ""}',
                                     style: const TextStyle(
-                                        fontSize: 10.5, color: AppTheme.outline),
+                                      fontSize: 10.5,
+                                      color: AppTheme.outline,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -150,7 +160,9 @@ class DiscountManagementScreen extends StatelessWidget {
                               value: d.isActive,
                               activeThumbColor: AppTheme.secondary,
                               onChanged: (val) {
-                                discProv.updateDiscount(d.copyWith(isActive: val));
+                                discProv.updateDiscount(
+                                  d.copyWith(isActive: val),
+                                );
                               },
                             ),
                           ],
@@ -164,14 +176,18 @@ class DiscountManagementScreen extends StatelessWidget {
     );
   }
 
-  void _showDiscountFormDialog(BuildContext context,
-      {DiscountModel? discount}) {
+  void _showDiscountFormDialog(
+    BuildContext context, {
+    DiscountModel? discount,
+  }) {
     final nameCtrl = TextEditingController(text: discount?.name ?? '');
     final codeCtrl = TextEditingController(text: discount?.code ?? '');
     final valCtrl = TextEditingController(
-        text: discount != null ? discount.value.toInt().toString() : '10');
+      text: discount != null ? discount.value.toInt().toString() : '10',
+    );
     final minCtrl = TextEditingController(
-        text: discount != null ? discount.minPurchase.toInt().toString() : '0');
+      text: discount != null ? discount.minPurchase.toInt().toString() : '0',
+    );
     String selectedType = discount?.type ?? 'transaksi';
     bool isPct = discount?.isPercentage ?? true;
 
@@ -180,7 +196,8 @@ class DiscountManagementScreen extends StatelessWidget {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setStateDialog) => Dialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: SingleChildScrollView(
@@ -194,7 +211,9 @@ class DiscountManagementScreen extends StatelessWidget {
                         ? 'Buat Diskon / Promo Baru'
                         : 'Edit Diskon / Promo',
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 14),
                   TextField(
@@ -210,15 +229,25 @@ class DiscountManagementScreen extends StatelessWidget {
                     decoration: const InputDecoration(labelText: 'Tipe Promo'),
                     items: const [
                       DropdownMenuItem(
-                          value: 'transaksi', child: Text('Diskon Transaksi')),
+                        value: 'transaksi',
+                        child: Text('Diskon Transaksi'),
+                      ),
                       DropdownMenuItem(
-                          value: 'member', child: Text('Diskon Khusus Member')),
+                        value: 'member',
+                        child: Text('Diskon Khusus Member'),
+                      ),
                       DropdownMenuItem(
-                          value: 'kupon', child: Text('Kupon Voucher')),
+                        value: 'kupon',
+                        child: Text('Kupon Voucher'),
+                      ),
                       DropdownMenuItem(
-                          value: 'bogo', child: Text('Promo Buy 1 Get 1')),
+                        value: 'bogo',
+                        child: Text('Promo Buy 1 Get 1'),
+                      ),
                       DropdownMenuItem(
-                          value: 'produk', child: Text('Diskon Produk')),
+                        value: 'produk',
+                        child: Text('Diskon Produk'),
+                      ),
                     ],
                     onChanged: (v) {
                       if (v != null) setStateDialog(() => selectedType = v);
@@ -240,8 +269,9 @@ class DiscountManagementScreen extends StatelessWidget {
                           controller: valCtrl,
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText:
-                                isPct ? 'Persentase (%)' : 'Nominal (Rp)',
+                            labelText: isPct
+                                ? 'Persentase (%)'
+                                : 'Nominal (Rp)',
                           ),
                         ),
                       ),
@@ -272,8 +302,10 @@ class DiscountManagementScreen extends StatelessWidget {
                     children: [
                       if (discount != null) ...[
                         IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: AppTheme.error),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: AppTheme.error,
+                          ),
                           onPressed: () async {
                             await context
                                 .read<DiscountProvider>()
@@ -306,7 +338,8 @@ class DiscountManagementScreen extends StatelessWidget {
                               isPercentage: isPct,
                               minPurchase: minP,
                               startDate: discount?.startDate ?? DateTime.now(),
-                              endDate: discount?.endDate ??
+                              endDate:
+                                  discount?.endDate ??
                                   DateTime.now().add(const Duration(days: 60)),
                               isActive: discount?.isActive ?? true,
                               createdAt: discount?.createdAt ?? DateTime.now(),
@@ -333,4 +366,3 @@ class DiscountManagementScreen extends StatelessWidget {
     );
   }
 }
-

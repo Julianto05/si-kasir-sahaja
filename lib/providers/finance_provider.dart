@@ -41,8 +41,7 @@ class FinanceProvider extends ChangeNotifier {
   List<DebtModel> get customerReceivables =>
       _debts.where((d) => d.type == 'piutang').toList();
 
-  double get totalExpenses =>
-      _expenses.fold(0.0, (acc, e) => acc + e.amount);
+  double get totalExpenses => _expenses.fold(0.0, (acc, e) => acc + e.amount);
 
   double get todayExpenses {
     final now = DateTime.now();
@@ -53,11 +52,13 @@ class FinanceProvider extends ChangeNotifier {
   }
 
   double expensesInRange(DateTime? start, DateTime? end) {
-    return _expenses.where((e) {
-      if (start != null && e.date.isBefore(start)) return false;
-      if (end != null && e.date.isAfter(end)) return false;
-      return true;
-    }).fold(0.0, (acc, e) => acc + e.amount);
+    return _expenses
+        .where((e) {
+          if (start != null && e.date.isBefore(start)) return false;
+          if (end != null && e.date.isAfter(end)) return false;
+          return true;
+        })
+        .fold(0.0, (acc, e) => acc + e.amount);
   }
 
   double get totalCapital =>
@@ -77,46 +78,50 @@ class FinanceProvider extends ChangeNotifier {
         .collection(AppConstants.expensesCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => ExpenseModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => b.date.compareTo(a.date));
-      _expenses = list;
-      _isLoading = false;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => ExpenseModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.date.compareTo(a.date));
+          _expenses = list;
+          _isLoading = false;
+          notifyListeners();
+        });
 
     _capitalSub = _firestore
         .collection(AppConstants.capitalEntriesCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => CapitalEntryModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => b.date.compareTo(a.date));
-      _capitalEntries = list;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => CapitalEntryModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.date.compareTo(a.date));
+          _capitalEntries = list;
+          notifyListeners();
+        });
 
     _debtSub = _firestore
         .collection(AppConstants.debtsCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => DebtModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _debts = list;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => DebtModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _debts = list;
+          notifyListeners();
+        });
 
     _debtPaymentSub = _firestore
         .collection(AppConstants.debtPaymentsCollection)
         .snapshots()
         .listen((snap) {
-      final list =
-          snap.docs.map((doc) => DebtPaymentModel.fromFirestore(doc)).toList();
-      list.sort((a, b) => b.date.compareTo(a.date));
-      _debtPayments = list;
-      notifyListeners();
-    });
+          final list = snap.docs
+              .map((doc) => DebtPaymentModel.fromFirestore(doc))
+              .toList();
+          list.sort((a, b) => b.date.compareTo(a.date));
+          _debtPayments = list;
+          notifyListeners();
+        });
   }
 
   Future<bool> addExpense({
@@ -132,8 +137,9 @@ class FinanceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.expensesCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.expensesCollection)
+          .doc();
       final expense = ExpenseModel(
         id: docRef.id,
         category: category,
@@ -181,8 +187,9 @@ class FinanceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.capitalEntriesCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.capitalEntriesCollection)
+          .doc();
       final entry = CapitalEntryModel(
         id: docRef.id,
         amount: amount,
@@ -216,8 +223,7 @@ class FinanceProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.debtsCollection).doc();
+      final docRef = _firestore.collection(AppConstants.debtsCollection).doc();
       final debt = DebtModel(
         id: docRef.id,
         type: type,
@@ -265,15 +271,14 @@ class FinanceProvider extends ChangeNotifier {
       final newPaid = (debt.paidAmount + payAmount).clamp(0.0, debt.amount);
       final newStatus = newPaid >= debt.amount ? 'paid' : 'partial';
 
-      final debtRef =
-          _firestore.collection(AppConstants.debtsCollection).doc(debt.id);
-      batch.update(debtRef, {
-        'paidAmount': newPaid,
-        'status': newStatus,
-      });
+      final debtRef = _firestore
+          .collection(AppConstants.debtsCollection)
+          .doc(debt.id);
+      batch.update(debtRef, {'paidAmount': newPaid, 'status': newStatus});
 
-      final paymentRef =
-          _firestore.collection(AppConstants.debtPaymentsCollection).doc();
+      final paymentRef = _firestore
+          .collection(AppConstants.debtPaymentsCollection)
+          .doc();
       final payment = DebtPaymentModel(
         id: paymentRef.id,
         debtId: debt.id,
@@ -296,10 +301,14 @@ class FinanceProvider extends ChangeNotifier {
 
         if (txSnap.docs.isNotEmpty) {
           final txDoc = txSnap.docs.first;
-          final currentTxPaid = (txDoc.data()['paidAmount'] as num?)?.toDouble() ?? 0.0;
-          final txTotal = (txDoc.data()['total'] as num?)?.toDouble() ?? debt.amount;
+          final currentTxPaid =
+              (txDoc.data()['paidAmount'] as num?)?.toDouble() ?? 0.0;
+          final txTotal =
+              (txDoc.data()['total'] as num?)?.toDouble() ?? debt.amount;
           final updatedTxPaid = (currentTxPaid + payAmount).clamp(0.0, txTotal);
-          final updatedTxStatus = newStatus == 'paid' ? AppConstants.statusCompleted : AppConstants.statusUnpaid;
+          final updatedTxStatus = newStatus == 'paid'
+              ? AppConstants.statusCompleted
+              : AppConstants.statusUnpaid;
 
           batch.update(txDoc.reference, {
             'paidAmount': updatedTxPaid,

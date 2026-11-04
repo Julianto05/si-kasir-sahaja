@@ -112,7 +112,8 @@ class PurchaseModel {
   final List<PurchaseItemModel> items;
   final double total;
   final double paidAmount;
-  final String paymentStatus; // 'paid' (Lunas), 'partial' (Sebagian), 'unpaid' (Belum Dibayar)
+  final String
+  paymentStatus; // 'paid' (Lunas), 'partial' (Sebagian), 'unpaid' (Belum Dibayar)
   final String notes;
   final String createdBy;
   final String createdByName;
@@ -149,9 +150,11 @@ class PurchaseModel {
     final rawItems = data['items'];
     final List<PurchaseItemModel> parsedItems = rawItems is List
         ? rawItems
-            .whereType<Map>()
-            .map((e) => PurchaseItemModel.fromMap(Map<String, dynamic>.from(e)))
-            .toList()
+              .whereType<Map>()
+              .map(
+                (e) => PurchaseItemModel.fromMap(Map<String, dynamic>.from(e)),
+              )
+              .toList()
         : const [];
 
     return PurchaseModel(
@@ -188,4 +191,3 @@ class PurchaseModel {
     };
   }
 }
-

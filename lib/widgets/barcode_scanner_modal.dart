@@ -9,10 +9,7 @@ import '../core/theme/app_theme.dart';
 class BarcodeScannerModal extends StatefulWidget {
   final String title;
 
-  const BarcodeScannerModal({
-    super.key,
-    this.title = 'Pindai Barcode Produk',
-  });
+  const BarcodeScannerModal({super.key, this.title = 'Pindai Barcode Produk'});
 
   /// Static helper to show this scanner as a bottom sheet.
   static Future<String?> show(BuildContext context, {String? title}) {
@@ -20,9 +17,8 @@ class BarcodeScannerModal extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => BarcodeScannerModal(
-        title: title ?? 'Pindai Barcode Produk',
-      ),
+      builder: (ctx) =>
+          BarcodeScannerModal(title: title ?? 'Pindai Barcode Produk'),
     );
   }
 
@@ -120,11 +116,11 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                     children: [
                       Text(
                         widget.title,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
                       Text(
                         'Posisikan barcode di dalam kotak pemindai',
@@ -154,10 +150,7 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    MobileScanner(
-                      controller: _controller,
-                      onDetect: _onDetect,
-                    ),
+                    MobileScanner(controller: _controller, onDetect: _onDetect),
 
                     // Viewfinder Frame Overlay with Animated Laser Line
                     SizedBox(
@@ -197,8 +190,9 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFF34D399)
-                                            .withValues(alpha: 0.65),
+                                        color: const Color(
+                                          0xFF34D399,
+                                        ).withValues(alpha: 0.65),
                                         blurRadius: 8,
                                         spreadRadius: 1,
                                       ),
@@ -222,8 +216,9 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.65),
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusFull,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -236,9 +231,7 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                             const SizedBox(width: 6),
                             Text(
                               'Mendeteksi barcode secara otomatis...',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
@@ -332,8 +325,7 @@ class _ScannerBracketPainter extends CustomPainter {
     final br = Path()
       ..moveTo(size.width - len, size.height)
       ..lineTo(size.width - r, size.height)
-      ..quadraticBezierTo(
-          size.width, size.height, size.width, size.height - r)
+      ..quadraticBezierTo(size.width, size.height, size.width, size.height - r)
       ..lineTo(size.width, size.height - len);
     canvas.drawPath(br, paint);
   }

@@ -48,7 +48,9 @@ class CategoryListScreen extends StatelessWidget {
                   builder: (context, provider, _) {
                     if (provider.isLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(color: AppTheme.primary),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
                       );
                     }
 
@@ -93,7 +95,9 @@ class CategoryListScreen extends StatelessWidget {
                             .refreshCategories();
                       },
                       child: ListView.separated(
-                        padding: const EdgeInsets.all(AppTheme.containerPadding),
+                        padding: const EdgeInsets.all(
+                          AppTheme.containerPadding,
+                        ),
                         itemCount: categories.length,
                         separatorBuilder: (_, _) =>
                             const SizedBox(height: AppTheme.spacingMd),

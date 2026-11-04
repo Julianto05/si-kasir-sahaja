@@ -67,7 +67,8 @@ class UserModel {
       role: map['role'] as String? ?? 'kasir',
       phone: map['phone'] as String? ?? '',
       photoUrl: map['photoUrl'] as String?,
-      position: map['position'] as String? ??
+      position:
+          map['position'] as String? ??
           ((map['role'] == 'admin') ? 'Administrator' : 'Kasir'),
       permissions: perms,
       workScheduleId: map['workScheduleId'] as String?,

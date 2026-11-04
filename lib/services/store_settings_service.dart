@@ -7,8 +7,9 @@ import '../models/store_settings_model.dart';
 class StoreSettingsService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  DocumentReference<Map<String, dynamic>> get _settingsDoc =>
-      _firestore.collection(AppConstants.storeSettingsCollection).doc('general');
+  DocumentReference<Map<String, dynamic>> get _settingsDoc => _firestore
+      .collection(AppConstants.storeSettingsCollection)
+      .doc('general');
 
   /// Streams the store settings in real-time.
   Stream<StoreSettingsModel> streamSettings() {

@@ -162,7 +162,10 @@ class CategoryProvider extends ChangeNotifier {
   /// Toggles active status of a category.
   Future<bool> toggleCategoryStatus(CategoryModel category) async {
     try {
-      await _categoryService.toggleCategoryStatus(category.id, category.isActive);
+      await _categoryService.toggleCategoryStatus(
+        category.id,
+        category.isActive,
+      );
       return true;
     } catch (e) {
       _errorMessage = 'Gagal mengubah status kategori: $e';

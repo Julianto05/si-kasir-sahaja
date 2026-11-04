@@ -32,21 +32,22 @@ class DiscountProvider extends ChangeNotifier {
         .collection(AppConstants.discountsCollection)
         .snapshots()
         .listen(
-      (snap) {
-        final list =
-            snap.docs.map((doc) => DiscountModel.fromFirestore(doc)).toList();
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        _discounts = list;
-        _isLoading = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (e) {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat data diskon: $e';
-        notifyListeners();
-      },
-    );
+          (snap) {
+            final list = snap.docs
+                .map((doc) => DiscountModel.fromFirestore(doc))
+                .toList();
+            list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+            _discounts = list;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (e) {
+            _isLoading = false;
+            _errorMessage = 'Gagal memuat data diskon: $e';
+            notifyListeners();
+          },
+        );
   }
 
   Future<bool> addDiscount(DiscountModel discount) async {
@@ -55,8 +56,9 @@ class DiscountProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.discountsCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.discountsCollection)
+          .doc();
       await docRef.set(discount.copyWith(id: docRef.id).toMap());
       _isLoading = false;
       notifyListeners();
@@ -110,4 +112,3 @@ class DiscountProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

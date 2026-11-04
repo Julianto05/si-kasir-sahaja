@@ -130,13 +130,15 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   Text(
                     'Total Karyawan (${userProvider.allUsers.length})',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const Spacer(),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: AppTheme.secondaryContainer,
                       borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -161,27 +163,29 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   child: CircularProgressIndicator(color: AppTheme.primary),
                 )
               : users.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'Tidak ada karyawan ditemukan',
-                        style: TextStyle(color: AppTheme.outline),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
-                      itemCount: users.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
-                      itemBuilder: (context, index) {
-                        return _UserCard(user: users[index]);
-                      },
-                    ),
+              ? const Center(
+                  child: Text(
+                    'Tidak ada karyawan ditemukan',
+                    style: TextStyle(color: AppTheme.outline),
+                  ),
+                )
+              : ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
+                  itemCount: users.length,
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    return _UserCard(user: users[index]);
+                  },
+                ),
         ),
       ],
     );
   }
 
   Widget _buildAttendanceTab(
-      BuildContext context, AttendanceProvider attendanceProv) {
+    BuildContext context,
+    AttendanceProvider attendanceProv,
+  ) {
     final logs = attendanceProv.attendanceLogs;
     final schedules = attendanceProv.workSchedules;
 
@@ -194,55 +198,69 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           color: AppTheme.surfaceContainerLow,
           child: Row(
             children: [
-              const Icon(Icons.schedule_rounded,
-                  size: 18, color: AppTheme.primary),
+              const Icon(
+                Icons.schedule_rounded,
+                size: 18,
+                color: AppTheme.primary,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: schedules.isEmpty
                     ? const Text(
                         'Belum ada jadwal shift tetap. Klik ikon jam di atas untuk menambah.',
-                        style:
-                            TextStyle(fontSize: 11.5, color: AppTheme.outline),
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          color: AppTheme.outline,
+                        ),
                       )
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: schedules
-                              .map((s) => InkWell(
-                                    borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusFull),
-                                    onTap: () =>
-                                        _showEditScheduleDialog(context, s),
-                                    child: Container(
-                                      margin: const EdgeInsets.only(right: 8),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: AppTheme.surfaceContainerLowest,
-                                        borderRadius: BorderRadius.circular(
-                                            AppTheme.radiusFull),
-                                        border: Border.all(
-                                          color: AppTheme.outlineVariant
-                                              .withValues(alpha: 0.6),
-                                        ),
+                              .map(
+                                (s) => InkWell(
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusFull,
+                                  ),
+                                  onTap: () =>
+                                      _showEditScheduleDialog(context, s),
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.surfaceContainerLowest,
+                                      borderRadius: BorderRadius.circular(
+                                        AppTheme.radiusFull,
                                       ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            '${s.name}: ${s.startTime}-${s.endTime}',
-                                            style: const TextStyle(
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.w700),
-                                          ),
-                                          const SizedBox(width: 4),
-                                          const Icon(Icons.edit_outlined,
-                                              size: 13,
-                                              color: AppTheme.outline),
-                                        ],
+                                      border: Border.all(
+                                        color: AppTheme.outlineVariant
+                                            .withValues(alpha: 0.6),
                                       ),
                                     ),
-                                  ))
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${s.name}: ${s.startTime}-${s.endTime}',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        const Icon(
+                                          Icons.edit_outlined,
+                                          size: 13,
+                                          color: AppTheme.outline,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(),
                         ),
                       ),
@@ -314,12 +332,16 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   Text(
                     log.userName,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 13.5),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                    ),
                   ),
                   Text(
                     'Masuk: $loginStr • Keluar: $logoutStr',
-                    style:
-                        const TextStyle(fontSize: 11.5, color: AppTheme.outline),
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      color: AppTheme.outline,
+                    ),
                   ),
                 ],
               ),
@@ -350,7 +372,9 @@ class _UserManagementScreenState extends State<UserManagementScreen>
   }
 
   Widget _buildActivityLogsTab(
-      BuildContext context, AttendanceProvider attendanceProv) {
+    BuildContext context,
+    AttendanceProvider attendanceProv,
+  ) {
     final logs = attendanceProv.activityLogs;
     if (logs.isEmpty) {
       return const Center(
@@ -380,8 +404,11 @@ class _UserManagementScreenState extends State<UserManagementScreen>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.history_edu_rounded,
-                  size: 20, color: AppTheme.primary),
+              const Icon(
+                Icons.history_edu_rounded,
+                size: 20,
+                color: AppTheme.primary,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -401,7 +428,9 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         Text(
                           dateStr,
                           style: const TextStyle(
-                              fontSize: 10.5, color: AppTheme.outline),
+                            fontSize: 10.5,
+                            color: AppTheme.outline,
+                          ),
                         ),
                       ],
                     ),
@@ -409,12 +438,16 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     Text(
                       act.description,
                       style: const TextStyle(
-                          fontSize: 12.5, fontWeight: FontWeight.w600),
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       'Oleh: ${act.userName}',
                       style: const TextStyle(
-                          fontSize: 11, color: AppTheme.outline),
+                        fontSize: 11,
+                        color: AppTheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -435,7 +468,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
@@ -518,7 +552,10 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     );
   }
 
-  void _showEditScheduleDialog(BuildContext context, WorkScheduleModel schedule) {
+  void _showEditScheduleDialog(
+    BuildContext context,
+    WorkScheduleModel schedule,
+  ) {
     final nameCtrl = TextEditingController(text: schedule.name);
     final startCtrl = TextEditingController(text: schedule.startTime);
     final endCtrl = TextEditingController(text: schedule.endTime);
@@ -527,7 +564,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 400),
           child: SingleChildScrollView(
@@ -543,14 +581,18 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                       child: Text(
                         'Ubah Jadwal Shift',
                         style: TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 16),
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.delete_outline,
-                          color: AppTheme.error),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: AppTheme.error,
+                      ),
                       tooltip: 'Hapus Jadwal',
                       onPressed: () async {
                         await context
@@ -572,16 +614,18 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                     Expanded(
                       child: TextField(
                         controller: startCtrl,
-                        decoration:
-                            const InputDecoration(labelText: 'Jam Masuk (HH:mm)'),
+                        decoration: const InputDecoration(
+                          labelText: 'Jam Masuk (HH:mm)',
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: TextField(
                         controller: endCtrl,
-                        decoration:
-                            const InputDecoration(labelText: 'Jam Pulang (HH:mm)'),
+                        decoration: const InputDecoration(
+                          labelText: 'Jam Pulang (HH:mm)',
+                        ),
                       ),
                     ),
                   ],
@@ -630,7 +674,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
     String role = 'kasir';
     String status = 'tepat';
     final inTimeCtrl = TextEditingController(
-        text: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()));
+      text: DateFormat('yyyy-MM-dd HH:mm').format(DateTime.now()),
+    );
     final outTimeCtrl = TextEditingController();
 
     showDialog(
@@ -638,7 +683,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => Dialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: SingleChildScrollView(
@@ -674,11 +720,22 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   const SizedBox(height: 10),
                   DropdownButtonFormField<String>(
                     initialValue: status,
-                    decoration: const InputDecoration(labelText: 'Status Kehadiran'),
+                    decoration: const InputDecoration(
+                      labelText: 'Status Kehadiran',
+                    ),
                     items: const [
-                      DropdownMenuItem(value: 'tepat', child: Text('Tepat Waktu')),
-                      DropdownMenuItem(value: 'terlambat', child: Text('Terlambat')),
-                      DropdownMenuItem(value: 'pulang_awal', child: Text('Pulang Lebih Awal')),
+                      DropdownMenuItem(
+                        value: 'tepat',
+                        child: Text('Tepat Waktu'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'terlambat',
+                        child: Text('Terlambat'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'pulang_awal',
+                        child: Text('Pulang Lebih Awal'),
+                      ),
                     ],
                     onChanged: (v) {
                       if (v != null) setDialogState(() => status = v);
@@ -714,7 +771,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         child: ElevatedButton(
                           onPressed: () async {
                             if (nameCtrl.text.trim().isEmpty) return;
-                            final loginAt = DateTime.tryParse(inTimeCtrl.text.trim()) ??
+                            final loginAt =
+                                DateTime.tryParse(inTimeCtrl.text.trim()) ??
                                 DateTime.now();
                             final logoutAt = outTimeCtrl.text.trim().isNotEmpty
                                 ? DateTime.tryParse(outTimeCtrl.text.trim())
@@ -765,7 +823,8 @@ class _UserManagementScreenState extends State<UserManagementScreen>
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => Dialog(
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+          ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: SingleChildScrollView(
@@ -781,14 +840,18 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                         child: Text(
                           'Absensi: ${log.userName}',
                           style: const TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.delete_outline,
-                            color: AppTheme.error),
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: AppTheme.error,
+                        ),
                         tooltip: 'Hapus Catatan Absensi',
                         onPressed: () async {
                           await context
@@ -802,16 +865,22 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     initialValue: status,
-                    decoration:
-                        const InputDecoration(labelText: 'Status Kehadiran'),
+                    decoration: const InputDecoration(
+                      labelText: 'Status Kehadiran',
+                    ),
                     items: const [
                       DropdownMenuItem(
-                          value: 'tepat', child: Text('Tepat Waktu')),
+                        value: 'tepat',
+                        child: Text('Tepat Waktu'),
+                      ),
                       DropdownMenuItem(
-                          value: 'terlambat', child: Text('Terlambat')),
+                        value: 'terlambat',
+                        child: Text('Terlambat'),
+                      ),
                       DropdownMenuItem(
-                          value: 'pulang_awal',
-                          child: Text('Pulang Lebih Awal')),
+                        value: 'pulang_awal',
+                        child: Text('Pulang Lebih Awal'),
+                      ),
                     ],
                     onChanged: (v) {
                       if (v != null) setDialogState(() => status = v);
@@ -848,7 +917,7 @@ class _UserManagementScreenState extends State<UserManagementScreen>
                           onPressed: () async {
                             final loginAt =
                                 DateTime.tryParse(inTimeCtrl.text.trim()) ??
-                                    log.loginAt;
+                                log.loginAt;
                             final logoutAt = outTimeCtrl.text.trim().isNotEmpty
                                 ? DateTime.tryParse(outTimeCtrl.text.trim())
                                 : null;
@@ -932,21 +1001,24 @@ class _UserCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           '${user.name} (${user.position})',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: isAdmin ? AppTheme.primary : AppTheme.secondary,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSm),
+                          color: isAdmin
+                              ? AppTheme.primary
+                              : AppTheme.secondary,
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
+                          ),
                         ),
                         child: Text(
                           isAdmin ? 'ADMIN' : 'KASIR',
@@ -962,9 +1034,9 @@ class _UserCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${user.email}${user.phone.isNotEmpty ? " • ${user.phone}" : ""}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppTheme.outline,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppTheme.outline),
                   ),
                   if (user.permissions.isNotEmpty && !isAdmin) ...[
                     const SizedBox(height: 4),
@@ -972,23 +1044,28 @@ class _UserCard extends StatelessWidget {
                       spacing: 4,
                       runSpacing: 4,
                       children: user.permissions
-                          .map((p) => Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 1),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.primary.withValues(alpha: 0.1),
-                                  borderRadius:
-                                      BorderRadius.circular(AppTheme.radiusSm),
+                          .map(
+                            (p) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
                                 ),
-                                child: Text(
-                                  AppConstants.permissionLabel(p),
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.primary,
-                                  ),
+                              ),
+                              child: Text(
+                                AppConstants.permissionLabel(p),
+                                style: const TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppTheme.primary,
                                 ),
-                              ))
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ],
@@ -997,13 +1074,16 @@ class _UserCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: user.isActive
                               ? AppTheme.secondaryContainer
                               : AppTheme.errorContainer,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
+                          ),
                         ),
                         child: Text(
                           user.isActive ? 'Aktif' : 'Nonaktif',
@@ -1020,7 +1100,9 @@ class _UserCard extends StatelessWidget {
                       Text(
                         'Terdaftar: $dateStr',
                         style: const TextStyle(
-                            fontSize: 10, color: AppTheme.outline),
+                          fontSize: 10,
+                          color: AppTheme.outline,
+                        ),
                       ),
                     ],
                   ),
@@ -1031,8 +1113,7 @@ class _UserCard extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.edit_outlined, size: 18),
               tooltip: 'Edit Profil & Hak Akses',
-              onPressed: () =>
-                  UserFormDialog.show(context, userToEdit: user),
+              onPressed: () => UserFormDialog.show(context, userToEdit: user),
             ),
 
             // Toggle Active Switch (Only for Cashier, cannot disable admin)
@@ -1045,8 +1126,7 @@ class _UserCard extends StatelessWidget {
                   color: user.isActive ? AppTheme.secondary : AppTheme.outline,
                   size: 32,
                 ),
-                tooltip:
-                    user.isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun',
+                tooltip: user.isActive ? 'Nonaktifkan Akun' : 'Aktifkan Akun',
                 onPressed: () {
                   context.read<UserProvider>().toggleUserStatus(user);
                 },

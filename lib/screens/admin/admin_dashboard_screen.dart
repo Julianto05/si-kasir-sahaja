@@ -46,10 +46,7 @@ class AdminDashboardScreen extends StatelessWidget {
     }
 
     if (context.mounted) {
-      Navigator.push(
-        context,
-        SmoothPageRoute(page: const PosScreen()),
-      );
+      Navigator.push(context, SmoothPageRoute(page: const PosScreen()));
     }
   }
 
@@ -109,101 +106,100 @@ class AdminDashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              // Welcome Hero Banner
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 40),
-                child: _buildWelcomeBanner(
-                  context,
-                  user?.name ?? 'Admin',
-                  txProvider.todayTransactionCount,
+                // Welcome Hero Banner
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 40),
+                  child: _buildWelcomeBanner(
+                    context,
+                    user?.name ?? 'Admin',
+                    txProvider.todayTransactionCount,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 18),
+                const SizedBox(height: 18),
 
-              // Overview Cards (Penjualan Hari Ini, Pengeluaran Hari Ini, Stok & Expired, Produk)
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 110),
-                child: _buildOverviewGrid(context, txProvider),
-              ),
-              const SizedBox(height: 16),
-
-              // Expiry / Empty Stock Alert Banner (PRD Section 5.5)
-              _buildInventoryAlertBanner(context),
-              const SizedBox(height: 20),
-
-              // Quick Actions Section
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 180),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Aksi Cepat',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
-                    ),
-                    const SizedBox(height: 10),
-                    _buildQuickActions(context),
-                  ],
+                // Overview Cards (Penjualan Hari Ini, Pengeluaran Hari Ini, Stok & Expired, Produk)
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 110),
+                  child: _buildOverviewGrid(context, txProvider),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
-              // Visual Analytics Charts (Responsive for Mobile, Tablet & Desktop)
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 240),
-                child: Builder(
-                  builder: (context) {
-                    final isDesktop = width >= 900;
-                    if (isDesktop) {
-                      return Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                // Expiry / Empty Stock Alert Banner (PRD Section 5.5)
+                _buildInventoryAlertBanner(context),
+                const SizedBox(height: 20),
+
+                // Quick Actions Section
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 180),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Aksi Cepat',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildQuickActions(context),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // Visual Analytics Charts (Responsive for Mobile, Tablet & Desktop)
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 240),
+                  child: Builder(
+                    builder: (context) {
+                      final isDesktop = width >= 900;
+                      if (isDesktop) {
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 6,
+                              child: SalesTrendChart(
+                                transactions: txProvider.allTransactions,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              flex: 4,
+                              child: PaymentDonutChart(
+                                transactions: txProvider.allTransactions,
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return Column(
                         children: [
-                          Expanded(
-                            flex: 6,
-                            child: SalesTrendChart(
-                              transactions: txProvider.allTransactions,
-                            ),
+                          SalesTrendChart(
+                            transactions: txProvider.allTransactions,
                           ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 4,
-                            child: PaymentDonutChart(
-                              transactions: txProvider.allTransactions,
-                            ),
+                          const SizedBox(height: 14),
+                          PaymentDonutChart(
+                            transactions: txProvider.allTransactions,
                           ),
                         ],
                       );
-                    }
-
-                    return Column(
-                      children: [
-                        SalesTrendChart(
-                          transactions: txProvider.allTransactions,
-                        ),
-                        const SizedBox(height: 14),
-                        PaymentDonutChart(
-                          transactions: txProvider.allTransactions,
-                        ),
-                      ],
-                    );
-                  },
+                    },
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Recent Transactions Section
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 300),
-                child: _buildRecentTransactions(context, txProvider),
-              ),
-              const SizedBox(height: 16),
-            ],
+                // Recent Transactions Section
+                FadeSlideIn(
+                  delay: const Duration(milliseconds: 300),
+                  child: _buildRecentTransactions(context, txProvider),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -263,8 +259,9 @@ class AdminDashboardScreen extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.14),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusFull),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusFull,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -337,7 +334,9 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildOverviewGrid(
-      BuildContext context, TransactionProvider txProvider) {
+    BuildContext context,
+    TransactionProvider txProvider,
+  ) {
     final financeProv = context.watch<FinanceProvider>();
     final prodProvider = context.watch<ProductProvider>();
     final prodCount = prodProvider.products.length;
@@ -409,9 +408,9 @@ class AdminDashboardScreen extends StatelessWidget {
             count: lowStockCount,
             suffix: ' Produk',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: lowStockCount > 0 ? AppTheme.error : AppTheme.outline,
-                ),
+              fontWeight: FontWeight.w800,
+              color: lowStockCount > 0 ? AppTheme.error : AppTheme.outline,
+            ),
           ),
           subtitle: lowStockCount > 0 ? 'Perlu restock segera' : 'Stok aman',
           onTap: () {
@@ -429,9 +428,9 @@ class AdminDashboardScreen extends StatelessWidget {
             count: prodCount,
             suffix: ' Item',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                ),
+              fontWeight: FontWeight.w800,
+              color: AppTheme.primary,
+            ),
           ),
           subtitle: 'Katalog terdaftar',
           onTap: () {
@@ -448,8 +447,9 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget _buildInventoryAlertBanner(BuildContext context) {
     final prodProvider = context.watch<ProductProvider>();
     final expiring = prodProvider.expiringOrExpiredProducts;
-    final emptyStock =
-        prodProvider.products.where((p) => p.stock <= 0).toList();
+    final emptyStock = prodProvider.products
+        .where((p) => p.stock <= 0)
+        .toList();
 
     if (expiring.isEmpty && emptyStock.isEmpty) {
       return const SizedBox.shrink();
@@ -469,9 +469,7 @@ class AdminDashboardScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.errorContainer.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(
-              color: AppTheme.error.withValues(alpha: 0.4),
-            ),
+            border: Border.all(color: AppTheme.error.withValues(alpha: 0.4)),
           ),
           child: Row(
             children: [
@@ -487,8 +485,11 @@ class AdminDashboardScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.arrow_forward_ios_rounded,
-                  size: 13, color: AppTheme.error),
+              const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: AppTheme.error,
+              ),
             ],
           ),
         ),
@@ -549,7 +550,9 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 
   Widget _buildRecentTransactions(
-      BuildContext context, TransactionProvider txProvider) {
+    BuildContext context,
+    TransactionProvider txProvider,
+  ) {
     final recent = txProvider.allTransactions.take(5).toList();
 
     return Column(
@@ -560,9 +563,9 @@ class AdminDashboardScreen extends StatelessWidget {
           children: [
             Text(
               'Transaksi Terbaru',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             TextButton.icon(
               onPressed: () {
@@ -640,22 +643,23 @@ class AdminDashboardScreen extends StatelessWidget {
                           color: tx.isCompleted
                               ? AppTheme.secondary.withValues(alpha: 0.1)
                               : (tx.isUnpaid
-                                  ? Colors.amber.withValues(alpha: 0.15)
-                                  : AppTheme.errorContainer),
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusDefault),
+                                    ? Colors.amber.withValues(alpha: 0.15)
+                                    : AppTheme.errorContainer),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusDefault,
+                          ),
                         ),
                         child: Icon(
                           tx.isCompleted
                               ? Icons.receipt_rounded
                               : (tx.isUnpaid
-                                  ? Icons.pending_actions_rounded
-                                  : Icons.cancel_outlined),
+                                    ? Icons.pending_actions_rounded
+                                    : Icons.cancel_outlined),
                           color: tx.isCompleted
                               ? AppTheme.secondary
                               : (tx.isUnpaid
-                                  ? Colors.amber[900]
-                                  : AppTheme.error),
+                                    ? Colors.amber[900]
+                                    : AppTheme.error),
                           size: 20,
                         ),
                       ),
@@ -681,12 +685,16 @@ class AdminDashboardScreen extends StatelessWidget {
                                   const SizedBox(width: 6),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 5, vertical: 1),
+                                      horizontal: 5,
+                                      vertical: 1,
+                                    ),
                                     decoration: BoxDecoration(
-                                      color:
-                                          Colors.amber.withValues(alpha: 0.2),
+                                      color: Colors.amber.withValues(
+                                        alpha: 0.2,
+                                      ),
                                       borderRadius: BorderRadius.circular(
-                                          AppTheme.radiusSm),
+                                        AppTheme.radiusSm,
+                                      ),
                                     ),
                                     child: Text(
                                       'Belum Lunas',
@@ -721,8 +729,8 @@ class AdminDashboardScreen extends StatelessWidget {
                           color: tx.isCompleted
                               ? AppTheme.primary
                               : (tx.isUnpaid
-                                  ? Colors.amber[900]
-                                  : AppTheme.error),
+                                    ? Colors.amber[900]
+                                    : AppTheme.error),
                         ),
                       ),
                     ],
@@ -782,10 +790,10 @@ class _StatCard extends StatelessWidget {
                   child: Text(
                     title,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.onSurfaceVariant,
-                          fontSize: 11.5,
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.onSurfaceVariant,
+                      fontSize: 11.5,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -814,10 +822,7 @@ class _StatCard extends StatelessWidget {
                 Row(
                   children: [
                     if (showPulse) ...[
-                      const PulseIndicator(
-                        color: AppTheme.error,
-                        size: 6,
-                      ),
+                      const PulseIndicator(color: AppTheme.error, size: 6),
                       const SizedBox(width: 4),
                     ],
                     Expanded(
@@ -826,8 +831,9 @@ class _StatCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 10,
                           color: showPulse ? AppTheme.error : AppTheme.outline,
-                          fontWeight:
-                              showPulse ? FontWeight.w600 : FontWeight.w400,
+                          fontWeight: showPulse
+                              ? FontWeight.w600
+                              : FontWeight.w400,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

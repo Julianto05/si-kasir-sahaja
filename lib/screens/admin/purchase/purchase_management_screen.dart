@@ -119,7 +119,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                   Expanded(
                     child: _buildMiniStat(
                       'Total Pembelian',
-                      CurrencyFormatter.format(purchaseProv.totalPurchasesAmount),
+                      CurrencyFormatter.format(
+                        purchaseProv.totalPurchasesAmount,
+                      ),
                       AppTheme.primary,
                     ),
                   ),
@@ -127,7 +129,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                   Expanded(
                     child: _buildMiniStat(
                       'Utang Belum Lunas',
-                      CurrencyFormatter.format(purchaseProv.totalUnpaidPurchases),
+                      CurrencyFormatter.format(
+                        purchaseProv.totalUnpaidPurchases,
+                      ),
                       AppTheme.error,
                     ),
                   ),
@@ -159,18 +163,22 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final po = purchases[index];
-                    final dateStr =
-                        DateFormat('dd MMM yyyy, HH:mm').format(po.date);
+                    final dateStr = DateFormat(
+                      'dd MMM yyyy, HH:mm',
+                    ).format(po.date);
                     return ScaleTap(
                       onTap: () => _showPurchaseDetailDialog(context, po),
                       child: Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
                           border: Border.all(
-                            color: AppTheme.outlineVariant.withValues(alpha: 0.6),
+                            color: AppTheme.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           boxShadow: AppTheme.cardShadow,
                         ),
@@ -189,13 +197,16 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 3),
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: po.isPaid
                                         ? AppTheme.secondaryContainer
                                         : AppTheme.errorContainer,
                                     borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusSm),
+                                      AppTheme.radiusSm,
+                                    ),
                                   ),
                                   child: Text(
                                     po.paymentStatusLabel,
@@ -214,7 +225,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                             Text(
                               'Supplier: ${po.supplierName} • $dateStr',
                               style: const TextStyle(
-                                  fontSize: 11.5, color: AppTheme.outline),
+                                fontSize: 11.5,
+                                color: AppTheme.outline,
+                              ),
                             ),
                             const Divider(height: 14),
                             Row(
@@ -249,7 +262,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
   }
 
   Widget _buildSuppliersTab(
-      BuildContext context, SupplierProvider supplierProv) {
+    BuildContext context,
+    SupplierProvider supplierProv,
+  ) {
     final suppliers = supplierProv.filteredSuppliers;
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
@@ -294,10 +309,13 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
                           border: Border.all(
-                            color: AppTheme.outlineVariant.withValues(alpha: 0.6),
+                            color: AppTheme.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           boxShadow: AppTheme.cardShadow,
                         ),
@@ -308,10 +326,13 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                               decoration: BoxDecoration(
                                 color: AppTheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusDefault),
+                                  AppTheme.radiusDefault,
+                                ),
                               ),
-                              child: const Icon(Icons.local_shipping_rounded,
-                                  color: AppTheme.primary),
+                              child: const Icon(
+                                Icons.local_shipping_rounded,
+                                color: AppTheme.primary,
+                              ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -332,15 +353,20 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                   Text(
                                     '${s.phone.isNotEmpty ? s.phone : "-"} • ${s.address.isNotEmpty ? s.address : "Tanpa alamat"}',
                                     style: const TextStyle(
-                                        fontSize: 11, color: AppTheme.outline),
+                                      fontSize: 11,
+                                      color: AppTheme.outline,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(Icons.edit_outlined,
-                                size: 18, color: AppTheme.outline),
+                            const Icon(
+                              Icons.edit_outlined,
+                              size: 18,
+                              color: AppTheme.outline,
+                            ),
                           ],
                         ),
                       ),
@@ -362,8 +388,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(fontSize: 10.5, color: AppTheme.outline)),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 10.5, color: AppTheme.outline),
+          ),
           const SizedBox(height: 2),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -386,7 +414,8 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 440),
           child: SingleChildScrollView(
@@ -398,7 +427,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                 Text(
                   'Detail Pembelian ${po.purchaseNo}',
                   style: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 16),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -421,7 +452,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                         Text(
                           CurrencyFormatter.format(item.subtotal),
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.w700),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ],
                     ),
@@ -431,10 +464,14 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Total Pembelian',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    Text(CurrencyFormatter.format(po.total),
-                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                    const Text(
+                      'Total Pembelian',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      CurrencyFormatter.format(po.total),
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 4),
@@ -450,12 +487,16 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Sisa Utang Supplier',
-                          style: TextStyle(color: AppTheme.error)),
+                      const Text(
+                        'Sisa Utang Supplier',
+                        style: TextStyle(color: AppTheme.error),
+                      ),
                       Text(
                         CurrencyFormatter.format(po.remainingDebt),
                         style: const TextStyle(
-                            color: AppTheme.error, fontWeight: FontWeight.bold),
+                          color: AppTheme.error,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -473,8 +514,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
     );
   }
 
-  void _showSupplierFormDialog(BuildContext context,
-      {SupplierModel? supplier}) {
+  void _showSupplierFormDialog(
+    BuildContext context, {
+    SupplierModel? supplier,
+  }) {
     final nameCtrl = TextEditingController(text: supplier?.name ?? '');
     final phoneCtrl = TextEditingController(text: supplier?.phone ?? '');
     final addrCtrl = TextEditingController(text: supplier?.address ?? '');
@@ -483,7 +526,8 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 420),
           child: SingleChildScrollView(
@@ -495,7 +539,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                 Text(
                   supplier == null ? 'Tambah Supplier Baru' : 'Edit Supplier',
                   style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -573,14 +619,14 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
     final suppliers = context.read<SupplierProvider>().activeSuppliers;
     final products = context.read<ProductProvider>().allProducts;
 
-    SupplierModel? selectedSupplier =
-        suppliers.isNotEmpty ? suppliers.first : null;
+    SupplierModel? selectedSupplier = suppliers.isNotEmpty
+        ? suppliers.first
+        : null;
     final List<PurchaseItemModel> draftItems = [];
     final paidCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
 
-    ProductModel? selectedProduct =
-        products.isNotEmpty ? products.first : null;
+    ProductModel? selectedProduct = products.isNotEmpty ? products.first : null;
     final qtyCtrl = TextEditingController(text: '10');
     final buyPriceCtrl = TextEditingController(
       text: selectedProduct != null
@@ -593,14 +639,17 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
       isScrollControlled: true,
       backgroundColor: AppTheme.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXl)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusXl),
+        ),
       ),
       builder: (sheetCtx) {
         return StatefulBuilder(
           builder: (ctx, setModalState) {
-            final totalPo =
-                draftItems.fold(0.0, (sum, item) => sum + item.subtotal);
+            final totalPo = draftItems.fold(
+              0.0,
+              (sum, item) => sum + item.subtotal,
+            );
 
             return Padding(
               padding: EdgeInsets.only(
@@ -620,7 +669,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                         const Text(
                           'Buat Pembelian & Terima Barang',
                           style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 16),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close_rounded),
@@ -639,10 +690,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                         isDense: true,
                       ),
                       items: suppliers
-                          .map((s) => DropdownMenuItem(
-                                value: s,
-                                child: Text(s.name),
-                              ))
+                          .map(
+                            (s) =>
+                                DropdownMenuItem(value: s, child: Text(s.name)),
+                          )
                           .toList(),
                       onChanged: (val) =>
                           setModalState(() => selectedSupplier = val),
@@ -662,7 +713,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                           const Text(
                             'Tambah Barang ke Daftar Pembelian',
                             style: TextStyle(
-                                fontSize: 12, fontWeight: FontWeight.w700),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<ProductModel>(
@@ -673,17 +726,20 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                               isDense: true,
                             ),
                             items: products
-                                .map((p) => DropdownMenuItem(
-                                      value: p,
-                                      child: Text('${p.name} (Stok: ${p.stock})'),
-                                    ))
+                                .map(
+                                  (p) => DropdownMenuItem(
+                                    value: p,
+                                    child: Text('${p.name} (Stok: ${p.stock})'),
+                                  ),
+                                )
                                 .toList(),
                             onChanged: (val) {
                               setModalState(() {
                                 selectedProduct = val;
                                 if (val != null) {
-                                  buyPriceCtrl.text =
-                                      val.costPrice.toInt().toString();
+                                  buyPriceCtrl.text = val.costPrice
+                                      .toInt()
+                                      .toString();
                                 }
                               });
                             },
@@ -722,16 +778,20 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                   if (q <= 0) return;
 
                                   setModalState(() {
-                                    draftItems.add(PurchaseItemModel(
-                                      productId: selectedProduct!.id,
-                                      productName: selectedProduct!.name,
-                                      productCode: selectedProduct!.code,
-                                      qty: q,
-                                      buyPrice: bp,
-                                      unit: selectedProduct!.unit,
-                                    ));
+                                    draftItems.add(
+                                      PurchaseItemModel(
+                                        productId: selectedProduct!.id,
+                                        productName: selectedProduct!.name,
+                                        productCode: selectedProduct!.code,
+                                        qty: q,
+                                        buyPrice: bp,
+                                        unit: selectedProduct!.unit,
+                                      ),
+                                    );
                                     final newTotal = draftItems.fold(
-                                        0.0, (s, i) => s + i.subtotal);
+                                      0.0,
+                                      (s, i) => s + i.subtotal,
+                                    );
                                     paidCtrl.text = newTotal.toInt().toString();
                                   });
                                 },
@@ -752,22 +812,28 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                         return ListTile(
                           dense: true,
                           contentPadding: EdgeInsets.zero,
-                          title: Text(item.productName,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700)),
+                          title: Text(
+                            item.productName,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
                           subtitle: Text(
-                              '${item.qty} ${item.unit} x ${CurrencyFormatter.format(item.buyPrice)}'),
+                            '${item.qty} ${item.unit} x ${CurrencyFormatter.format(item.buyPrice)}',
+                          ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
                                 CurrencyFormatter.format(item.subtotal),
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.delete_outline,
-                                    color: AppTheme.error, size: 18),
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  color: AppTheme.error,
+                                  size: 18,
+                                ),
                                 onPressed: () {
                                   setModalState(() => draftItems.removeAt(idx));
                                 },
@@ -780,8 +846,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text('TOTAL PEMBELIAN:',
-                              style: TextStyle(fontWeight: FontWeight.w800)),
+                          const Text(
+                            'TOTAL PEMBELIAN:',
+                            style: TextStyle(fontWeight: FontWeight.w800),
+                          ),
                           Text(
                             CurrencyFormatter.format(totalPo),
                             style: const TextStyle(
@@ -818,8 +886,7 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                           if (selectedSupplier == null || draftItems.isEmpty) {
                             return;
                           }
-                          final user =
-                              context.read<AuthProvider>().currentUser;
+                          final user = context.read<AuthProvider>().currentUser;
                           final paid = double.tryParse(paidCtrl.text) ?? 0.0;
                           final ok = await context
                               .read<PurchaseProvider>()
@@ -837,14 +904,16 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                    'Pembelian berhasil! Stok barang & HPP otomatis diperbarui.'),
+                                  'Pembelian berhasil! Stok barang & HPP otomatis diperbarui.',
+                                ),
                                 backgroundColor: AppTheme.secondary,
                               ),
                             );
                           }
                         },
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.secondary),
+                          backgroundColor: AppTheme.secondary,
+                        ),
                         icon: const Icon(Icons.check_circle_outline_rounded),
                         label: const Text('Simpan Pembelian & Terima Stok'),
                       ),
@@ -859,4 +928,3 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
     );
   }
 }
-

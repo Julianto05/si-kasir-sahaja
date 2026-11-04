@@ -5,10 +5,7 @@ class PaymentSplitItem {
   final String method;
   final double amount;
 
-  const PaymentSplitItem({
-    required this.method,
-    required this.amount,
-  });
+  const PaymentSplitItem({required this.method, required this.amount});
 
   factory PaymentSplitItem.fromMap(Map<String, dynamic> map) {
     return PaymentSplitItem(
@@ -18,10 +15,7 @@ class PaymentSplitItem {
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'method': method,
-      'amount': amount,
-    };
+    return {'method': method, 'amount': amount};
   }
 }
 
@@ -195,8 +189,11 @@ class TransactionModel {
     List<TransactionItemModel> parsedItems = itemsList ?? [];
     if (parsedItems.isEmpty && data['items'] is List) {
       parsedItems = (data['items'] as List)
-          .map((item) =>
-              TransactionItemModel.fromMap(Map<String, dynamic>.from(item as Map)))
+          .map(
+            (item) => TransactionItemModel.fromMap(
+              Map<String, dynamic>.from(item as Map),
+            ),
+          )
           .toList();
     }
 
@@ -264,8 +261,9 @@ class TransactionModel {
       'notes': notes,
       'cancelReason': cancelReason,
       'cancelledBy': cancelledBy,
-      'cancelledAt':
-          cancelledAt != null ? Timestamp.fromDate(cancelledAt!) : null,
+      'cancelledAt': cancelledAt != null
+          ? Timestamp.fromDate(cancelledAt!)
+          : null,
       'items': items.map((e) => e.toMap()).toList(),
       'createdAt': Timestamp.fromDate(createdAt),
     };

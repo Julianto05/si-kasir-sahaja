@@ -3,7 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Operational Expense entry (`expenses` collection - PRD Section 5.9 & 8.1).
 class ExpenseModel {
   final String id;
-  final String category; // 'operasional', 'listrik_air', 'transportasi', 'gaji', 'lainnya'
+  final String
+  category; // 'operasional', 'listrik_air', 'transportasi', 'gaji', 'lainnya'
   final double amount;
   final String note;
   final DateTime date;
@@ -89,7 +90,8 @@ class CapitalEntryModel {
 /// Payable (Utang Supplier) or Receivable (Piutang Pelanggan) record (`debts` - PRD Section 5.9 & 8.1).
 class DebtModel {
   final String id;
-  final String type; // 'utang' (Payable to Supplier) or 'piutang' (Receivable from Customer)
+  final String
+  type; // 'utang' (Payable to Supplier) or 'piutang' (Receivable from Customer)
   final String partyType; // 'supplier' or 'customer'
   final String partyId;
   final String partyName;
@@ -116,7 +118,8 @@ class DebtModel {
     required this.createdAt,
   });
 
-  double get remainingAmount => (amount - paidAmount).clamp(0.0, double.infinity);
+  double get remainingAmount =>
+      (amount - paidAmount).clamp(0.0, double.infinity);
   bool get isPaid => status == 'paid' || remainingAmount <= 0;
 
   factory DebtModel.fromFirestore(DocumentSnapshot doc) {
@@ -202,4 +205,3 @@ class DebtPaymentModel {
     };
   }
 }
-

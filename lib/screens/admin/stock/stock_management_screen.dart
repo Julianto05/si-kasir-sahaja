@@ -50,7 +50,10 @@ class _StockManagementScreenState extends State<StockManagementScreen>
           indicatorColor: AppTheme.secondaryContainer,
           indicatorWeight: 3,
           tabs: const [
-            Tab(icon: Icon(Icons.inventory_2_outlined), text: 'Stok & Kartu Stok'),
+            Tab(
+              icon: Icon(Icons.inventory_2_outlined),
+              text: 'Stok & Kartu Stok',
+            ),
             Tab(icon: Icon(Icons.history_rounded), text: 'Riwayat Mutasi'),
           ],
         ),
@@ -109,7 +112,8 @@ class _StockManagementScreenState extends State<StockManagementScreen>
                         color: AppTheme.error,
                       ),
                       label: Text(
-                          'Stok Menipis/Kosong (${prodProvider.lowStockCount})'),
+                        'Stok Menipis/Kosong (${prodProvider.lowStockCount})',
+                      ),
                       backgroundColor: prodProvider.showOnlyLowStock
                           ? AppTheme.errorContainer
                           : AppTheme.surfaceContainerHigh,
@@ -119,17 +123,22 @@ class _StockManagementScreenState extends State<StockManagementScreen>
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 6),
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF3C7),
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusFull,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const PulseIndicator(
-                                color: Color(0xFFD97706), size: 6),
+                              color: Color(0xFFD97706),
+                              size: 6,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '$expiringCount Produk Hampir/Sudah Expired',
@@ -167,8 +176,11 @@ class _StockManagementScreenState extends State<StockManagementScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.inventory_2_outlined,
-                          size: 48, color: AppTheme.outline),
+                      const Icon(
+                        Icons.inventory_2_outlined,
+                        size: 48,
+                        color: AppTheme.outline,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Tidak ada data produk',
@@ -254,8 +266,11 @@ class _StockManagementScreenState extends State<StockManagementScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.history_toggle_off_rounded,
-                          size: 48, color: AppTheme.outline),
+                      const Icon(
+                        Icons.history_toggle_off_rounded,
+                        size: 48,
+                        color: AppTheme.outline,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         'Belum ada riwayat pergerakan stok',
@@ -333,8 +348,8 @@ class _StockProductCard extends StatelessWidget {
                       child: Text(
                         product.name,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                          fontWeight: FontWeight.bold,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -345,9 +360,9 @@ class _StockProductCard extends StatelessWidget {
                 Text(
                   'SKU: ${product.code} • ${product.categoryName}${product.brand.isNotEmpty ? " (${product.brand})" : ""}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppTheme.outline,
-                        fontSize: 11,
-                      ),
+                    color: AppTheme.outline,
+                    fontSize: 11,
+                  ),
                 ),
                 const SizedBox(height: 6),
                 Wrap(
@@ -357,7 +372,9 @@ class _StockProductCard extends StatelessWidget {
                   children: [
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 2),
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: product.isLowStock
                             ? AppTheme.errorContainer
@@ -380,7 +397,9 @@ class _StockProductCard extends StatelessWidget {
                     Text(
                       'Min: ${product.minimumStock} ${product.unit}',
                       style: const TextStyle(
-                          fontSize: 11, color: AppTheme.outline),
+                        fontSize: 11,
+                        color: AppTheme.outline,
+                      ),
                     ),
                     if (product.expiryDate != null)
                       Text(
@@ -444,14 +463,16 @@ class _StockProductCard extends StatelessWidget {
   }
 
   void _showStockCardDialog(BuildContext context, ProductModel prod) {
-    final movements =
-        context.read<StockProvider>().getMovementsForProduct(prod.id);
+    final movements = context.read<StockProvider>().getMovementsForProduct(
+      prod.id,
+    );
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500, maxHeight: 560),
           child: Padding(
@@ -470,12 +491,16 @@ class _StockProductCard extends StatelessWidget {
                           Text(
                             'Kartu Stok: ${prod.name}',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w800, fontSize: 15),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
                           ),
                           Text(
                             'SKU: ${prod.code} • Saldo Saat Ini: ${prod.stock} ${prod.unit}',
                             style: const TextStyle(
-                                fontSize: 11.5, color: AppTheme.outline),
+                              fontSize: 11.5,
+                              color: AppTheme.outline,
+                            ),
                           ),
                         ],
                       ),
@@ -539,9 +564,9 @@ class _StockMovementCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   movement.productName,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               Container(
@@ -588,9 +613,9 @@ class _StockMovementCard extends StatelessWidget {
                 child: Text(
                   movement.notes,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontSize: 11,
-                        color: AppTheme.onSurfaceVariant,
-                      ),
+                    fontSize: 11,
+                    color: AppTheme.onSurfaceVariant,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

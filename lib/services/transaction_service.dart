@@ -26,8 +26,10 @@ class TransactionService {
     final endOfDay = startOfDay.add(const Duration(days: 1));
 
     final countSnap = await _transactionsRef
-        .where('createdAt',
-            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where(
+          'createdAt',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay),
+        )
         .where('createdAt', isLessThan: Timestamp.fromDate(endOfDay))
         .count()
         .get();
@@ -47,26 +49,27 @@ class TransactionService {
       final list = snapshot.docs
           .map((doc) => TransactionModel.fromFirestore(doc))
           .where((tx) {
-        if (startDate != null && tx.createdAt.isBefore(startDate)) {
-          return false;
-        }
-        if (endDate != null && tx.createdAt.isAfter(endDate)) {
-          return false;
-        }
-        if (cashierId != null &&
-            cashierId.isNotEmpty &&
-            cashierId != 'all' &&
-            tx.cashierId != cashierId) {
-          return false;
-        }
-        if (status != null &&
-            status.isNotEmpty &&
-            status != 'all' &&
-            tx.status != status) {
-          return false;
-        }
-        return true;
-      }).toList();
+            if (startDate != null && tx.createdAt.isBefore(startDate)) {
+              return false;
+            }
+            if (endDate != null && tx.createdAt.isAfter(endDate)) {
+              return false;
+            }
+            if (cashierId != null &&
+                cashierId.isNotEmpty &&
+                cashierId != 'all' &&
+                tx.cashierId != cashierId) {
+              return false;
+            }
+            if (status != null &&
+                status.isNotEmpty &&
+                status != 'all' &&
+                tx.status != status) {
+              return false;
+            }
+            return true;
+          })
+          .toList();
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
@@ -75,7 +78,8 @@ class TransactionService {
 
   /// Fetches subcollection items for a given transaction.
   Future<List<TransactionItemModel>> getTransactionItems(
-      String transactionId) async {
+    String transactionId,
+  ) async {
     final snap = await _transactionsRef
         .doc(transactionId)
         .collection(AppConstants.transactionItemsSubcollection)
@@ -148,8 +152,9 @@ class TransactionService {
       });
 
       if (transaction.pointsRedeemed > 0) {
-        final redeemRef =
-            _firestore.collection(AppConstants.pointLogsCollection).doc();
+        final redeemRef = _firestore
+            .collection(AppConstants.pointLogsCollection)
+            .doc();
         batch.set(redeemRef, {
           'customerId': transaction.customerId,
           'customerName': transaction.customerName ?? '',
@@ -161,8 +166,9 @@ class TransactionService {
       }
 
       if (transaction.pointsEarned > 0) {
-        final earnRef =
-            _firestore.collection(AppConstants.pointLogsCollection).doc();
+        final earnRef = _firestore
+            .collection(AppConstants.pointLogsCollection)
+            .doc();
         batch.set(earnRef, {
           'customerId': transaction.customerId,
           'customerName': transaction.customerName ?? '',
@@ -178,7 +184,10 @@ class TransactionService {
     double piutangAmount = 0.0;
     if (transaction.status == AppConstants.statusUnpaid) {
       // Jika status belum lunas, sisa tagihan dicatat sebagai piutang
-      piutangAmount = (transaction.total - transaction.paidAmount).clamp(0.0, double.infinity);
+      piutangAmount = (transaction.total - transaction.paidAmount).clamp(
+        0.0,
+        double.infinity,
+      );
     } else if (transaction.payments.isNotEmpty) {
       for (final p in transaction.payments) {
         if (p.method.toLowerCase() == 'piutang') {
@@ -190,8 +199,7 @@ class TransactionService {
     }
 
     if (piutangAmount > 0) {
-      final debtRef =
-          _firestore.collection(AppConstants.debtsCollection).doc();
+      final debtRef = _firestore.collection(AppConstants.debtsCollection).doc();
       batch.set(debtRef, {
         'type': 'piutang',
         'partyType': 'customer',
@@ -277,9 +285,14 @@ class TransactionService {
 
     // 1. Update Transaction status and paid amount
     batch.update(txRef, {
-      'status': isFullPaid ? AppConstants.statusCompleted : AppConstants.statusUnpaid,
+      'status': isFullPaid
+          ? AppConstants.statusCompleted
+          : AppConstants.statusUnpaid,
       'paidAmount': newTotalPaid,
-      'changeAmount': (newTotalPaid - transaction.total).clamp(0.0, double.infinity),
+      'changeAmount': (newTotalPaid - transaction.total).clamp(
+        0.0,
+        double.infinity,
+      ),
       'notes': notes.isNotEmpty
           ? '${transaction.notes.isNotEmpty ? "${transaction.notes} • " : ""}$notes'
           : transaction.notes,
@@ -295,9 +308,14 @@ class TransactionService {
 
     if (debtSnap.docs.isNotEmpty) {
       final debtDoc = debtSnap.docs.first;
-      final currentDebtPaid = (debtDoc.data()['paidAmount'] as num?)?.toDouble() ?? 0.0;
-      final debtTotal = (debtDoc.data()['amount'] as num?)?.toDouble() ?? transaction.total;
-      final updatedDebtPaid = (currentDebtPaid + additionalPaidAmount).clamp(0.0, debtTotal);
+      final currentDebtPaid =
+          (debtDoc.data()['paidAmount'] as num?)?.toDouble() ?? 0.0;
+      final debtTotal =
+          (debtDoc.data()['amount'] as num?)?.toDouble() ?? transaction.total;
+      final updatedDebtPaid = (currentDebtPaid + additionalPaidAmount).clamp(
+        0.0,
+        debtTotal,
+      );
       final debtStatus = updatedDebtPaid >= debtTotal ? 'paid' : 'partial';
 
       batch.update(debtDoc.reference, {
@@ -306,8 +324,9 @@ class TransactionService {
       });
 
       // Log payment record in `debt_payments`
-      final paymentRef =
-          _firestore.collection(AppConstants.debtPaymentsCollection).doc();
+      final paymentRef = _firestore
+          .collection(AppConstants.debtPaymentsCollection)
+          .doc();
       batch.set(paymentRef, {
         'debtId': debtDoc.id,
         'amount': additionalPaidAmount,
@@ -357,8 +376,9 @@ class TransactionService {
       });
 
       if (isLunas) {
-        final paymentRef =
-            _firestore.collection(AppConstants.debtPaymentsCollection).doc();
+        final paymentRef = _firestore
+            .collection(AppConstants.debtPaymentsCollection)
+            .doc();
         batch.set(paymentRef, {
           'debtId': debtDoc.id,
           'amount': debtTotal,

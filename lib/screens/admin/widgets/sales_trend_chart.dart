@@ -30,14 +30,15 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
       return today.subtract(Duration(days: 6 - i));
     });
 
-    final Map<DateTime, double> dailyTotals = {
-      for (var d in last7Days) d: 0.0,
-    };
+    final Map<DateTime, double> dailyTotals = {for (var d in last7Days) d: 0.0};
 
     for (final tx in widget.transactions) {
       if (!tx.isCompleted) continue;
-      final txDate =
-          DateTime(tx.createdAt.year, tx.createdAt.month, tx.createdAt.day);
+      final txDate = DateTime(
+        tx.createdAt.year,
+        tx.createdAt.month,
+        tx.createdAt.day,
+      );
       if (dailyTotals.containsKey(txDate)) {
         dailyTotals[txDate] = (dailyTotals[txDate] ?? 0.0) + tx.total;
       }
@@ -49,8 +50,10 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
     final activeIdx = _selectedIndex ?? 6; // default to Today
     final selectedDate = last7Days[activeIdx];
     final selectedAmount = dailyTotals[selectedDate] ?? 0.0;
-    final selectedDateStr =
-        DateFormat('EEEE, dd MMM', 'id_ID').format(selectedDate);
+    final selectedDateStr = DateFormat(
+      'EEEE, dd MMM',
+      'id_ID',
+    ).format(selectedDate);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -88,8 +91,8 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                     Text(
                       'Tren Penjualan 7 Hari',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     Text(
                       selectedDateStr,
@@ -102,8 +105,10 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.secondary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -134,10 +139,11 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                   children: List.generate(last7Days.length, (index) {
                     final date = last7Days[index];
                     final amount = dailyTotals[date] ?? 0.0;
-                    final rawFactor =
-                        (amount / effectiveMax).clamp(0.05, 1.0);
-                    final animatedFactor =
-                        (rawFactor * progress).clamp(0.05, 1.0);
+                    final rawFactor = (amount / effectiveMax).clamp(0.05, 1.0);
+                    final animatedFactor = (rawFactor * progress).clamp(
+                      0.05,
+                      1.0,
+                    );
 
                     final isToday = index == 6;
                     final isSelected = activeIdx == index;
@@ -183,8 +189,9 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                                   child: FractionallySizedBox(
                                     heightFactor: animatedFactor,
                                     child: AnimatedContainer(
-                                      duration:
-                                          const Duration(milliseconds: 220),
+                                      duration: const Duration(
+                                        milliseconds: 220,
+                                      ),
                                       width: double.infinity,
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
@@ -196,27 +203,28 @@ class _SalesTrendChartState extends State<SalesTrendChart> {
                                                   const Color(0xFF10B981),
                                                 ]
                                               : isToday
-                                                  ? [
-                                                      AppTheme.primary,
-                                                      AppTheme.primary
-                                                          .withValues(
-                                                              alpha: 0.75),
-                                                    ]
-                                                  : [
-                                                      AppTheme.primary
-                                                          .withValues(
-                                                              alpha: 0.75),
-                                                      AppTheme.primary
-                                                          .withValues(
-                                                              alpha: 0.45),
-                                                    ],
+                                              ? [
+                                                  AppTheme.primary,
+                                                  AppTheme.primary.withValues(
+                                                    alpha: 0.75,
+                                                  ),
+                                                ]
+                                              : [
+                                                  AppTheme.primary.withValues(
+                                                    alpha: 0.75,
+                                                  ),
+                                                  AppTheme.primary.withValues(
+                                                    alpha: 0.45,
+                                                  ),
+                                                ],
                                         ),
                                         borderRadius:
                                             const BorderRadius.vertical(
-                                          top: Radius.circular(
-                                              AppTheme.radiusSm),
-                                          bottom: Radius.circular(3),
-                                        ),
+                                              top: Radius.circular(
+                                                AppTheme.radiusSm,
+                                              ),
+                                              bottom: Radius.circular(3),
+                                            ),
                                         boxShadow: isSelected
                                             ? [
                                                 BoxShadow(

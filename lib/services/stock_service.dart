@@ -22,17 +22,21 @@ class StockService {
       final list = snap.docs
           .map((doc) => StockMovementModel.fromFirestore(doc))
           .where((m) {
-        if (productId != null &&
-            productId.isNotEmpty &&
-            productId != 'all' &&
-            m.productId != productId) {
-          return false;
-        }
-        if (type != null && type.isNotEmpty && type != 'all' && m.type != type) {
-          return false;
-        }
-        return true;
-      }).toList();
+            if (productId != null &&
+                productId.isNotEmpty &&
+                productId != 'all' &&
+                m.productId != productId) {
+              return false;
+            }
+            if (type != null &&
+                type.isNotEmpty &&
+                type != 'all' &&
+                m.type != type) {
+              return false;
+            }
+            return true;
+          })
+          .toList();
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
@@ -124,8 +128,9 @@ class StockService {
     batch.set(movementRef, movement.toMap());
 
     // 3. Log activity audit
-    final logRef =
-        _firestore.collection(AppConstants.activityLogsCollection).doc();
+    final logRef = _firestore
+        .collection(AppConstants.activityLogsCollection)
+        .doc();
     batch.set(logRef, {
       'userId': userId,
       'userName': userName,

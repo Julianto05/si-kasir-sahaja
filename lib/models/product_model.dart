@@ -72,8 +72,9 @@ class ProductModel {
   double get profitPerUnit => sellingPrice - costPrice;
 
   /// Profit margin percentage.
-  double get profitMarginPercentage =>
-      sellingPrice > 0 ? ((sellingPrice - costPrice) / sellingPrice) * 100 : 0.0;
+  double get profitMarginPercentage => sellingPrice > 0
+      ? ((sellingPrice - costPrice) / sellingPrice) * 100
+      : 0.0;
 
   /// Creates a [ProductModel] from a Firestore document snapshot.
   factory ProductModel.fromFirestore(DocumentSnapshot doc) {

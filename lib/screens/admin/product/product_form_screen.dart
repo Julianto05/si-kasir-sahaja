@@ -23,9 +23,7 @@ class ProductFormScreen extends StatefulWidget {
   static Future<bool?> navigate(BuildContext context, {ProductModel? product}) {
     return Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => ProductFormScreen(product: product),
-      ),
+      MaterialPageRoute(builder: (_) => ProductFormScreen(product: product)),
     );
   }
 
@@ -80,15 +78,20 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     _nameController = TextEditingController(text: p?.name ?? '');
     _brandController = TextEditingController(text: p?.brand ?? '');
     _variantsController = TextEditingController(
-        text: p != null && p.variants.isNotEmpty ? p.variants.join(', ') : '');
+      text: p != null && p.variants.isNotEmpty ? p.variants.join(', ') : '',
+    );
     _costPriceController = TextEditingController(
-        text: p != null ? p.costPrice.toInt().toString() : '');
+      text: p != null ? p.costPrice.toInt().toString() : '',
+    );
     _sellingPriceController = TextEditingController(
-        text: p != null ? p.sellingPrice.toInt().toString() : '');
-    _stockController =
-        TextEditingController(text: p != null ? p.stock.toString() : '0');
+      text: p != null ? p.sellingPrice.toInt().toString() : '',
+    );
+    _stockController = TextEditingController(
+      text: p != null ? p.stock.toString() : '0',
+    );
     _minStockController = TextEditingController(
-        text: p != null ? p.minimumStock.toString() : '5');
+      text: p != null ? p.minimumStock.toString() : '5',
+    );
     _unitController = TextEditingController(text: p?.unit ?? 'pcs');
 
     _selectedCategoryId = p?.categoryId;
@@ -339,8 +342,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             if (val != null) {
                               setState(() {
                                 _selectedCategoryId = val;
-                                final found = activeCategories
-                                    .firstWhere((c) => c.id == val);
+                                final found = activeCategories.firstWhere(
+                                  (c) => c.id == val,
+                                );
                                 _selectedCategoryName = found.name;
                               });
                             }
@@ -393,7 +397,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                               prefixIcon: const Icon(Icons.barcode_reader),
                               suffixIcon: IconButton(
                                 icon: const Icon(
-                                    Icons.center_focus_strong_rounded),
+                                  Icons.center_focus_strong_rounded,
+                                ),
                                 tooltip: 'Scan Barcode',
                                 onPressed: _scanBarcode,
                               ),
@@ -414,8 +419,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             decoration: const InputDecoration(
                               labelText: 'Merek / Brand',
                               hintText: 'e.g. Aqua, Indomie',
-                              prefixIcon:
-                                  Icon(Icons.branding_watermark_outlined),
+                              prefixIcon: Icon(
+                                Icons.branding_watermark_outlined,
+                              ),
                             ),
                           ),
                         ),
@@ -437,8 +443,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
                     // Expiry Date Picker
                     ListTile(
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
                       tileColor: AppTheme.surfaceContainerLow,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusMd),
@@ -446,14 +453,18 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           color: AppTheme.outlineVariant.withValues(alpha: 0.5),
                         ),
                       ),
-                      leading: const Icon(Icons.event_busy_rounded,
-                          color: AppTheme.primary),
+                      leading: const Icon(
+                        Icons.event_busy_rounded,
+                        color: AppTheme.primary,
+                      ),
                       title: Text(
                         _expiryDate == null
                             ? 'Tanggal Kedaluwarsa (Opsional)'
                             : 'Kedaluwarsa: ${_expiryDate!.day.toString().padLeft(2, "0")}/${_expiryDate!.month.toString().padLeft(2, "0")}/${_expiryDate!.year}',
                         style: const TextStyle(
-                            fontSize: 13, fontWeight: FontWeight.w600),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                       trailing: _expiryDate != null
                           ? IconButton(
@@ -465,7 +476,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       onTap: () async {
                         final picked = await showDatePicker(
                           context: context,
-                          initialDate: _expiryDate ??
+                          initialDate:
+                              _expiryDate ??
                               DateTime.now().add(const Duration(days: 90)),
                           firstDate: DateTime(2024),
                           lastDate: DateTime(2035),
@@ -489,7 +501,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _costPriceController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
@@ -514,7 +526,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _sellingPriceController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
@@ -550,7 +562,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _stockController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
@@ -574,7 +586,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _minStockController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly
+                              FilteringTextInputFormatter.digitsOnly,
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
@@ -603,8 +615,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         hintText: 'pcs, kg, botol, pack',
                         prefixIcon: Icon(Icons.straighten_rounded),
                       ),
-                      validator: (val) =>
-                          val == null || val.trim().isEmpty ? 'Satuan wajib' : null,
+                      validator: (val) => val == null || val.trim().isEmpty
+                          ? 'Satuan wajib'
+                          : null,
                     ),
                     const SizedBox(height: 8),
 
@@ -660,7 +673,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                               )
                             : const Icon(Icons.save_rounded),
                         label: Text(
-                            _isEdit ? 'Simpan Perubahan' : 'Simpan Produk'),
+                          _isEdit ? 'Simpan Perubahan' : 'Simpan Produk',
+                        ),
                       ),
                     ),
                   ],
@@ -675,7 +689,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
 
   Widget _buildPhotoPicker() {
     final existingUrl = widget.product?.imageUrl;
-    final hasImage = _croppedImageBytes != null ||
+    final hasImage =
+        _croppedImageBytes != null ||
         _selectedImageFile != null ||
         (existingUrl != null && existingUrl.isNotEmpty);
 
@@ -705,10 +720,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       Image.memory(_croppedImageBytes!, fit: BoxFit.cover)
                     else if (_selectedImageFile != null)
                       kIsWeb
-                          ? Image.network(_selectedImageFile!.path,
-                              fit: BoxFit.cover)
-                          : Image.file(File(_selectedImageFile!.path),
-                              fit: BoxFit.cover)
+                          ? Image.network(
+                              _selectedImageFile!.path,
+                              fit: BoxFit.cover,
+                            )
+                          : Image.file(
+                              File(_selectedImageFile!.path),
+                              fit: BoxFit.cover,
+                            )
                     else if (existingUrl != null && existingUrl.isNotEmpty)
                       Image.network(existingUrl, fit: BoxFit.cover)
                     else
@@ -740,11 +759,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                         right: 6,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.65),
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: const Text(
                             '1:1',
@@ -771,8 +793,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 label: const Text('Galeri'),
                 style: OutlinedButton.styleFrom(
                   minimumSize: Size.zero,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -782,16 +806,21 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 label: const Text('Kamera'),
                 style: OutlinedButton.styleFrom(
                   minimumSize: Size.zero,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
               if (_croppedImageBytes != null || _selectedImageFile != null) ...[
                 const SizedBox(width: 8),
                 IconButton(
                   tooltip: 'Hapus Foto Terpilih',
-                  icon: const Icon(Icons.delete_outline_rounded,
-                      color: AppTheme.error, size: 20),
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: AppTheme.error,
+                    size: 20,
+                  ),
                   onPressed: () {
                     setState(() {
                       _selectedImageFile = null;
@@ -813,9 +842,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         Text(
           title,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primary,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primary,
+          ),
         ),
         const SizedBox(width: 8),
         const Expanded(child: Divider()),
@@ -862,8 +891,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color:
-                      isLoss ? AppTheme.error : AppTheme.onSecondaryContainer,
+                  color: isLoss
+                      ? AppTheme.error
+                      : AppTheme.onSecondaryContainer,
                 ),
               ),
             ],

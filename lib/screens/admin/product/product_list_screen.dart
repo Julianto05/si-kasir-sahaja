@@ -69,7 +69,9 @@ class ProductListScreen extends StatelessWidget {
                   builder: (context, provider, _) {
                     if (provider.isLoading) {
                       return const Center(
-                        child: CircularProgressIndicator(color: AppTheme.primary),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
                       );
                     }
 
@@ -96,14 +98,16 @@ class ProductListScreen extends StatelessWidget {
                               ),
                               gridDelegate:
                                   const SliverGridDelegateWithMaxCrossAxisExtent(
-                                maxCrossAxisExtent: 360,
-                                mainAxisExtent: 140,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                              ),
+                                    maxCrossAxisExtent: 360,
+                                    mainAxisExtent: 140,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
                               itemCount: products.length,
                               itemBuilder: (context, index) {
-                                return _ProductGridCard(product: products[index]);
+                                return _ProductGridCard(
+                                  product: products[index],
+                                );
                               },
                             );
                           }
@@ -233,17 +237,12 @@ class ProductListScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const PulseIndicator(
-                          color: AppTheme.error,
-                          size: 7,
-                        ),
+                        const PulseIndicator(color: AppTheme.error, size: 7),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '$lowStockCount produk memiliki stok menipis!',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
+                            style: Theme.of(context).textTheme.labelMedium
                                 ?.copyWith(
                                   color: AppTheme.onErrorContainer,
                                   fontWeight: FontWeight.bold,
@@ -344,7 +343,8 @@ class ProductListScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, ProductProvider provider) {
-    final isFiltering = provider.searchQuery.isNotEmpty ||
+    final isFiltering =
+        provider.searchQuery.isNotEmpty ||
         provider.selectedCategoryId != 'all' ||
         provider.showOnlyLowStock;
 
@@ -411,7 +411,8 @@ class ProductListScreen extends StatelessWidget {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: SingleChildScrollView(
@@ -436,14 +437,16 @@ class ProductListScreen extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text(
-                            'Data CSV produk berhasil disalin ke Clipboard! Tempelkan di Excel.'),
+                          'Data CSV produk berhasil disalin ke Clipboard! Tempelkan di Excel.',
+                        ),
                         backgroundColor: AppTheme.secondary,
                       ),
                     );
                   },
                   icon: const Icon(Icons.copy_all_rounded, size: 18),
                   label: Text(
-                      'Salin Export CSV (${prodProvider.products.length} Produk)'),
+                    'Salin Export CSV (${prodProvider.products.length} Produk)',
+                  ),
                 ),
                 const SizedBox(height: 14),
                 TextField(
@@ -474,18 +477,19 @@ class ProductListScreen extends StatelessWidget {
                               .read<CategoryProvider>()
                               .activeCategories
                               .firstOrNull;
-                          final count =
-                              await prodProvider.importProductsFromCsv(
-                            importCtrl.text,
-                            defaultCategoryId: defaultCat?.id ?? 'default',
-                            defaultCategoryName: defaultCat?.name ?? 'Umum',
-                          );
+                          final count = await prodProvider
+                              .importProductsFromCsv(
+                                importCtrl.text,
+                                defaultCategoryId: defaultCat?.id ?? 'default',
+                                defaultCategoryName: defaultCat?.name ?? 'Umum',
+                              );
                           if (ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content:
-                                    Text('$count produk berhasil di-import!'),
+                                content: Text(
+                                  '$count produk berhasil di-import!',
+                                ),
                                 backgroundColor: AppTheme.secondary,
                               ),
                             );
@@ -567,10 +571,8 @@ class _ProductListCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           product.name,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -583,8 +585,9 @@ class _ProductListCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.errorContainer,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: const Text(
                             'Nonaktif',
@@ -605,10 +608,10 @@ class _ProductListCard extends StatelessWidget {
                       Text(
                         product.code,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primary,
-                              fontSize: 11.5,
-                            ),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                          fontSize: 11.5,
+                        ),
                       ),
                       if (product.categoryName.isNotEmpty) ...[
                         const Text(
@@ -648,8 +651,8 @@ class _ProductListCard extends StatelessWidget {
                             color: product.isExpired
                                 ? AppTheme.error
                                 : (product.isNearExpiry
-                                    ? const Color(0xFFD97706)
-                                    : AppTheme.outline),
+                                      ? const Color(0xFFD97706)
+                                      : AppTheme.outline),
                           ),
                         ),
                       ],
@@ -678,8 +681,9 @@ class _ProductListCard extends StatelessWidget {
                           color: product.isLowStock
                               ? AppTheme.errorContainer
                               : AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
+                          ),
                         ),
                         child: Text(
                           'Stok: ${product.stock} ${product.unit}',
@@ -739,9 +743,11 @@ class _ProductListCard extends StatelessWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(product.isArchived
-                          ? 'Pulihkan dari Arsip'
-                          : 'Arsipkan Produk'),
+                      Text(
+                        product.isArchived
+                            ? 'Pulihkan dari Arsip'
+                            : 'Arsipkan Produk',
+                      ),
                     ],
                   ),
                 ),
@@ -750,8 +756,11 @@ class _ProductListCard extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline,
-                          size: 20, color: AppTheme.error),
+                      Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: AppTheme.error,
+                      ),
                       SizedBox(width: 8),
                       Text('Hapus', style: TextStyle(color: AppTheme.error)),
                     ],

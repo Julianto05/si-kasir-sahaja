@@ -63,7 +63,9 @@ class StorageService {
   /// Uploads a product image from an [XFile] to Firebase Storage (supports all formats).
   Future<String> uploadProductImage(XFile imageFile, String productId) async {
     final Uint8List bytes = await imageFile.readAsBytes();
-    final fileName = imageFile.name.isNotEmpty ? imageFile.name : imageFile.path;
+    final fileName = imageFile.name.isNotEmpty
+        ? imageFile.name
+        : imageFile.path;
     final ext = getExtension(fileName, bytes);
     final mime = getMimeType(fileName, bytes);
 

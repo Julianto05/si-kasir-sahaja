@@ -26,10 +26,8 @@ class StockAdjustmentDialog extends StatefulWidget {
     return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (ctx) => StockAdjustmentDialog(
-        product: product,
-        isRestock: isRestock,
-      ),
+      builder: (ctx) =>
+          StockAdjustmentDialog(product: product, isRestock: isRestock),
     );
   }
 
@@ -51,7 +49,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
       text: widget.isRestock ? '' : widget.product.stock.toString(),
     );
     _notesController = TextEditingController(
-      text: widget.isRestock ? 'Restock dari supplier' : 'Penyesuaian stok fisik',
+      text: widget.isRestock
+          ? 'Restock dari supplier'
+          : 'Penyesuaian stok fisik',
     );
   }
 
@@ -131,7 +131,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
   @override
   Widget build(BuildContext context) {
     final isDamageOrExpired =
-        !widget.isRestock && (_adjustmentMode == 'damaged' || _adjustmentMode == 'expired');
+        !widget.isRestock &&
+        (_adjustmentMode == 'damaged' || _adjustmentMode == 'expired');
 
     return Dialog(
       backgroundColor: AppTheme.surfaceContainerLowest,
@@ -157,8 +158,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         color: widget.isRestock
                             ? AppTheme.secondaryContainer
                             : AppTheme.primary.withValues(alpha: 0.1),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusDefault),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusDefault,
+                        ),
                       ),
                       child: Icon(
                         widget.isRestock
@@ -176,16 +178,15 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                         widget.isRestock
                             ? 'Tambah Stok Masuk'
                             : 'Penyesuaian / Rusak / Kedaluwarsa',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed:
-                          _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -207,13 +208,16 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                           children: [
                             Text(
                               widget.product.name,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             Text(
                               'SKU: ${widget.product.code}',
                               style: const TextStyle(
-                                  fontSize: 12, color: AppTheme.outline),
+                                fontSize: 12,
+                                color: AppTheme.outline,
+                              ),
                             ),
                           ],
                         ),
@@ -221,9 +225,13 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text('Stok Saat Ini',
-                              style: TextStyle(
-                                  fontSize: 11, color: AppTheme.outline)),
+                          const Text(
+                            'Stok Saat Ini',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
                           Text(
                             '${widget.product.stock} ${widget.product.unit}',
                             style: AppTheme.numericStyle.copyWith(
@@ -267,12 +275,12 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                       setState(() {
                         _adjustmentMode = v;
                         if (v == 'opname') {
-                          _qtyController.text =
-                              widget.product.stock.toString();
+                          _qtyController.text = widget.product.stock.toString();
                           _notesController.text = 'Penyesuaian stok fisik';
                         } else if (v == 'damaged') {
                           _qtyController.text = '1';
-                          _notesController.text = 'Barang rusak / cacat kemasan';
+                          _notesController.text =
+                              'Barang rusak / cacat kemasan';
                         } else {
                           _qtyController.text = '1';
                           _notesController.text =
@@ -294,8 +302,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                     labelText: widget.isRestock
                         ? 'Jumlah Stok Ditambahkan (${widget.product.unit}) *'
                         : isDamageOrExpired
-                            ? 'Jumlah Barang Rusak/Expired (${widget.product.unit}) *'
-                            : 'Total Stok Fisik Terbaru (${widget.product.unit}) *',
+                        ? 'Jumlah Barang Rusak/Expired (${widget.product.unit}) *'
+                        : 'Total Stok Fisik Terbaru (${widget.product.unit}) *',
                     hintText: widget.isRestock ? 'e.g. 50' : 'e.g. 120',
                     prefixIcon: const Icon(Icons.numbers_rounded),
                   ),
@@ -341,8 +349,9 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed:
-                            _isSubmitting ? null : () => Navigator.pop(context),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Batal'),
                       ),
                     ),
@@ -354,8 +363,8 @@ class _StockAdjustmentDialogState extends State<StockAdjustmentDialog> {
                           backgroundColor: widget.isRestock
                               ? AppTheme.secondary
                               : (isDamageOrExpired
-                                  ? AppTheme.error
-                                  : AppTheme.primary),
+                                    ? AppTheme.error
+                                    : AppTheme.primary),
                         ),
                         child: _isSubmitting
                             ? const SizedBox(

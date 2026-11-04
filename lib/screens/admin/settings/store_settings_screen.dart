@@ -62,18 +62,23 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
     _addressController = TextEditingController(text: settings.storeAddress);
     _phoneController = TextEditingController(text: settings.storePhone);
     _emailController = TextEditingController(text: settings.storeEmail);
-    _taxController =
-        TextEditingController(text: settings.taxPercentage.toString());
+    _taxController = TextEditingController(
+      text: settings.taxPercentage.toString(),
+    );
     _serviceController = TextEditingController(
-        text: settings.serviceChargePercentage.toString());
+      text: settings.serviceChargePercentage.toString(),
+    );
     _footerController = TextEditingController(text: settings.receiptFooter);
     _prefixController = TextEditingController(text: settings.invoicePrefix);
     _pointsPerAmountController = TextEditingController(
-        text: settings.pointsPerAmount.toInt().toString());
+      text: settings.pointsPerAmount.toInt().toString(),
+    );
     _pointRedeemValueController = TextEditingController(
-        text: settings.pointRedeemValue.toInt().toString());
+      text: settings.pointRedeemValue.toInt().toString(),
+    );
     _memberDiscountController = TextEditingController(
-        text: settings.memberDiscountPercentage.toString());
+      text: settings.memberDiscountPercentage.toString(),
+    );
 
     _enableTax = settings.enableTax;
     _enableService = settings.enableServiceCharge;
@@ -128,8 +133,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
       enableBarcodeScanner: _enableBarcodeScanner,
     );
 
-    final success =
-        await context.read<StoreSettingsProvider>().updateSettings(updated);
+    final success = await context.read<StoreSettingsProvider>().updateSettings(
+      updated,
+    );
 
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -160,14 +166,16 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
       'suppliersCount': suppliers.length,
       'productsCsv': context.read<ProductProvider>().exportProductsToCsv(),
     };
-    final jsonString =
-        const JsonEncoder.withIndent('  ').convert(backupPayload);
+    final jsonString = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(backupPayload);
 
     showDialog(
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 480),
           child: SingleChildScrollView(
@@ -183,8 +191,7 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                 const SizedBox(height: 6),
                 Text(
                   'Ringkasan: ${products.length} Produk, ${categories.length} Kategori, ${customers.length} Pelanggan, ${suppliers.length} Supplier.',
-                  style:
-                      const TextStyle(fontSize: 12, color: AppTheme.outline),
+                  style: const TextStyle(fontSize: 12, color: AppTheme.outline),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -198,7 +205,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                     child: SelectableText(
                       jsonString,
                       style: const TextStyle(
-                          fontSize: 10.5, fontFamily: 'monospace'),
+                        fontSize: 10.5,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
                 ),
@@ -220,7 +229,8 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                  'Backup JSON berhasil disalin ke Clipboard!'),
+                                'Backup JSON berhasil disalin ke Clipboard!',
+                              ),
                               backgroundColor: AppTheme.secondary,
                             ),
                           );
@@ -347,314 +357,331 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                           );
                         },
                       ),
-                    const SizedBox(height: 24),
+                      const SizedBox(height: 24),
 
-                    // Section 2: Metode Pembayaran & Perangkat
-                    _buildSectionHeader('Metode Pembayaran & Perangkat'),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Pilih metode pembayaran yang aktif di layar Kasir / POS:',
-                      style: TextStyle(fontSize: 12, color: AppTheme.outline),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      children: _allPaymentMethods.map((m) {
-                        final selected = _activePaymentMethods.contains(m);
-                        return FilterChip(
-                          label: Text(m),
-                          selected: selected,
-                          selectedColor: AppTheme.secondaryContainer,
-                          onSelected: (val) {
-                            setState(() {
-                              if (val) {
-                                _activePaymentMethods.add(m);
-                              } else if (_activePaymentMethods.length > 1) {
-                                _activePaymentMethods.remove(m);
-                              }
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    SwitchListTile(
-                      title: const Text('Aktifkan Pemindai Barcode Kamera'),
-                      subtitle: const Text(
-                          'Tampilkan tombol scan barcode cepat pada POS & Produk'),
-                      value: _enableBarcodeScanner,
-                      activeThumbColor: AppTheme.secondary,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) =>
-                          setState(() => _enableBarcodeScanner = val),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Section 3: Loyalitas Pelanggan & Member (PRD Section 5.8)
-                    _buildSectionHeader('Program Loyalitas & Member'),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      title: const Text('Aktifkan Poin Loyalitas Member'),
-                      subtitle: const Text(
-                          'Pelanggan member otomatis mendapat & menukar poin'),
-                      value: _enableLoyaltyPoints,
-                      activeThumbColor: AppTheme.secondary,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) =>
-                          setState(() => _enableLoyaltyPoints = val),
-                    ),
-                    if (_enableLoyaltyPoints) ...[
+                      // Section 2: Metode Pembayaran & Perangkat
+                      _buildSectionHeader('Metode Pembayaran & Perangkat'),
                       const SizedBox(height: 8),
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          if (constraints.maxWidth < 460) {
-                            return Column(
+                      const Text(
+                        'Pilih metode pembayaran yang aktif di layar Kasir / POS:',
+                        style: TextStyle(fontSize: 12, color: AppTheme.outline),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: _allPaymentMethods.map((m) {
+                          final selected = _activePaymentMethods.contains(m);
+                          return FilterChip(
+                            label: Text(m),
+                            selected: selected,
+                            selectedColor: AppTheme.secondaryContainer,
+                            onSelected: (val) {
+                              setState(() {
+                                if (val) {
+                                  _activePaymentMethods.add(m);
+                                } else if (_activePaymentMethods.length > 1) {
+                                  _activePaymentMethods.remove(m);
+                                }
+                              });
+                            },
+                          );
+                        }).toList(),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Aktifkan Pemindai Barcode Kamera'),
+                        subtitle: const Text(
+                          'Tampilkan tombol scan barcode cepat pada POS & Produk',
+                        ),
+                        value: _enableBarcodeScanner,
+                        activeThumbColor: AppTheme.secondary,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) =>
+                            setState(() => _enableBarcodeScanner = val),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Section 3: Loyalitas Pelanggan & Member (PRD Section 5.8)
+                      _buildSectionHeader('Program Loyalitas & Member'),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        title: const Text('Aktifkan Poin Loyalitas Member'),
+                        subtitle: const Text(
+                          'Pelanggan member otomatis mendapat & menukar poin',
+                        ),
+                        value: _enableLoyaltyPoints,
+                        activeThumbColor: AppTheme.secondary,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) =>
+                            setState(() => _enableLoyaltyPoints = val),
+                      ),
+                      if (_enableLoyaltyPoints) ...[
+                        const SizedBox(height: 8),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            if (constraints.maxWidth < 460) {
+                              return Column(
+                                children: [
+                                  TextFormField(
+                                    controller: _pointsPerAmountController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Belanja per 1 Poin (Rp)',
+                                      prefixText: 'Rp ',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  TextFormField(
+                                    controller: _pointRedeemValueController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nilai Tukar 1 Poin (Rp)',
+                                      prefixText: 'Rp ',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            return Row(
                               children: [
-                                TextFormField(
-                                  controller: _pointsPerAmountController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Belanja per 1 Poin (Rp)',
-                                    prefixText: 'Rp ',
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _pointsPerAmountController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Belanja per 1 Poin (Rp)',
+                                      prefixText: 'Rp ',
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: 10),
-                                TextFormField(
-                                  controller: _pointRedeemValueController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nilai Tukar 1 Poin (Rp)',
-                                    prefixText: 'Rp ',
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _pointRedeemValueController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Nilai Tukar 1 Poin (Rp)',
+                                      prefixText: 'Rp ',
+                                    ),
                                   ),
                                 ),
                               ],
                             );
-                          }
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _pointsPerAmountController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Belanja per 1 Poin (Rp)',
-                                    prefixText: 'Rp ',
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: TextFormField(
-                                  controller: _pointRedeemValueController,
-                                  keyboardType: TextInputType.number,
-                                  decoration: const InputDecoration(
-                                    labelText: 'Nilai Tukar 1 Poin (Rp)',
-                                    prefixText: 'Rp ',
-                                  ),
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    TextFormField(
-                      controller: _memberDiscountController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Diskon Otomatis Member (%)',
-                        suffixText: '%',
-                        prefixIcon: Icon(Icons.card_membership_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Section 4: Pajak & Biaya Layanan
-                    _buildSectionHeader('Pajak & Biaya Tambahan'),
-                    const SizedBox(height: 12),
-
-                    SwitchListTile(
-                      title: const Text('Aktifkan Pajak (PPN)'),
-                      subtitle:
-                          const Text('Ditambahkan otomatis saat checkout'),
-                      value: _enableTax,
-                      activeThumbColor: AppTheme.secondary,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setState(() => _enableTax = val),
-                    ),
-
-                    if (_enableTax) ...[
-                      const SizedBox(height: 8),
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                      ],
                       TextFormField(
-                        controller: _taxController,
+                        controller: _memberDiscountController,
                         keyboardType: TextInputType.number,
                         decoration: const InputDecoration(
-                          labelText: 'Persentase Pajak (%)',
-                          hintText: '11',
+                          labelText: 'Diskon Otomatis Member (%)',
                           suffixText: '%',
-                          prefixIcon: Icon(Icons.percent_rounded),
+                          prefixIcon: Icon(Icons.card_membership_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Section 4: Pajak & Biaya Layanan
+                      _buildSectionHeader('Pajak & Biaya Tambahan'),
+                      const SizedBox(height: 12),
+
+                      SwitchListTile(
+                        title: const Text('Aktifkan Pajak (PPN)'),
+                        subtitle: const Text(
+                          'Ditambahkan otomatis saat checkout',
+                        ),
+                        value: _enableTax,
+                        activeThumbColor: AppTheme.secondary,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) => setState(() => _enableTax = val),
+                      ),
+
+                      if (_enableTax) ...[
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _taxController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Persentase Pajak (%)',
+                            hintText: '11',
+                            suffixText: '%',
+                            prefixIcon: Icon(Icons.percent_rounded),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+
+                      SwitchListTile(
+                        title: const Text(
+                          'Aktifkan Biaya Layanan (Service Charge)',
+                        ),
+                        subtitle: const Text(
+                          'Ditambahkan pada total transaksi',
+                        ),
+                        value: _enableService,
+                        activeThumbColor: AppTheme.secondary,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: (val) =>
+                            setState(() => _enableService = val),
+                      ),
+
+                      if (_enableService) ...[
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: _serviceController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Persentase Service Charge (%)',
+                            hintText: '5',
+                            suffixText: '%',
+                            prefixIcon: Icon(Icons.room_service_outlined),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24),
+
+                      // Section 5: Format Struk
+                      _buildSectionHeader('Format Struk & Nota'),
+                      const SizedBox(height: 12),
+
+                      TextFormField(
+                        controller: _prefixController,
+                        decoration: const InputDecoration(
+                          labelText: 'Prefix Nomor Nota',
+                          hintText: 'TRX',
+                          prefixIcon: Icon(Icons.receipt_outlined),
                         ),
                       ),
                       const SizedBox(height: 12),
-                    ],
 
-                    SwitchListTile(
-                      title:
-                          const Text('Aktifkan Biaya Layanan (Service Charge)'),
-                      subtitle: const Text('Ditambahkan pada total transaksi'),
-                      value: _enableService,
-                      activeThumbColor: AppTheme.secondary,
-                      contentPadding: EdgeInsets.zero,
-                      onChanged: (val) => setState(() => _enableService = val),
-                    ),
-
-                    if (_enableService) ...[
-                      const SizedBox(height: 8),
                       TextFormField(
-                        controller: _serviceController,
-                        keyboardType: TextInputType.number,
+                        controller: _footerController,
+                        maxLines: 2,
                         decoration: const InputDecoration(
-                          labelText: 'Persentase Service Charge (%)',
-                          hintText: '5',
-                          suffixText: '%',
-                          prefixIcon: Icon(Icons.room_service_outlined),
+                          labelText: 'Pesan Footer Struk',
+                          hintText:
+                              'e.g. Barang yang dibeli tidak dapat ditukar',
+                          prefixIcon: Icon(Icons.notes_rounded),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Section 6: Backup & Reset Data Operasional
+                      _buildSectionHeader('Backup & Pemeliharaan Data'),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => _showBackupDatabaseDialog(context),
+                        icon: const Icon(
+                          Icons.cloud_download_outlined,
+                          size: 18,
+                        ),
+                        label: const Text('Backup / Export Data Toko (JSON)'),
+                      ),
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppTheme.error.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
+                          border: Border.all(
+                            color: AppTheme.error.withValues(alpha: 0.25),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.errorContainer,
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusSm,
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    Icons.restore_page_rounded,
+                                    color: AppTheme.error,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Reset Data Operasional',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: AppTheme.error,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Hapus riwayat transaksi, shift, atau log stok (1 Hari, Mingguan, Bulanan, Custom)',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: AppTheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                onPressed: () => ResetDataDialog.show(context),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppTheme.error,
+                                  side: const BorderSide(color: AppTheme.error),
+                                ),
+                                icon: const Icon(
+                                  Icons.delete_sweep_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Buka Pengaturan Reset Data'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Submit Button
+                      SizedBox(
+                        height: AppTheme.touchTarget,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSaving ? null : _handleSave,
+                          icon: _isSaving
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_rounded),
+                          label: const Text('Simpan Pengaturan'),
                         ),
                       ),
                     ],
-                    const SizedBox(height: 24),
-
-                    // Section 5: Format Struk
-                    _buildSectionHeader('Format Struk & Nota'),
-                    const SizedBox(height: 12),
-
-                    TextFormField(
-                      controller: _prefixController,
-                      decoration: const InputDecoration(
-                        labelText: 'Prefix Nomor Nota',
-                        hintText: 'TRX',
-                        prefixIcon: Icon(Icons.receipt_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    TextFormField(
-                      controller: _footerController,
-                      maxLines: 2,
-                      decoration: const InputDecoration(
-                        labelText: 'Pesan Footer Struk',
-                        hintText: 'e.g. Barang yang dibeli tidak dapat ditukar',
-                        prefixIcon: Icon(Icons.notes_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Section 6: Backup & Reset Data Operasional
-                    _buildSectionHeader('Backup & Pemeliharaan Data'),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: () => _showBackupDatabaseDialog(context),
-                      icon: const Icon(Icons.cloud_download_outlined, size: 18),
-                      label: const Text('Backup / Export Data Toko (JSON)'),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppTheme.error.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                        border: Border.all(
-                          color: AppTheme.error.withValues(alpha: 0.25),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: AppTheme.errorContainer,
-                                  borderRadius:
-                                      BorderRadius.circular(AppTheme.radiusSm),
-                                ),
-                                child: const Icon(
-                                  Icons.restore_page_rounded,
-                                  color: AppTheme.error,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Reset Data Operasional',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: AppTheme.error,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Hapus riwayat transaksi, shift, atau log stok (1 Hari, Mingguan, Bulanan, Custom)',
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppTheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: () => ResetDataDialog.show(context),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.error,
-                                side: const BorderSide(color: AppTheme.error),
-                              ),
-                              icon: const Icon(Icons.delete_sweep_rounded,
-                                  size: 18),
-                              label: const Text('Buka Pengaturan Reset Data'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    // Submit Button
-                    SizedBox(
-                      height: AppTheme.touchTarget,
-                      child: ElevatedButton.icon(
-                        onPressed: _isSaving ? null : _handleSave,
-                        icon: _isSaving
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.save_rounded),
-                        label: const Text('Simpan Pengaturan'),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -664,9 +691,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
         Text(
           title,
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: AppTheme.primary,
-              ),
+            fontWeight: FontWeight.bold,
+            color: AppTheme.primary,
+          ),
         ),
         const SizedBox(width: 8),
         const Expanded(child: Divider()),

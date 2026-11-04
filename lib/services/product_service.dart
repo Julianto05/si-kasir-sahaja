@@ -19,18 +19,18 @@ class ProductService {
       final list = snapshot.docs
           .map((doc) => ProductModel.fromFirestore(doc))
           .where((p) {
-        if (onlyActive && !p.isActive) return false;
-        if (categoryId != null &&
-            categoryId.isNotEmpty &&
-            categoryId != 'all' &&
-            p.categoryId != categoryId) {
-          return false;
-        }
-        return true;
-      }).toList();
+            if (onlyActive && !p.isActive) return false;
+            if (categoryId != null &&
+                categoryId.isNotEmpty &&
+                categoryId != 'all' &&
+                p.categoryId != categoryId) {
+              return false;
+            }
+            return true;
+          })
+          .toList();
 
-      list.sort((a, b) =>
-          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       return list;
     });
   }
@@ -44,18 +44,18 @@ class ProductService {
     final list = snapshot.docs
         .map((doc) => ProductModel.fromFirestore(doc))
         .where((p) {
-      if (onlyActive && !p.isActive) return false;
-      if (categoryId != null &&
-          categoryId.isNotEmpty &&
-          categoryId != 'all' &&
-          p.categoryId != categoryId) {
-        return false;
-      }
-      return true;
-    }).toList();
+          if (onlyActive && !p.isActive) return false;
+          if (categoryId != null &&
+              categoryId.isNotEmpty &&
+              categoryId != 'all' &&
+              p.categoryId != categoryId) {
+            return false;
+          }
+          return true;
+        })
+        .toList();
 
-    list.sort((a, b) =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return list;
   }
 

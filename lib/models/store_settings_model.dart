@@ -73,7 +73,8 @@ class StoreSettingsModel {
       taxPercentage: (data['taxPercentage'] as num?)?.toDouble() ?? 0.0,
       serviceChargePercentage:
           (data['serviceChargePercentage'] as num?)?.toDouble() ?? 0.0,
-      receiptFooter: data['receiptFooter'] as String? ??
+      receiptFooter:
+          data['receiptFooter'] as String? ??
           'Terima kasih atas kunjungan Anda!',
       invoicePrefix: data['invoicePrefix'] as String? ?? 'TRX',
       enableTax: data['enableTax'] as bool? ?? false,

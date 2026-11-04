@@ -95,10 +95,10 @@ class ImageCropperUtil {
 
     final picture = recorder.endRecording();
     final croppedUiImage = await picture.toImage(targetSide, targetSide);
-    final byteData =
-        await croppedUiImage.toByteData(format: ui.ImageByteFormat.png);
+    final byteData = await croppedUiImage.toByteData(
+      format: ui.ImageByteFormat.png,
+    );
 
     return byteData!.buffer.asUint8List();
   }
 }
-

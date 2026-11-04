@@ -71,8 +71,9 @@ class _PosScreenState extends State<PosScreen> {
     }
     final barcode = await BarcodeScannerModal.show(context);
     if (barcode != null && barcode.isNotEmpty && mounted) {
-      final product =
-          await context.read<ProductProvider>().findByBarcode(barcode);
+      final product = await context.read<ProductProvider>().findByBarcode(
+        barcode,
+      );
       if (product != null && mounted) {
         final added = context.read<PosProvider>().addToCart(product);
         if (added) {
@@ -123,12 +124,7 @@ class _PosScreenState extends State<PosScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              Expanded(
-                child: _buildCartSection(
-                  context,
-                  isBottomSheet: true,
-                ),
-              ),
+              Expanded(child: _buildCartSection(context, isBottomSheet: true)),
             ],
           ),
         ),
@@ -184,11 +180,14 @@ class _PosScreenState extends State<PosScreen> {
                       top: 6,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 1),
+                          horizontal: 5,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: AppTheme.error,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusFull,
+                          ),
                         ),
                         child: Text(
                           '${pos.heldOrdersCount}',
@@ -209,13 +208,12 @@ class _PosScreenState extends State<PosScreen> {
             tooltip: 'Scan Barcode',
             onPressed: _scanBarcode,
           ),
-          if (shiftProvider.hasActiveShift &&
-              shiftProvider.activeShift != null)
+          if (shiftProvider.hasActiveShift && shiftProvider.activeShift != null)
             IconButton(
               icon: const Icon(Icons.fact_check_rounded),
               tooltip: 'Tutup Shift Kasir (Closing)',
-              onPressed: () => ShiftClosingDialog.show(
-                  context, shiftProvider.activeShift!),
+              onPressed: () =>
+                  ShiftClosingDialog.show(context, shiftProvider.activeShift!),
             )
           else
             IconButton(
@@ -241,45 +239,42 @@ class _PosScreenState extends State<PosScreen> {
           child: !shiftProvider.hasActiveShift
               ? _buildShiftRequiredLockView(context, isAdmin)
               : (isTabletOrDesktop
-                  ? Row(
-                      children: [
-                        Expanded(
-                          flex: 6,
-                          child: Column(
+                    ? Row(
+                        children: [
+                          Expanded(
+                            flex: 6,
+                            child: Column(
+                              children: [
+                                _buildSearchAndCategoryBar(context),
+                                Expanded(child: _buildProductGrid(context)),
+                              ],
+                            ),
+                          ),
+                          const VerticalDivider(width: 1, thickness: 1),
+                          Expanded(flex: 4, child: _buildCartSection(context)),
+                        ],
+                      )
+                    : Stack(
+                        children: [
+                          Column(
                             children: [
                               _buildSearchAndCategoryBar(context),
-                              Expanded(child: _buildProductGrid(context)),
+                              Expanded(
+                                child: _buildProductGrid(
+                                  context,
+                                  bottomPadding: 92,
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-                        const VerticalDivider(width: 1, thickness: 1),
-                        Expanded(
-                          flex: 4,
-                          child: _buildCartSection(context),
-                        ),
-                      ],
-                    )
-                  : Stack(
-                      children: [
-                        Column(
-                          children: [
-                            _buildSearchAndCategoryBar(context),
-                            Expanded(
-                              child: _buildProductGrid(
-                                context,
-                                bottomPadding: 92,
-                              ),
-                            ),
-                          ],
-                        ),
-                        Positioned(
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          child: _buildMobileCartBar(context),
-                        ),
-                      ],
-                    )),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: _buildMobileCartBar(context),
+                          ),
+                        ],
+                      )),
         ),
       ),
     );
@@ -287,7 +282,8 @@ class _PosScreenState extends State<PosScreen> {
 
   Widget _buildShiftRequiredLockView(BuildContext context, bool isAdmin) {
     final userName =
-        context.read<AuthProvider>().currentUser?.name ?? (isAdmin ? 'Admin' : 'Kasir');
+        context.read<AuthProvider>().currentUser?.name ??
+        (isAdmin ? 'Admin' : 'Kasir');
 
     return Center(
       child: SingleChildScrollView(
@@ -329,8 +325,10 @@ class _PosScreenState extends State<PosScreen> {
                 ),
                 const SizedBox(height: 20),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.amber.shade50,
                     borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -350,9 +348,9 @@ class _PosScreenState extends State<PosScreen> {
                 Text(
                   'Wajib Buka Shift Terlebih Dahulu',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        fontSize: 18,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
@@ -440,9 +438,9 @@ class _PosScreenState extends State<PosScreen> {
                             icon: const Icon(Icons.clear_rounded, size: 18),
                             onPressed: () {
                               _searchController.clear();
-                              context
-                                  .read<ProductProvider>()
-                                  .setSearchQuery('');
+                              context.read<ProductProvider>().setSearchQuery(
+                                '',
+                              );
                             },
                           )
                         : null,
@@ -526,8 +524,11 @@ class _PosScreenState extends State<PosScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      size: 48, color: AppTheme.error),
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    size: 48,
+                    color: AppTheme.error,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     provider.errorMessage!,
@@ -546,8 +547,9 @@ class _PosScreenState extends State<PosScreen> {
           );
         }
 
-        final products =
-            provider.filteredProducts.where((p) => p.isActive).toList();
+        final products = provider.filteredProducts
+            .where((p) => p.isActive)
+            .toList();
 
         if (products.isEmpty) {
           final isTotalEmpty = provider.allProducts.isEmpty;
@@ -579,8 +581,8 @@ class _PosScreenState extends State<PosScreen> {
                         ? 'Belum Ada Produk Terdaftar'
                         : 'Produk Tidak Ditemukan',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -660,10 +662,7 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
-  Widget _buildCartSection(
-    BuildContext context, {
-    bool isBottomSheet = false,
-  }) {
+  Widget _buildCartSection(BuildContext context, {bool isBottomSheet = false}) {
     return Consumer2<PosProvider, StoreSettingsProvider>(
       builder: (context, posProvider, storeSettingsProvider, _) {
         final settings = storeSettingsProvider.settings;
@@ -678,8 +677,10 @@ class _PosScreenState extends State<PosScreen> {
             children: [
               // Cart Header
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceContainerLowest,
                   border: Border(
@@ -694,8 +695,7 @@ class _PosScreenState extends State<PosScreen> {
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withValues(alpha: 0.1),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusSm),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                       ),
                       child: const Icon(
                         Icons.shopping_cart_rounded,
@@ -707,8 +707,8 @@ class _PosScreenState extends State<PosScreen> {
                     Text(
                       'Keranjang Belanja',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Spacer(),
                     Container(
@@ -718,8 +718,9 @@ class _PosScreenState extends State<PosScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: AppTheme.primary,
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusFull),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusFull,
+                        ),
                       ),
                       child: Text(
                         '${posProvider.totalItemCount} Item',
@@ -745,8 +746,10 @@ class _PosScreenState extends State<PosScreen> {
 
               // Customer & Promo Quick Selector Strip (PRD Section 5.2)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppTheme.surfaceContainerLow,
                   border: Border(
@@ -763,16 +766,20 @@ class _PosScreenState extends State<PosScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 6),
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: posProvider.selectedCustomer != null
                                 ? AppTheme.secondaryContainer
                                 : AppTheme.surfaceContainerLowest,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                             border: Border.all(
-                              color: AppTheme.outlineVariant
-                                  .withValues(alpha: 0.6),
+                              color: AppTheme.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -812,17 +819,22 @@ class _PosScreenState extends State<PosScreen> {
                         borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 6),
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color: (posProvider.appliedPromo != null ||
+                            color:
+                                (posProvider.appliedPromo != null ||
                                     posProvider.discount > 0)
                                 ? AppTheme.primary.withValues(alpha: 0.1)
                                 : AppTheme.surfaceContainerLowest,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                             border: Border.all(
-                              color: AppTheme.outlineVariant
-                                  .withValues(alpha: 0.6),
+                              color: AppTheme.outlineVariant.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                           child: Row(
@@ -879,9 +891,7 @@ class _PosScreenState extends State<PosScreen> {
                             const SizedBox(height: 12),
                             Text(
                               'Keranjang masih kosong',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
+                              style: Theme.of(context).textTheme.bodyMedium
                                   ?.copyWith(
                                     color: AppTheme.onSurface,
                                     fontWeight: FontWeight.w700,
@@ -901,8 +911,7 @@ class _PosScreenState extends State<PosScreen> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(14),
                         itemCount: cartItems.length,
-                        separatorBuilder: (_, _) =>
-                            const Divider(height: 16),
+                        separatorBuilder: (_, _) => const Divider(height: 16),
                         itemBuilder: (context, index) {
                           final item = cartItems[index];
                           return _CartItemRow(item: item);
@@ -926,12 +935,12 @@ class _PosScreenState extends State<PosScreen> {
                     _buildSummaryRow('Subtotal', posProvider.subtotal),
                     if (posProvider.calculateTotalDiscount(settings) > 0)
                       _buildSummaryRow(
-                          'Total Diskon',
-                          -posProvider.calculateTotalDiscount(settings),
-                          isDiscount: true),
+                        'Total Diskon',
+                        -posProvider.calculateTotalDiscount(settings),
+                        isDiscount: true,
+                      ),
                     if (tax > 0)
-                      _buildSummaryRow(
-                          'PPN (${settings.taxPercentage}%)', tax),
+                      _buildSummaryRow('PPN (${settings.taxPercentage}%)', tax),
                     const SizedBox(height: 8),
 
                     Row(
@@ -939,10 +948,8 @@ class _PosScreenState extends State<PosScreen> {
                       children: [
                         Text(
                           'TOTAL BAYAR',
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         AnimatedCurrencyText(
                           value: total,
@@ -976,7 +983,8 @@ class _PosScreenState extends State<PosScreen> {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
-                                            'Transaksi disimpan sementara (Hold Order)'),
+                                          'Transaksi disimpan sementara (Hold Order)',
+                                        ),
                                         backgroundColor: AppTheme.primary,
                                       ),
                                     );
@@ -993,8 +1001,8 @@ class _PosScreenState extends State<PosScreen> {
                               onPressed: posProvider.isCartEmpty
                                   ? null
                                   : () {
-                                      final shiftProv =
-                                          context.read<ShiftProvider>();
+                                      final shiftProv = context
+                                          .read<ShiftProvider>();
                                       if (!shiftProv.hasActiveShift) {
                                         StartShiftDialog.show(context);
                                         return;
@@ -1004,8 +1012,10 @@ class _PosScreenState extends State<PosScreen> {
                                       }
                                       CheckoutDialog.show(context);
                                     },
-                              icon:
-                                  const Icon(Icons.payments_rounded, size: 20),
+                              icon: const Icon(
+                                Icons.payments_rounded,
+                                size: 20,
+                              ),
                               label: const Text(
                                 'Bayar Sekarang',
                                 style: TextStyle(
@@ -1016,8 +1026,9 @@ class _PosScreenState extends State<PosScreen> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppTheme.secondary,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(AppTheme.radiusMd),
+                                  borderRadius: BorderRadius.circular(
+                                    AppTheme.radiusMd,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1060,8 +1071,9 @@ class _PosScreenState extends State<PosScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: (isEmpty ? Colors.black : AppTheme.primary)
-                      .withValues(alpha: 0.18),
+                  color: (isEmpty ? Colors.black : AppTheme.primary).withValues(
+                    alpha: 0.18,
+                  ),
                   blurRadius: 20,
                   offset: const Offset(0, 6),
                 ),
@@ -1088,8 +1100,9 @@ class _PosScreenState extends State<PosScreen> {
                               color: isEmpty
                                   ? AppTheme.surfaceContainerLow
                                   : Colors.white.withValues(alpha: 0.15),
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radiusMd),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMd,
+                              ),
                             ),
                             child: Stack(
                               alignment: Alignment.center,
@@ -1113,7 +1126,8 @@ class _PosScreenState extends State<PosScreen> {
                                       decoration: BoxDecoration(
                                         color: AppTheme.secondary,
                                         borderRadius: BorderRadius.circular(
-                                            AppTheme.radiusFull),
+                                          AppTheme.radiusFull,
+                                        ),
                                       ),
                                       child: Text(
                                         '$itemCount',
@@ -1146,8 +1160,7 @@ class _PosScreenState extends State<PosScreen> {
                                       fontWeight: FontWeight.w500,
                                       color: isEmpty
                                           ? AppTheme.outline
-                                          : Colors.white
-                                              .withValues(alpha: 0.8),
+                                          : Colors.white.withValues(alpha: 0.8),
                                     ),
                                   ),
                                   if (!isEmpty) ...[
@@ -1155,8 +1168,9 @@ class _PosScreenState extends State<PosScreen> {
                                     Icon(
                                       Icons.keyboard_arrow_up_rounded,
                                       size: 14,
-                                      color:
-                                          Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                     ),
                                   ],
                                 ],
@@ -1183,12 +1197,10 @@ class _PosScreenState extends State<PosScreen> {
                 ScaleTap(
                   onTap: isEmpty ? null : () => CheckoutDialog.show(context),
                   child: ElevatedButton.icon(
-                    onPressed:
-                        isEmpty ? null : () => CheckoutDialog.show(context),
-                    icon: const Icon(
-                      Icons.payments_rounded,
-                      size: 18,
-                    ),
+                    onPressed: isEmpty
+                        ? null
+                        : () => CheckoutDialog.show(context),
+                    icon: const Icon(Icons.payments_rounded, size: 18),
                     label: const Text(
                       'Bayar',
                       style: TextStyle(
@@ -1218,8 +1230,11 @@ class _PosScreenState extends State<PosScreen> {
     );
   }
 
-  Widget _buildSummaryRow(String label, double amount,
-      {bool isDiscount = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    double amount, {
+    bool isDiscount = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -1273,7 +1288,8 @@ class _PosScreenState extends State<PosScreen> {
           final orders = pos.heldOrders;
           return Dialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460, maxHeight: 500),
               child: Padding(
@@ -1287,7 +1303,9 @@ class _PosScreenState extends State<PosScreen> {
                         const Text(
                           'Transaksi Tersimpan (Hold Order)',
                           style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                         IconButton(
                           icon: const Icon(Icons.close),
@@ -1315,7 +1333,8 @@ class _PosScreenState extends State<PosScreen> {
                                   decoration: BoxDecoration(
                                     color: AppTheme.surfaceContainerLow,
                                     borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusMd),
+                                      AppTheme.radiusMd,
+                                    ),
                                   ),
                                   child: Row(
                                     children: [
@@ -1327,21 +1346,25 @@ class _PosScreenState extends State<PosScreen> {
                                             Text(
                                               h.label,
                                               style: const TextStyle(
-                                                  fontWeight: FontWeight.w800,
-                                                  fontSize: 13),
+                                                fontWeight: FontWeight.w800,
+                                                fontSize: 13,
+                                              ),
                                             ),
                                             Text(
                                               '${h.items.length} produk • Total: ${CurrencyFormatter.format(h.subtotal)}',
                                               style: const TextStyle(
-                                                  fontSize: 11.5,
-                                                  color: AppTheme.outline),
+                                                fontSize: 11.5,
+                                                color: AppTheme.outline,
+                                              ),
                                             ),
                                           ],
                                         ),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.delete_outline,
-                                            color: AppTheme.error),
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          color: AppTheme.error,
+                                        ),
                                         onPressed: () =>
                                             pos.removeHeldOrder(h.id),
                                       ),
@@ -1380,7 +1403,8 @@ class _PosScreenState extends State<PosScreen> {
           final customers = custProv.filteredCustomers;
           return Dialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460, maxHeight: 540),
               child: Padding(
@@ -1394,7 +1418,9 @@ class _PosScreenState extends State<PosScreen> {
                         const Text(
                           'Pilih / Daftar Pelanggan POS',
                           style: TextStyle(
-                              fontWeight: FontWeight.w800, fontSize: 15),
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                         if (posProv.selectedCustomer != null)
                           TextButton(
@@ -1441,11 +1467,13 @@ class _PosScreenState extends State<PosScreen> {
                             ),
                             title: Text(
                               '${c.name}${c.isMember ? " (MEMBER)" : ""}',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                            subtitle:
-                                Text('${c.phone} • ${c.points} Poin Loyalitas'),
+                            subtitle: Text(
+                              '${c.phone} • ${c.points} Poin Loyalitas',
+                            ),
                             onTap: () {
                               posProv.selectCustomer(c);
                               Navigator.pop(ctx);
@@ -1457,8 +1485,10 @@ class _PosScreenState extends State<PosScreen> {
                     const Divider(),
                     const Text(
                       'Daftar Cepat Member Baru:',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Row(
@@ -1521,7 +1551,8 @@ class _PosScreenState extends State<PosScreen> {
           final promos = discProv.validDiscounts;
           return Dialog(
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+              borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            ),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 440),
               child: SingleChildScrollView(
@@ -1532,8 +1563,10 @@ class _PosScreenState extends State<PosScreen> {
                   children: [
                     const Text(
                       'Pilih Voucher & Promo Resmi Toko',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     const Text(
@@ -1546,8 +1579,9 @@ class _PosScreenState extends State<PosScreen> {
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
                         ),
                         child: const Text(
                           'Tidak ada promo atau voucher diskon yang sedang aktif.',
@@ -1564,15 +1598,21 @@ class _PosScreenState extends State<PosScreen> {
                               ? AppTheme.secondaryContainer
                               : AppTheme.surfaceContainerLow,
                           shape: RoundedRectangleBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusMd),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusMd,
+                            ),
                           ),
-                          leading: const Icon(Icons.local_offer_rounded,
-                              color: AppTheme.primary, size: 18),
+                          leading: const Icon(
+                            Icons.local_offer_rounded,
+                            color: AppTheme.primary,
+                            size: 18,
+                          ),
                           title: Text(
                             '${p.name} (${p.code})',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w700, fontSize: 12.5),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12.5,
+                            ),
                           ),
                           subtitle: Text(
                             p.type == 'percentage'
@@ -1581,8 +1621,10 @@ class _PosScreenState extends State<PosScreen> {
                             style: const TextStyle(fontSize: 11),
                           ),
                           trailing: selected
-                              ? const Icon(Icons.check_circle,
-                                  color: AppTheme.secondary)
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  color: AppTheme.secondary,
+                                )
                               : null,
                           onTap: () {
                             posProv.applyPromo(selected ? null : p);
@@ -1701,8 +1743,8 @@ class _PosProductCard extends StatelessWidget {
                 color: isSelected
                     ? AppTheme.secondary
                     : (product.isLowStock
-                        ? AppTheme.error.withValues(alpha: 0.4)
-                        : AppTheme.outlineVariant.withValues(alpha: 0.7)),
+                          ? AppTheme.error.withValues(alpha: 0.4)
+                          : AppTheme.outlineVariant.withValues(alpha: 0.7)),
                 width: isSelected ? 2 : 1,
               ),
               boxShadow: AppTheme.cardShadow,
@@ -1719,13 +1761,16 @@ class _PosProductCard extends StatelessWidget {
                         width: double.infinity,
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMd),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
                         ),
                         child: ClipRRect(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusMd),
-                          child: product.imageUrl != null &&
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          child:
+                              product.imageUrl != null &&
                                   product.imageUrl!.isNotEmpty
                               ? Image.network(
                                   product.imageUrl!,
@@ -1743,8 +1788,9 @@ class _PosProductCard extends StatelessWidget {
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.black.withValues(alpha: 0.45),
-                              borderRadius:
-                                  BorderRadius.circular(AppTheme.radiusMd),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMd,
+                              ),
                             ),
                             child: Center(
                               child: Container(
@@ -1755,7 +1801,8 @@ class _PosProductCard extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: AppTheme.error,
                                   borderRadius: BorderRadius.circular(
-                                      AppTheme.radiusFull),
+                                    AppTheme.radiusFull,
+                                  ),
                                 ),
                                 child: const Text(
                                   'HABIS',
@@ -1788,11 +1835,13 @@ class _PosProductCard extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     gradient: AppTheme.secondaryGradient,
                                     borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusFull),
+                                      AppTheme.radiusFull,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppTheme.secondary
-                                            .withValues(alpha: 0.35),
+                                        color: AppTheme.secondary.withValues(
+                                          alpha: 0.35,
+                                        ),
                                         blurRadius: 6,
                                         offset: const Offset(0, 2),
                                       ),
@@ -1819,10 +1868,10 @@ class _PosProductCard extends StatelessWidget {
                 Text(
                   product.name,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
-                        color: AppTheme.onSurface,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: AppTheme.onSurface,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -1863,16 +1912,14 @@ class _PosProductCard extends StatelessWidget {
                         color: isOut
                             ? AppTheme.errorContainer
                             : (product.isLowStock
-                                ? AppTheme.errorContainer
-                                    .withValues(alpha: 0.6)
-                                : AppTheme.surfaceContainerLow),
-                        borderRadius:
-                            BorderRadius.circular(AppTheme.radiusSm),
+                                  ? AppTheme.errorContainer.withValues(
+                                      alpha: 0.6,
+                                    )
+                                  : AppTheme.surfaceContainerLow),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                       ),
                       child: Text(
-                        isOut
-                            ? 'Habis'
-                            : '${product.stock} ${product.unit}',
+                        isOut ? 'Habis' : '${product.stock} ${product.unit}',
                         style: TextStyle(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
@@ -1895,11 +1942,11 @@ class _PosProductCard extends StatelessWidget {
   Widget _buildFallbackAvatar(String name) {
     final initials = name.trim().isNotEmpty
         ? name
-            .trim()
-            .split(' ')
-            .take(2)
-            .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
-            .join()
+              .trim()
+              .split(' ')
+              .take(2)
+              .map((w) => w.isNotEmpty ? w[0].toUpperCase() : '')
+              .join()
         : 'P';
 
     return Container(
@@ -1946,10 +1993,10 @@ class _CartItemRow extends StatelessWidget {
               Text(
                 item.productName,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AppTheme.onSurface,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: AppTheme.onSurface,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -1958,11 +2005,11 @@ class _CartItemRow extends StatelessWidget {
                 '${CurrencyFormatter.format(item.price)} / ${item.unit}'
                 '${item.itemDiscount > 0 ? " (Diskon -${CurrencyFormatter.format(item.itemDiscount)})" : ""}',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      fontSize: 11,
-                      color: item.itemDiscount > 0
-                          ? AppTheme.error
-                          : AppTheme.outline,
-                    ),
+                  fontSize: 11,
+                  color: item.itemDiscount > 0
+                      ? AppTheme.error
+                      : AppTheme.outline,
+                ),
               ),
             ],
           ),
@@ -1994,8 +2041,10 @@ class _CartItemRow extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 onTap: () => _showEditQuantityDialog(context, item),
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   child: Text(
                     '${item.quantity}',
                     style: AppTheme.numericSmallStyle.copyWith(
@@ -2041,7 +2090,10 @@ class _CartItemRow extends StatelessWidget {
     );
   }
 
-  void _showEditQuantityDialog(BuildContext context, TransactionItemModel item) {
+  void _showEditQuantityDialog(
+    BuildContext context,
+    TransactionItemModel item,
+  ) {
     final controller = TextEditingController(text: item.quantity.toString());
     showDialog(
       context: context,
@@ -2081,10 +2133,10 @@ class _CartItemRow extends StatelessWidget {
               final val = int.tryParse(controller.text);
               if (val != null && val >= 0) {
                 context.read<PosProvider>().setItemQuantity(
-                      item.productId,
-                      val,
-                      999999,
-                    );
+                  item.productId,
+                  val,
+                  999999,
+                );
               }
               Navigator.pop(ctx);
             },

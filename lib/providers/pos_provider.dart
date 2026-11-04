@@ -92,7 +92,9 @@ class PosProvider extends ChangeNotifier {
 
   /// Total cost price for margin/profit calculation.
   double get totalCostPrice => _cartItems.fold(
-      0.0, (sum, item) => sum + (item.costPrice * item.quantity));
+    0.0,
+    (sum, item) => sum + (item.costPrice * item.quantity),
+  );
 
   /// Calculates automatic member discount + promo discount + redeemed points + manual discount.
   double calculateEffectiveDiscount(StoreSettingsModel settings) {
@@ -208,7 +210,7 @@ class PosProvider extends ChangeNotifier {
     final label = (customLabel != null && customLabel.trim().isNotEmpty)
         ? customLabel.trim()
         : (_selectedCustomer?.name ??
-            'Antrean #${_heldOrders.length + 1} (${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')})');
+              'Antrean #${_heldOrders.length + 1} (${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')})');
 
     _heldOrders.add(
       HeldOrder(
@@ -253,7 +255,8 @@ class PosProvider extends ChangeNotifier {
   /// Adds a product to the active cart.
   bool addToCart(ProductModel product, {String variant = ''}) {
     final index = _cartItems.indexWhere(
-        (item) => item.productId == product.id && item.variant == variant);
+      (item) => item.productId == product.id && item.variant == variant,
+    );
 
     if (index >= 0) {
       final currentQty = _cartItems[index].quantity;
@@ -261,25 +264,29 @@ class PosProvider extends ChangeNotifier {
       final itemDisc = _cartItems[index].itemDiscount;
       _cartItems[index] = _cartItems[index].copyWith(
         quantity: newQty,
-        subtotal:
-            ((_cartItems[index].price * newQty) - itemDisc).clamp(0.0, double.infinity),
+        subtotal: ((_cartItems[index].price * newQty) - itemDisc).clamp(
+          0.0,
+          double.infinity,
+        ),
       );
     } else {
       final chosenVariant = variant.isNotEmpty
           ? variant
           : (product.variants.isNotEmpty ? product.variants.first : '');
-      _cartItems.add(TransactionItemModel(
-        productId: product.id,
-        productName: product.name,
-        productCode: product.code,
-        variant: chosenVariant,
-        price: product.sellingPrice,
-        costPrice: product.costPrice,
-        quantity: 1,
-        unit: product.unit,
-        itemDiscount: 0.0,
-        subtotal: product.sellingPrice,
-      ));
+      _cartItems.add(
+        TransactionItemModel(
+          productId: product.id,
+          productName: product.name,
+          productCode: product.code,
+          variant: chosenVariant,
+          price: product.sellingPrice,
+          costPrice: product.costPrice,
+          quantity: 1,
+          unit: product.unit,
+          itemDiscount: 0.0,
+          subtotal: product.sellingPrice,
+        ),
+      );
     }
 
     _errorMessage = null;
@@ -288,11 +295,16 @@ class PosProvider extends ChangeNotifier {
   }
 
   /// Sets per-item discount nominal (Rp) for a product in cart (PRD Section 5.2).
-  void setItemDiscount(String productId, double itemDiscountAmount,
-      {String? variant}) {
-    final index = _cartItems.indexWhere((item) =>
-        item.productId == productId &&
-        (variant == null || item.variant == variant));
+  void setItemDiscount(
+    String productId,
+    double itemDiscountAmount, {
+    String? variant,
+  }) {
+    final index = _cartItems.indexWhere(
+      (item) =>
+          item.productId == productId &&
+          (variant == null || item.variant == variant),
+    );
     if (index >= 0) {
       final item = _cartItems[index];
       final gross = item.price * item.quantity;
@@ -435,7 +447,8 @@ class PosProvider extends ChangeNotifier {
     }
 
     final total = calculateTotal(settings);
-    final isUnpaidTx = status == AppConstants.statusUnpaid ||
+    final isUnpaidTx =
+        status == AppConstants.statusUnpaid ||
         _paymentMethod == 'Piutang' ||
         _paidAmount < total;
 
@@ -465,7 +478,8 @@ class PosProvider extends ChangeNotifier {
           ? _splitPayments
           : [PaymentSplitItem(method: _paymentMethod, amount: _paidAmount)];
 
-      final finalStatus = status ??
+      final finalStatus =
+          status ??
           (isUnpaidTx
               ? AppConstants.statusUnpaid
               : AppConstants.statusCompleted);
@@ -496,8 +510,9 @@ class PosProvider extends ChangeNotifier {
         createdAt: DateTime.now(),
       );
 
-      final savedId =
-          await _transactionService.executeTransaction(draftTransaction);
+      final savedId = await _transactionService.executeTransaction(
+        draftTransaction,
+      );
       final completedTx = draftTransaction.copyWith(id: savedId);
 
       // Reset cart after successful transaction

@@ -55,32 +55,34 @@ class CustomerProvider extends ChangeNotifier {
         .collection(AppConstants.customersCollection)
         .snapshots()
         .listen(
-      (snap) {
-        final list =
-            snap.docs.map((doc) => CustomerModel.fromFirestore(doc)).toList();
-        list.sort((a, b) => b.totalSpent.compareTo(a.totalSpent));
-        _customers = list;
-        _isLoading = false;
-        _errorMessage = null;
-        notifyListeners();
-      },
-      onError: (e) {
-        _isLoading = false;
-        _errorMessage = 'Gagal memuat data pelanggan: $e';
-        notifyListeners();
-      },
-    );
+          (snap) {
+            final list = snap.docs
+                .map((doc) => CustomerModel.fromFirestore(doc))
+                .toList();
+            list.sort((a, b) => b.totalSpent.compareTo(a.totalSpent));
+            _customers = list;
+            _isLoading = false;
+            _errorMessage = null;
+            notifyListeners();
+          },
+          onError: (e) {
+            _isLoading = false;
+            _errorMessage = 'Gagal memuat data pelanggan: $e';
+            notifyListeners();
+          },
+        );
 
     _pointSub = _firestore
         .collection(AppConstants.pointLogsCollection)
         .snapshots()
         .listen((snap) {
-      final logs =
-          snap.docs.map((doc) => PointLogModel.fromFirestore(doc)).toList();
-      logs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      _pointLogs = logs;
-      notifyListeners();
-    });
+          final logs = snap.docs
+              .map((doc) => PointLogModel.fromFirestore(doc))
+              .toList();
+          logs.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          _pointLogs = logs;
+          notifyListeners();
+        });
   }
 
   void setSearchQuery(String query) {
@@ -117,8 +119,9 @@ class CustomerProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final docRef =
-          _firestore.collection(AppConstants.customersCollection).doc();
+      final docRef = _firestore
+          .collection(AppConstants.customersCollection)
+          .doc();
       final seq = (_customers.length + 1).toString().padLeft(4, '0');
       final code = '${isMember ? "MBR" : "PLG"}-$seq';
 
@@ -174,4 +177,3 @@ class CustomerProvider extends ChangeNotifier {
     super.dispose();
   }
 }
-

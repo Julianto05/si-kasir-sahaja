@@ -53,8 +53,11 @@ class ShiftReceiptDialog extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.receipt_long_rounded,
-                      color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
                   const Text(
                     'Struk Rekap Penutupan Kasir',
@@ -66,8 +69,11 @@ class ShiftReceiptDialog extends StatelessWidget {
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded,
-                        color: Colors.white, size: 20),
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     onPressed: () => Navigator.pop(context),
@@ -112,7 +118,9 @@ class ShiftReceiptDialog extends StatelessWidget {
                       const Text(
                         '================================',
                         style: TextStyle(
-                            fontFamily: 'monospace', color: Colors.black38),
+                          fontFamily: 'monospace',
+                          color: Colors.black38,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const Text(
@@ -128,65 +136,90 @@ class ShiftReceiptDialog extends StatelessWidget {
                       const Text(
                         '================================',
                         style: TextStyle(
-                            fontFamily: 'monospace', color: Colors.black38),
+                          fontFamily: 'monospace',
+                          color: Colors.black38,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
 
                       // Metadata
                       _buildReceiptRow('Kasir', shift.cashierName),
-                      _buildReceiptRow('ID Shift', shift.id.substring(0, 8).toUpperCase()),
+                      _buildReceiptRow(
+                        'ID Shift',
+                        shift.id.substring(0, 8).toUpperCase(),
+                      ),
                       _buildReceiptRow('Buka Shift', openStr),
                       _buildReceiptRow('Tutup Shift', closeStr),
                       const SizedBox(height: 6),
                       const Text(
                         '--------------------------------',
                         style: TextStyle(
-                            fontFamily: 'monospace', color: Colors.black38),
+                          fontFamily: 'monospace',
+                          color: Colors.black38,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
 
                       // Sales Breakdown
                       _buildReceiptRow(
-                          'Modal Awal', CurrencyFormatter.format(shift.startingCash)),
-                      _buildReceiptRow('Penjualan Tunai',
-                          CurrencyFormatter.format(shift.cashSales)),
-                      _buildReceiptRow('Penjualan Non-Tunai',
-                          CurrencyFormatter.format(shift.nonCashSales)),
+                        'Modal Awal',
+                        CurrencyFormatter.format(shift.startingCash),
+                      ),
                       _buildReceiptRow(
-                          'Total Omset Shift', CurrencyFormatter.format(shift.totalSales),
-                          isBold: true),
-                      _buildReceiptRow('Jumlah Transaksi',
-                          '${shift.transactionCount} Transaksi'),
+                        'Penjualan Tunai',
+                        CurrencyFormatter.format(shift.cashSales),
+                      ),
+                      _buildReceiptRow(
+                        'Penjualan Non-Tunai',
+                        CurrencyFormatter.format(shift.nonCashSales),
+                      ),
+                      _buildReceiptRow(
+                        'Total Omset Shift',
+                        CurrencyFormatter.format(shift.totalSales),
+                        isBold: true,
+                      ),
+                      _buildReceiptRow(
+                        'Jumlah Transaksi',
+                        '${shift.transactionCount} Transaksi',
+                      ),
                       const SizedBox(height: 6),
                       const Text(
                         '--------------------------------',
                         style: TextStyle(
-                            fontFamily: 'monospace', color: Colors.black38),
+                          fontFamily: 'monospace',
+                          color: Colors.black38,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 6),
 
                       // Cashier Drawer Reconciliation
-                      _buildReceiptRow('Estimasi Kas di Laci',
-                          CurrencyFormatter.format(shift.expectedCash),
-                          isBold: true),
-                      _buildReceiptRow('Fisik Kas Dihitung',
-                          CurrencyFormatter.format(shift.physicalCash),
-                          isBold: true),
+                      _buildReceiptRow(
+                        'Estimasi Kas di Laci',
+                        CurrencyFormatter.format(shift.expectedCash),
+                        isBold: true,
+                      ),
+                      _buildReceiptRow(
+                        'Fisik Kas Dihitung',
+                        CurrencyFormatter.format(shift.physicalCash),
+                        isBold: true,
+                      ),
                       const SizedBox(height: 4),
 
                       // Variance Indicator
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: isBalanced
                               ? Colors.green.shade50
                               : (isShortage
-                                  ? Colors.red.shade50
-                                  : Colors.blue.shade50),
+                                    ? Colors.red.shade50
+                                    : Colors.blue.shade50),
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: isBalanced
@@ -201,8 +234,8 @@ class ShiftReceiptDialog extends StatelessWidget {
                               isBalanced
                                   ? 'SELISIH (MATCH)'
                                   : (isShortage
-                                      ? 'SELISIH (MINUS)'
-                                      : 'SELISIH (PLUS)'),
+                                        ? 'SELISIH (MINUS)'
+                                        : 'SELISIH (PLUS)'),
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontWeight: FontWeight.bold,
@@ -210,8 +243,8 @@ class ShiftReceiptDialog extends StatelessWidget {
                                 color: isBalanced
                                     ? Colors.green.shade800
                                     : (isShortage
-                                        ? Colors.red.shade800
-                                        : Colors.blue.shade800),
+                                          ? Colors.red.shade800
+                                          : Colors.blue.shade800),
                               ),
                             ),
                             Text(
@@ -223,8 +256,8 @@ class ShiftReceiptDialog extends StatelessWidget {
                                 color: isBalanced
                                     ? Colors.green.shade800
                                     : (isShortage
-                                        ? Colors.red.shade800
-                                        : Colors.blue.shade800),
+                                          ? Colors.red.shade800
+                                          : Colors.blue.shade800),
                               ),
                             ),
                           ],
@@ -246,8 +279,10 @@ class ShiftReceiptDialog extends StatelessWidget {
                         const SizedBox(height: 2),
                         ...shift.denominations.entries.map((e) {
                           if (e.key == 'coins') {
-                            return _buildReceiptRow('• Koin',
-                                CurrencyFormatter.format(e.value.toDouble()));
+                            return _buildReceiptRow(
+                              '• Koin',
+                              CurrencyFormatter.format(e.value.toDouble()),
+                            );
                           }
                           final val = int.tryParse(e.key) ?? 0;
                           return _buildReceiptRow(
@@ -282,7 +317,9 @@ class ShiftReceiptDialog extends StatelessWidget {
                       const Text(
                         '================================',
                         style: TextStyle(
-                            fontFamily: 'monospace', color: Colors.black38),
+                          fontFamily: 'monospace',
+                          color: Colors.black38,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 16),
@@ -293,28 +330,42 @@ class ShiftReceiptDialog extends StatelessWidget {
                         children: [
                           Column(
                             children: [
-                              const Text('Kasir Shift,',
-                                  style: TextStyle(
-                                      fontFamily: 'monospace', fontSize: 10)),
+                              const Text(
+                                'Kasir Shift,',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                ),
+                              ),
                               const SizedBox(height: 36),
-                              Text('(${shift.cashierName})',
-                                  style: const TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '(${shift.cashierName})',
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const Column(
                             children: [
-                              Text('Supervisor,',
-                                  style: TextStyle(
-                                      fontFamily: 'monospace', fontSize: 10)),
+                              Text(
+                                'Supervisor,',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                ),
+                              ),
                               SizedBox(height: 36),
-                              Text('( .................... )',
-                                  style: TextStyle(
-                                      fontFamily: 'monospace',
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold)),
+                              Text(
+                                '( .................... )',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -342,7 +393,9 @@ class ShiftReceiptDialog extends StatelessWidget {
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Mengirim struk rekap ke printer thermal...'),
+                            content: Text(
+                              'Mengirim struk rekap ke printer thermal...',
+                            ),
                             backgroundColor: AppTheme.secondary,
                           ),
                         );

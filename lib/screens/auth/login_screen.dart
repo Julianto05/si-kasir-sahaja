@@ -53,8 +53,11 @@ class _LoginScreenState extends State<LoginScreen> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline_rounded,
-                    color: Colors.white, size: 18),
+                const Icon(
+                  Icons.error_outline_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: Text(authProvider.errorMessage!)),
               ],
@@ -196,18 +199,18 @@ class _LoginScreenState extends State<LoginScreen> {
         Text(
           AppConstants.appName,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppTheme.primary,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.3,
-              ),
+            color: AppTheme.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           'Aplikasi Kasir Modern & Terpercaya',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppTheme.onSurfaceVariant,
-                fontWeight: FontWeight.w500,
-              ),
+            color: AppTheme.onSurfaceVariant,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
@@ -242,7 +245,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: AppTheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                      borderRadius: BorderRadius.circular(
+                        AppTheme.radiusDefault,
+                      ),
                     ),
                     child: const Icon(
                       Icons.lock_person_rounded,
@@ -286,8 +291,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email harus diisi';
                   }
-                  if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$')
-                      .hasMatch(value.trim())) {
+                  if (!RegExp(
+                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$',
+                  ).hasMatch(value.trim())) {
                     return 'Format email tidak valid';
                   }
                   return null;
@@ -397,10 +403,10 @@ class _LoginScreenState extends State<LoginScreen> {
             Text(
               'Koneksi Terenkripsi & Sinkronisasi Cloud',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppTheme.onSurfaceVariant,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                  ),
+                color: AppTheme.onSurfaceVariant,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -409,9 +415,9 @@ class _LoginScreenState extends State<LoginScreen> {
           '© 2026 ${AppConstants.appName} v${AppConstants.appVersion}',
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppTheme.outline,
-                fontSize: 11,
-              ),
+            color: AppTheme.outline,
+            fontSize: 11,
+          ),
         ),
       ],
     );

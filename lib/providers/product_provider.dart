@@ -53,16 +53,20 @@ class ProductProvider extends ChangeNotifier {
       _products.where((p) => p.isActive && !p.isArchived).toList();
 
   /// Products whose current stock is at or below minimumStock.
-  List<ProductModel> get lowStockProducts =>
-      _products.where((p) => p.isLowStock && p.isActive && !p.isArchived).toList();
+  List<ProductModel> get lowStockProducts => _products
+      .where((p) => p.isLowStock && p.isActive && !p.isArchived)
+      .toList();
 
   /// Products that are completely out of stock (stok = 0).
-  List<ProductModel> get outOfStockProducts =>
-      _products.where((p) => p.isOutOfStock && p.isActive && !p.isArchived).toList();
+  List<ProductModel> get outOfStockProducts => _products
+      .where((p) => p.isOutOfStock && p.isActive && !p.isArchived)
+      .toList();
 
   /// Products that are expired or expiring within 30 days.
   List<ProductModel> get expiringOrExpiredProducts => _products
-      .where((p) => !p.isArchived && p.isActive && (p.isExpired || p.isNearExpiry))
+      .where(
+        (p) => !p.isArchived && p.isActive && (p.isExpired || p.isNearExpiry),
+      )
       .toList();
 
   /// Total count of products with low stock.
@@ -70,7 +74,9 @@ class ProductProvider extends ChangeNotifier {
 
   /// Total inventory valuation (HPP * stock).
   double get totalInventoryCostValue => allProducts.fold(
-      0.0, (sum, p) => sum + (p.costPrice * (p.stock > 0 ? p.stock : 0)));
+    0.0,
+    (sum, p) => sum + (p.costPrice * (p.stock > 0 ? p.stock : 0)),
+  );
 
   /// Filtered products for UI lists based on category, search query, archive, and low stock toggle.
   List<ProductModel> get filteredProducts {
@@ -283,8 +289,10 @@ class ProductProvider extends ChangeNotifier {
         }
       } else if (imageFile != null) {
         try {
-          imageUrl =
-              await _storageService.uploadProductImage(imageFile, newDocId);
+          imageUrl = await _storageService.uploadProductImage(
+            imageFile,
+            newDocId,
+          );
           final updatedProduct = productDraft.copyWith(
             id: newDocId,
             imageUrl: imageUrl,
@@ -453,13 +461,15 @@ class ProductProvider extends ChangeNotifier {
   String exportProductsToCsv() {
     final buffer = StringBuffer();
     buffer.writeln(
-        'Kode;Barcode;Nama Produk;Merek;Kategori;Harga Modal;Harga Jual;Stok;Min Stok;Satuan;Varian;Kedaluwarsa');
+      'Kode;Barcode;Nama Produk;Merek;Kategori;Harga Modal;Harga Jual;Stok;Min Stok;Satuan;Varian;Kedaluwarsa',
+    );
     final dateFmt = DateFormat('yyyy-MM-dd');
     for (final p in allProducts) {
       final expStr = p.expiryDate != null ? dateFmt.format(p.expiryDate!) : '';
       final varStr = p.variants.join(',');
       buffer.writeln(
-          '${p.code};${p.barcode};${p.name};${p.brand};${p.categoryName};${p.costPrice.toInt()};${p.sellingPrice.toInt()};${p.stock};${p.minimumStock};${p.unit};$varStr;$expStr');
+        '${p.code};${p.barcode};${p.name};${p.brand};${p.categoryName};${p.costPrice.toInt()};${p.sellingPrice.toInt()};${p.stock};${p.minimumStock};${p.unit};$varStr;$expStr',
+      );
     }
     return buffer.toString();
   }
@@ -500,10 +510,12 @@ class ProductProvider extends ChangeNotifier {
       final costPrice = double.tryParse(parts[5].trim()) ?? 0.0;
       final sellingPrice = double.tryParse(parts[6].trim()) ?? 0.0;
       final stock = parts.length > 7 ? (int.tryParse(parts[7].trim()) ?? 0) : 0;
-      final minStock =
-          parts.length > 8 ? (int.tryParse(parts[8].trim()) ?? 5) : 5;
-      final unit =
-          parts.length > 9 && parts[9].trim().isNotEmpty ? parts[9].trim() : 'pcs';
+      final minStock = parts.length > 8
+          ? (int.tryParse(parts[8].trim()) ?? 5)
+          : 5;
+      final unit = parts.length > 9 && parts[9].trim().isNotEmpty
+          ? parts[9].trim()
+          : 'pcs';
 
       final added = await addProduct(
         code: code,

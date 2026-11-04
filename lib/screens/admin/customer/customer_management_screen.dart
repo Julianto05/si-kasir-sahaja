@@ -117,7 +117,9 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                   Text(
                     '${custProv.memberCustomers.length} Member Terdaftar',
                     style: const TextStyle(
-                        fontSize: 11.5, fontWeight: FontWeight.w700),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -149,12 +151,15 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusLg),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusLg,
+                          ),
                           border: Border.all(
                             color: c.isMember
                                 ? AppTheme.secondary.withValues(alpha: 0.4)
-                                : AppTheme.outlineVariant.withValues(alpha: 0.6),
+                                : AppTheme.outlineVariant.withValues(
+                                    alpha: 0.6,
+                                  ),
                           ),
                           boxShadow: AppTheme.cardShadow,
                         ),
@@ -197,11 +202,14 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                                         const SizedBox(width: 6),
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 2),
+                                            horizontal: 6,
+                                            vertical: 2,
+                                          ),
                                           decoration: BoxDecoration(
                                             color: AppTheme.secondary,
                                             borderRadius: BorderRadius.circular(
-                                                AppTheme.radiusSm),
+                                              AppTheme.radiusSm,
+                                            ),
                                           ),
                                           child: const Text(
                                             'MEMBER',
@@ -219,7 +227,9 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                                   Text(
                                     '${c.code} • WA: ${c.whatsapp.isNotEmpty ? c.whatsapp : "-"}',
                                     style: const TextStyle(
-                                        fontSize: 11, color: AppTheme.outline),
+                                      fontSize: 11,
+                                      color: AppTheme.outline,
+                                    ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -235,8 +245,11 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                                         ),
                                       ),
                                       const Spacer(),
-                                      const Icon(Icons.stars_rounded,
-                                          size: 14, color: Color(0xFFD97706)),
+                                      const Icon(
+                                        Icons.stars_rounded,
+                                        size: 14,
+                                        color: Color(0xFFD97706),
+                                      ),
                                       const SizedBox(width: 3),
                                       Text(
                                         '${c.points} Poin',
@@ -307,12 +320,16 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                           ? log.customerName
                           : 'Pelanggan #${log.customerId}',
                       style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 13),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
                     ),
                     Text(
                       '${isEarn ? "Perolehan Poin Belanja" : "Penukaran Poin Diskon"} • $dateStr',
                       style: const TextStyle(
-                          fontSize: 11, color: AppTheme.outline),
+                        fontSize: 11,
+                        color: AppTheme.outline,
+                      ),
                     ),
                   ],
                 ),
@@ -333,16 +350,18 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
 
   void _showCustomerDetailSheet(BuildContext context, CustomerModel customer) {
     final allTx = context.read<TransactionProvider>().allTransactions;
-    final customerTx =
-        allTx.where((tx) => tx.customerId == customer.id).toList();
+    final customerTx = allTx
+        .where((tx) => tx.customerId == customer.id)
+        .toList();
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.surfaceContainerLowest,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppTheme.radiusXl)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppTheme.radiusXl),
+        ),
       ),
       builder: (ctx) => Padding(
         padding: const EdgeInsets.all(20),
@@ -357,7 +376,9 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                   Text(
                     customer.name,
                     style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                    ),
                   ),
                   TextButton.icon(
                     onPressed: () {
@@ -385,15 +406,18 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                       ),
                       child: Column(
                         children: [
-                          const Text('Total Belanja',
-                              style: TextStyle(fontSize: 11)),
+                          const Text(
+                            'Total Belanja',
+                            style: TextStyle(fontSize: 11),
+                          ),
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
                               CurrencyFormatter.format(customer.totalSpent),
                               style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primary),
+                                fontWeight: FontWeight.w800,
+                                color: AppTheme.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -410,13 +434,16 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
                       ),
                       child: Column(
                         children: [
-                          const Text('Poin Loyalitas',
-                              style: TextStyle(fontSize: 11)),
+                          const Text(
+                            'Poin Loyalitas',
+                            style: TextStyle(fontSize: 11),
+                          ),
                           Text(
                             '${customer.points} Poin',
                             style: const TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFFD97706)),
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFFD97706),
+                            ),
                           ),
                         ],
                       ),
@@ -427,29 +454,40 @@ class _CustomerManagementScreenState extends State<CustomerManagementScreen>
               const SizedBox(height: 14),
               Text(
                 'Riwayat Belanja (${customerTx.length} Transaksi)',
-                style:
-                    const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 6),
               if (customerTx.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Text('Belum ada transaksi tercatat.',
-                      style: TextStyle(fontSize: 12, color: AppTheme.outline)),
+                  child: Text(
+                    'Belum ada transaksi tercatat.',
+                    style: TextStyle(fontSize: 12, color: AppTheme.outline),
+                  ),
                 )
               else
-                ...customerTx.take(5).map((tx) => ListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(tx.invoiceNumber,
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(
-                          DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt)),
-                      trailing: Text(
-                        CurrencyFormatter.format(tx.total),
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                ...customerTx
+                    .take(5)
+                    .map(
+                      (tx) => ListTile(
+                        dense: true,
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          tx.invoiceNumber,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          DateFormat('dd MMM yyyy, HH:mm').format(tx.createdAt),
+                        ),
+                        trailing: Text(
+                          CurrencyFormatter.format(tx.total),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
                       ),
-                    )),
+                    ),
             ],
           ),
         ),
@@ -464,8 +502,10 @@ class CustomerFormDialog extends StatefulWidget {
 
   const CustomerFormDialog({super.key, this.customer});
 
-  static Future<CustomerModel?> show(BuildContext context,
-      {CustomerModel? customer}) {
+  static Future<CustomerModel?> show(
+    BuildContext context, {
+    CustomerModel? customer,
+  }) {
     return showDialog<CustomerModel>(
       context: context,
       builder: (_) => CustomerFormDialog(customer: customer),
@@ -504,7 +544,8 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusXl)),
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+      ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
         child: SingleChildScrollView(
@@ -517,8 +558,10 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                 widget.customer == null
                     ? 'Daftar Pelanggan / Member Baru'
                     : 'Edit Data Pelanggan',
-                style:
-                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
               ),
               const SizedBox(height: 14),
               TextField(
@@ -550,9 +593,10 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Status Member Loyalitas',
-                    style:
-                        TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                title: const Text(
+                  'Status Member Loyalitas',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                ),
                 subtitle: const Text(
                   'Berhak mendapat diskon khusus member & poin belanja',
                   style: TextStyle(fontSize: 11),
@@ -566,8 +610,9 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed:
-                          _isSaving ? null : () => Navigator.pop(context),
+                      onPressed: _isSaving
+                          ? null
+                          : () => Navigator.pop(context),
                       child: const Text('Batal'),
                     ),
                   ),
@@ -615,4 +660,3 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
     );
   }
 }
-

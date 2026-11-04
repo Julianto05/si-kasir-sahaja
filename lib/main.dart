@@ -42,9 +42,7 @@ void main() async {
   await initializeDateFormatting('id_ID', null);
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Allow all orientations (portrait and landscape)
   await SystemChrome.setPreferredOrientations([

@@ -43,9 +43,9 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
 
   Future<void> _loadItems() async {
     setState(() => _isLoadingItems = true);
-    final items = await context
-        .read<TransactionProvider>()
-        .getTransactionItems(widget.transaction.id);
+    final items = await context.read<TransactionProvider>().getTransactionItems(
+      widget.transaction.id,
+    );
     if (mounted) {
       setState(() {
         _items = items;
@@ -85,11 +85,12 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
       );
 
       if (confirm == true && mounted) {
-        final success =
-            await context.read<TransactionProvider>().updateTransactionStatus(
-                  transaction: tx,
-                  newStatus: AppConstants.statusCompleted,
-                );
+        final success = await context
+            .read<TransactionProvider>()
+            .updateTransactionStatus(
+              transaction: tx,
+              newStatus: AppConstants.statusCompleted,
+            );
 
         if (!mounted) return;
 
@@ -121,8 +122,10 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
             children: [
               Text(
                 'Nota: ${tx.invoiceNumber}',
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
               ),
               const SizedBox(height: 6),
               const Text(
@@ -173,11 +176,9 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
     );
 
     if (chosenStatus != null && chosenStatus != tx.status && mounted) {
-      final success =
-          await context.read<TransactionProvider>().updateTransactionStatus(
-                transaction: tx,
-                newStatus: chosenStatus,
-              );
+      final success = await context
+          .read<TransactionProvider>()
+          .updateTransactionStatus(transaction: tx, newStatus: chosenStatus);
 
       if (!mounted) return;
 
@@ -249,25 +250,27 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                       children: [
                         Text(
                           tx.invoiceNumber,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           dateStr,
                           style: const TextStyle(
-                              fontSize: 11, color: AppTheme.outline),
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
@@ -295,7 +298,9 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                     child: Text(
                       'Kasir: ${tx.cashierName}',
                       style: const TextStyle(
-                          fontSize: 12, color: AppTheme.outline),
+                        fontSize: 12,
+                        color: AppTheme.outline,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -304,31 +309,35 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                   Text(
                     'Metode: ${tx.paymentMethod}',
                     style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.onSurface),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.onSurface,
+                    ),
                   ),
                 ],
               ),
               if (tx.notes.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text('Catatan: ${tx.notes}',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.outline)),
+                Text(
+                  'Catatan: ${tx.notes}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.outline),
+                ),
               ],
               if (tx.cancelReason != null) ...[
                 const SizedBox(height: 4),
-                Text('Alasan Batal: ${tx.cancelReason}',
-                    style:
-                        const TextStyle(fontSize: 12, color: AppTheme.error)),
+                Text(
+                  'Alasan Batal: ${tx.cancelReason}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.error),
+                ),
               ],
               const SizedBox(height: 12),
 
               // Items Section
               Text(
                 'Rincian Produk',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
 
@@ -353,12 +362,16 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                               Text(
                                 item.productName,
                                 style: const TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Text(
                                 '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
                                 style: const TextStyle(
-                                    fontSize: 11, color: AppTheme.outline),
+                                  fontSize: 11,
+                                  color: AppTheme.outline,
+                                ),
                               ),
                             ],
                           ),
@@ -389,8 +402,10 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total Pembayaran',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Total Pembayaran',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     CurrencyFormatter.format(tx.total),
                     style: AppTheme.numericStyle.copyWith(
