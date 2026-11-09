@@ -11,6 +11,7 @@ import '../../../providers/product_provider.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/barcode_scanner_modal.dart';
 import '../../../widgets/motion_widgets.dart';
+import '../../../widgets/product_image.dart';
 import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'product_form_screen.dart';
@@ -535,29 +536,12 @@ class _ProductListCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Thumbnail
-            Container(
+            ProductImage(
+              imageUrl: product.imageUrl,
+              productName: product.name,
               width: 60,
               height: 60,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.inventory_2_outlined,
-                          color: AppTheme.outline,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.inventory_2_outlined,
-                        color: AppTheme.outline,
-                      ),
-              ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
             const SizedBox(width: 12),
 

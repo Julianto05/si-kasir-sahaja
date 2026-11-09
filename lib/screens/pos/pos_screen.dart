@@ -19,6 +19,7 @@ import '../../providers/store_settings_provider.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/barcode_scanner_modal.dart';
 import '../../widgets/motion_widgets.dart';
+import '../../widgets/product_image.dart';
 import '../admin/product/product_form_screen.dart';
 import '../admin/widgets/admin_drawer.dart';
 import '../cashier/closing/shift_closing_dialog.dart';
@@ -1757,29 +1758,13 @@ class _PosProductCard extends StatelessWidget {
                 Expanded(
                   child: Stack(
                     children: [
-                      Container(
+                      ProductImage(
+                        imageUrl: product.imageUrl,
+                        productName: product.name,
                         width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: AppTheme.surfaceContainerLow,
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
-                          child:
-                              product.imageUrl != null &&
-                                  product.imageUrl!.isNotEmpty
-                              ? Image.network(
-                                  product.imageUrl!,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) =>
-                                      _buildFallbackAvatar(product.name),
-                                )
-                              : _buildFallbackAvatar(product.name),
-                        ),
+                        height: double.infinity,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        fallbackWidget: _buildFallbackAvatar(product.name),
                       ),
 
                       // Out of stock overlay

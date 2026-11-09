@@ -36,7 +36,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Future<void> _openPos(BuildContext context) async {
     final auth = context.read<AuthProvider>();
     final shiftProvider = context.read<ShiftProvider>();
-    if (!shiftProvider.hasActiveShift && auth.currentUser != null) {
+    if (auth.currentUser != null) {
       await shiftProvider.loadActiveShift(auth.currentUser!.id);
     }
     if (!context.mounted) return;

@@ -103,11 +103,28 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     posProvider.setNotes(_notesController.text.trim());
 
     final shiftProvider = context.read<ShiftProvider>();
+    if (!shiftProvider.hasActiveShift || shiftProvider.activeShift == null) {
+      await shiftProvider.loadActiveShift(user.id);
+    }
+
+    if (!shiftProvider.hasActiveShift || shiftProvider.activeShift == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Transaksi ditolak: Shift kasir tidak aktif. Silakan buka shift terlebih dahulu.',
+          ),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+
     final completedTx = await posProvider.checkout(
       cashier: user,
       settings: settings,
       status: _transactionStatus,
-      shiftId: shiftProvider.activeShift?.id,
+      shiftId: shiftProvider.activeShift!.id,
     );
 
     if (!mounted) return;

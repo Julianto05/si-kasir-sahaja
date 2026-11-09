@@ -124,6 +124,15 @@ class FinanceProvider extends ChangeNotifier {
         });
   }
 
+  /// Cancels existing subscriptions and re-subscribes to all finance streams.
+  void refreshFinance() {
+    _expenseSub?.cancel();
+    _capitalSub?.cancel();
+    _debtSub?.cancel();
+    _debtPaymentSub?.cancel();
+    _initStreams();
+  }
+
   Future<bool> addExpense({
     required String category,
     required double amount,

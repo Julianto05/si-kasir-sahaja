@@ -14,12 +14,14 @@ class ShiftProvider extends ChangeNotifier {
   List<ShiftModel> _allShifts = [];
   bool _isLoading = false;
   String? _errorMessage;
+  String? _currentCashierId;
   StreamSubscription<List<ShiftModel>>? _subscription;
 
   ShiftModel? get activeShift => _activeShift;
   List<ShiftModel> get allShifts => _allShifts;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  String? get currentCashierId => _currentCashierId;
   bool get hasActiveShift => _activeShift != null && _activeShift!.isOpen;
 
   ShiftProvider() {
@@ -32,21 +34,18 @@ class ShiftProvider extends ChangeNotifier {
     super.dispose();
   }
 
+  /// Clears active shift state on logout.
+  void clearActiveShift() {
+    _activeShift = null;
+    _currentCashierId = null;
+    notifyListeners();
+  }
+
   void _initAdminStream() {
     _subscription = _shiftService.streamAllShifts().listen(
       (shifts) {
         _allShifts = shifts;
-        // Keep activeShift in sync if updated or deleted
-        if (_activeShift != null) {
-          final updated = shifts
-              .where((s) => s.id == _activeShift!.id)
-              .firstOrNull;
-          if (updated != null && updated.isOpen) {
-            _activeShift = updated;
-          } else {
-            _activeShift = null;
-          }
-        }
+        _syncActiveShift(shifts);
         notifyListeners();
       },
       onError: (e) {
@@ -55,13 +54,52 @@ class ShiftProvider extends ChangeNotifier {
     );
   }
 
+  void _syncActiveShift(List<ShiftModel> shifts) {
+    if (_activeShift != null) {
+      final updated = shifts.where((s) => s.id == _activeShift!.id).firstOrNull;
+      if (updated != null) {
+        if (updated.isOpen) {
+          _activeShift = updated;
+          return;
+        } else {
+          _activeShift = null;
+        }
+      } else {
+        // Stream may have received an older snapshot before the new doc was synced.
+        // If the shift was opened recently and is marked open, keep it intact.
+        final diff = DateTime.now()
+            .difference(_activeShift!.openedAt)
+            .inSeconds;
+        if (diff < 120 && _activeShift!.isOpen) {
+          return;
+        }
+      }
+    }
+
+    // 1. Check open shift for the current cashier
+    if (_currentCashierId != null && _currentCashierId!.isNotEmpty) {
+      final openList = shifts
+          .where((s) => s.cashierId == _currentCashierId && s.isOpen)
+          .toList();
+      if (openList.isNotEmpty) {
+        openList.sort((a, b) => b.openedAt.compareTo(a.openedAt));
+        _activeShift = openList.first;
+        return;
+      }
+    }
+
+    // 2. Store-wide fallback: If any shift is open in the store, keep it active
+    final anyOpenList = shifts.where((s) => s.isOpen).toList();
+    if (anyOpenList.isNotEmpty) {
+      anyOpenList.sort((a, b) => b.openedAt.compareTo(a.openedAt));
+      _activeShift = anyOpenList.first;
+    }
+  }
+
   /// Loads or refreshes the active shift for the given cashier or admin.
   Future<void> loadActiveShift(String cashierId) async {
-    if (cashierId.isEmpty) return;
+    _currentCashierId = cashierId;
     try {
-      if (_activeShift != null && _activeShift!.cashierId != cashierId) {
-        _activeShift = null;
-      }
       _isLoading = true;
       notifyListeners();
 
@@ -83,6 +121,7 @@ class ShiftProvider extends ChangeNotifier {
     required double startingCash,
   }) async {
     try {
+      _currentCashierId = cashierId;
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
@@ -102,6 +141,12 @@ class ShiftProvider extends ChangeNotifier {
       );
 
       _activeShift = shift;
+      final existsIdx = _allShifts.indexWhere((s) => s.id == shift.id);
+      if (existsIdx >= 0) {
+        _allShifts[existsIdx] = shift;
+      } else {
+        _allShifts.insert(0, shift);
+      }
       _isLoading = false;
       notifyListeners();
       return true;
@@ -246,6 +291,10 @@ class ShiftProvider extends ChangeNotifier {
 
       if (_activeShift?.id == targetShift.id) {
         _activeShift = null;
+      }
+      final idx = _allShifts.indexWhere((s) => s.id == targetShift.id);
+      if (idx >= 0) {
+        _allShifts[idx] = closedShift;
       }
       _isLoading = false;
       notifyListeners();

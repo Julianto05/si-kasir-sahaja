@@ -1,12 +1,14 @@
-import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/constants/app_constants.dart';
 import '../core/utils/image_cropper_util.dart';
 
-/// Service layer for uploading and managing files on Firebase Storage with support for all image formats.
+/// Service layer for uploading and managing files on Firebase Storage with support for all image formats,
+/// including automatic resilient fallback to inline Base64 Data URL if Cloud Storage is unprovisioned or unreachable.
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
@@ -60,60 +62,67 @@ class StorageService {
     }
   }
 
-  /// Uploads a product image from an [XFile] to Firebase Storage (supports all formats).
+  /// Uploads a product image from an [XFile] to Firebase Storage with automatic Data URL fallback.
   Future<String> uploadProductImage(XFile imageFile, String productId) async {
-    final Uint8List bytes = await imageFile.readAsBytes();
+    final Uint8List rawBytes = await imageFile.readAsBytes();
+    // Ensure square crop 1:1 if not already cropped
+    final Uint8List squareBytes = await ImageCropperUtil.cropToSquare(
+      rawBytes,
+      maxDimension: 512,
+    );
+
     final fileName = imageFile.name.isNotEmpty
         ? imageFile.name
         : imageFile.path;
-    final ext = getExtension(fileName, bytes);
-    final mime = getMimeType(fileName, bytes);
+    final ext = getExtension(fileName, squareBytes);
 
-    final ref = _storage
-        .ref()
-        .child(AppConstants.productImagesPath)
-        .child('$productId.$ext');
-
-    final metadata = SettableMetadata(
-      contentType: mime,
-      customMetadata: {
-        'uploadedAt': DateTime.now().toIso8601String(),
-        'originalName': imageFile.name,
-      },
-    );
-
-    final uploadTask = await ref.putData(bytes, metadata);
-    return await uploadTask.ref.getDownloadURL();
+    return await uploadProductImageBytes(squareBytes, productId, format: ext);
   }
 
-  /// Uploads raw image bytes directly to Firebase Storage with explicit or auto-detected format.
+  /// Uploads raw image bytes directly to Firebase Storage with explicit or auto-detected format,
+  /// with seamless fallback to inline Base64 Data URL if Storage reference is unavailable.
   Future<String> uploadProductImageBytes(
     Uint8List bytes,
     String productId, {
     String? format,
   }) async {
-    final ext = format ?? getExtension('image.$format', bytes);
+    final detected = format ?? ImageCropperUtil.detectFormat(bytes);
+    final ext = detected.isNotEmpty ? detected : 'png';
     final mime = getMimeType('image.$ext', bytes);
 
-    final ref = _storage
-        .ref()
-        .child(AppConstants.productImagesPath)
-        .child('$productId.$ext');
+    try {
+      final ref = _storage
+          .ref()
+          .child(AppConstants.productImagesPath)
+          .child('$productId.$ext');
 
-    final metadata = SettableMetadata(
-      contentType: mime,
-      customMetadata: {
-        'uploadedAt': DateTime.now().toIso8601String(),
-        'format': ext,
-      },
-    );
+      final metadata = SettableMetadata(
+        contentType: mime,
+        cacheControl: 'public, max-age=31536000',
+        customMetadata: {
+          'uploadedAt': DateTime.now().toIso8601String(),
+          'format': ext,
+        },
+      );
 
-    final uploadTask = await ref.putData(bytes, metadata);
-    return await uploadTask.ref.getDownloadURL();
+      final uploadTask = await ref.putData(bytes, metadata);
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      debugPrint(
+        'Firebase Storage upload unavailable ($e). Falling back to resilient inline Base64 data URI.',
+      );
+      final base64String = base64Encode(bytes);
+      return 'data:$mime;base64,$base64String';
+    }
   }
 
   /// Deletes a file from Firebase Storage given its downloadable URL or reference path.
   Future<void> deleteImageByUrl(String imageUrl) async {
+    if (imageUrl.startsWith('data:')) {
+      // Inline Data URL requires no remote file deletion
+      return;
+    }
     try {
       final ref = _storage.refFromURL(imageUrl);
       await ref.delete();

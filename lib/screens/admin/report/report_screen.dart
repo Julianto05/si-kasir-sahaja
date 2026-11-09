@@ -73,7 +73,20 @@ class ReportScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: AppTheme.surface,
-      appBar: AppBar(title: const Text('Laporan & Analitik Keuangan')),
+      appBar: AppBar(
+        title: const Text('Laporan & Analitik Keuangan'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Segarkan Data Transaksi & Keuangan',
+            onPressed: () {
+              txProvider.refreshTransactions();
+              prodProvider.refreshProducts();
+              financeProvider.refreshFinance();
+            },
+          ),
+        ],
+      ),
       drawer: const AdminDrawer(currentRoute: 'reports'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'reports'),
       body: AppBackground(
@@ -529,11 +542,39 @@ class ReportScreen extends StatelessWidget {
     String label,
     TransactionProvider provider,
   ) {
+    bool isSelected = false;
+    final now = DateTime.now();
+    if (range == 'all' && provider.startDate == null) {
+      isSelected = true;
+    } else if (range == 'today' &&
+        provider.startDate != null &&
+        provider.startDate!.year == now.year &&
+        provider.startDate!.month == now.month &&
+        provider.startDate!.day == now.day) {
+      isSelected = true;
+    } else if (range == 'month' &&
+        provider.startDate != null &&
+        provider.startDate!.day == 1) {
+      isSelected = true;
+    } else if (range == 'week' &&
+        provider.startDate != null &&
+        provider.startDate!.day != 1 &&
+        provider.startDate!.day != now.day) {
+      isSelected = true;
+    }
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
+      child: FilterChip(
         label: Text(label),
-        onPressed: () => provider.setQuickDateFilter(range),
+        selected: isSelected,
+        selectedColor: AppTheme.primary.withValues(alpha: 0.18),
+        checkmarkColor: AppTheme.primary,
+        labelStyle: TextStyle(
+          color: isSelected ? AppTheme.primary : AppTheme.onSurface,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+        onSelected: (_) => provider.setQuickDateFilter(range),
       ),
     );
   }

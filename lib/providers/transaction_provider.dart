@@ -114,7 +114,11 @@ class TransactionProvider extends ChangeNotifier {
 
   // ─── Stream Initialization ──────────────────────────────────
 
+  Timer? _reconnectTimer;
+
   void _initStream() {
+    _subscription?.cancel();
+    _reconnectTimer?.cancel();
     _isLoading = true;
     notifyListeners();
 
@@ -129,8 +133,18 @@ class TransactionProvider extends ChangeNotifier {
         _isLoading = false;
         _errorMessage = 'Gagal memuat riwayat transaksi: $error';
         notifyListeners();
+        // Schedule auto reconnect if stream failed
+        _reconnectTimer?.cancel();
+        _reconnectTimer = Timer(const Duration(seconds: 4), () {
+          _initStream();
+        });
       },
     );
+  }
+
+  /// Manually re-initializes transaction subscription.
+  void refreshTransactions() {
+    _initStream();
   }
 
   // ─── Filters ────────────────────────────────────────────────
@@ -293,6 +307,7 @@ class TransactionProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _subscription?.cancel();
     super.dispose();
   }

@@ -1,5 +1,44 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+double _parseNumToDouble(dynamic val, [double fallback = 0.0]) {
+  if (val == null) return fallback;
+  if (val is num) return val.toDouble();
+  if (val is String) {
+    return double.tryParse(val.replaceAll(',', '.')) ?? fallback;
+  }
+  return fallback;
+}
+
+int _parseNumToInt(dynamic val, [int fallback = 0]) {
+  if (val == null) return fallback;
+  if (val is num) return val.toInt();
+  if (val is String) {
+    return int.tryParse(val) ?? fallback;
+  }
+  return fallback;
+}
+
+DateTime _parseDateTime(dynamic val, [DateTime? fallback]) {
+  if (val == null) return fallback ?? DateTime.now();
+  if (val is Timestamp) return val.toDate();
+  if (val is DateTime) return val;
+  if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+  if (val is String) {
+    final parsed = DateTime.tryParse(val);
+    if (parsed != null) return parsed;
+  }
+  return fallback ?? DateTime.now();
+}
+
+DateTime? _parseNullableDateTime(dynamic val) {
+  if (val == null) return null;
+  if (val is Timestamp) return val.toDate();
+  if (val is DateTime) return val;
+  if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+  if (val is String) return DateTime.tryParse(val);
+  return null;
+}
+
 /// Represents a single payment method entry in a split/combination payment (PRD Section 5.2 & 8.2).
 class PaymentSplitItem {
   final String method;
@@ -9,8 +48,8 @@ class PaymentSplitItem {
 
   factory PaymentSplitItem.fromMap(Map<String, dynamic> map) {
     return PaymentSplitItem(
-      method: map['method'] as String? ?? 'Cash',
-      amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
+      method: map['method']?.toString() ?? 'Cash',
+      amount: _parseNumToDouble(map['amount']),
     );
   }
 
@@ -48,16 +87,16 @@ class TransactionItemModel {
   /// Factory from Map.
   factory TransactionItemModel.fromMap(Map<String, dynamic> map) {
     return TransactionItemModel(
-      productId: map['productId'] as String? ?? '',
-      productName: map['productName'] as String? ?? '',
-      productCode: map['productCode'] as String? ?? '',
-      variant: map['variant'] as String? ?? '',
-      price: (map['price'] as num?)?.toDouble() ?? 0.0,
-      costPrice: (map['costPrice'] as num?)?.toDouble() ?? 0.0,
-      quantity: (map['quantity'] as num?)?.toInt() ?? 1,
-      unit: map['unit'] as String? ?? 'pcs',
-      itemDiscount: (map['itemDiscount'] as num?)?.toDouble() ?? 0.0,
-      subtotal: (map['subtotal'] as num?)?.toDouble() ?? 0.0,
+      productId: map['productId']?.toString() ?? '',
+      productName: map['productName']?.toString() ?? '',
+      productCode: map['productCode']?.toString() ?? '',
+      variant: map['variant']?.toString() ?? '',
+      price: _parseNumToDouble(map['price']),
+      costPrice: _parseNumToDouble(map['costPrice']),
+      quantity: _parseNumToInt(map['quantity'], 1),
+      unit: map['unit']?.toString() ?? 'pcs',
+      itemDiscount: _parseNumToDouble(map['itemDiscount']),
+      subtotal: _parseNumToDouble(map['subtotal']),
     );
   }
 
@@ -185,54 +224,63 @@ class TransactionModel {
   ]) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
 
-    // Parse embedded items if present in document
+    // Parse embedded items safely if present in document
     List<TransactionItemModel> parsedItems = itemsList ?? [];
     if (parsedItems.isEmpty && data['items'] is List) {
-      parsedItems = (data['items'] as List)
-          .map(
-            (item) => TransactionItemModel.fromMap(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          )
-          .toList();
+      final rawList = data['items'] as List;
+      for (final item in rawList) {
+        if (item is Map) {
+          try {
+            parsedItems.add(
+              TransactionItemModel.fromMap(Map<String, dynamic>.from(item)),
+            );
+          } catch (_) {}
+        }
+      }
     }
 
-    // Parse split payments if present
+    // Parse split payments safely if present
     List<PaymentSplitItem> parsedPayments = [];
     if (data['payments'] is List) {
-      parsedPayments = (data['payments'] as List)
-          .whereType<Map>()
-          .map((p) => PaymentSplitItem.fromMap(Map<String, dynamic>.from(p)))
-          .toList();
+      final rawPayments = data['payments'] as List;
+      for (final p in rawPayments) {
+        if (p is Map) {
+          try {
+            parsedPayments.add(
+              PaymentSplitItem.fromMap(Map<String, dynamic>.from(p)),
+            );
+          } catch (_) {}
+        }
+      }
     }
 
     return TransactionModel(
       id: doc.id,
-      invoiceNumber: data['invoiceNumber'] as String? ?? '',
-      cashierId: data['cashierId'] as String? ?? '',
-      cashierName: data['cashierName'] as String? ?? '',
-      customerId: data['customerId'] as String?,
-      customerName: data['customerName'] as String?,
-      subtotal: (data['subtotal'] as num?)?.toDouble() ?? 0.0,
-      discount: (data['discount'] as num?)?.toDouble() ?? 0.0,
-      tax: (data['tax'] as num?)?.toDouble() ?? 0.0,
-      serviceCharge: (data['serviceCharge'] as num?)?.toDouble() ?? 0.0,
-      total: (data['total'] as num?)?.toDouble() ?? 0.0,
-      totalCostPrice: (data['totalCostPrice'] as num?)?.toDouble() ?? 0.0,
-      paymentMethod: data['paymentMethod'] as String? ?? 'Cash',
+      invoiceNumber: data['invoiceNumber']?.toString() ?? '',
+      cashierId: data['cashierId']?.toString() ?? '',
+      cashierName: data['cashierName']?.toString() ?? '',
+      customerId: data['customerId']?.toString(),
+      customerName: data['customerName']?.toString(),
+      subtotal: _parseNumToDouble(data['subtotal']),
+      discount: _parseNumToDouble(data['discount']),
+      tax: _parseNumToDouble(data['tax']),
+      serviceCharge: _parseNumToDouble(data['serviceCharge']),
+      total: _parseNumToDouble(data['total']),
+      totalCostPrice: _parseNumToDouble(data['totalCostPrice']),
+      paymentMethod: data['paymentMethod']?.toString() ?? 'Cash',
       payments: parsedPayments,
-      paidAmount: (data['paidAmount'] as num?)?.toDouble() ?? 0.0,
-      changeAmount: (data['changeAmount'] as num?)?.toDouble() ?? 0.0,
-      pointsEarned: (data['pointsEarned'] as num?)?.toInt() ?? 0,
-      pointsRedeemed: (data['pointsRedeemed'] as num?)?.toInt() ?? 0,
-      status: data['status'] as String? ?? 'completed',
-      shiftId: data['shiftId'] as String?,
-      notes: data['notes'] as String? ?? '',
-      cancelReason: data['cancelReason'] as String?,
-      cancelledBy: data['cancelledBy'] as String?,
-      cancelledAt: (data['cancelledAt'] as Timestamp?)?.toDate(),
+      paidAmount: _parseNumToDouble(data['paidAmount']),
+      changeAmount: _parseNumToDouble(data['changeAmount']),
+      pointsEarned: _parseNumToInt(data['pointsEarned']),
+      pointsRedeemed: _parseNumToInt(data['pointsRedeemed']),
+      status: data['status']?.toString() ?? 'completed',
+      shiftId: data['shiftId']?.toString(),
+      notes: data['notes']?.toString() ?? '',
+      cancelReason: data['cancelReason']?.toString(),
+      cancelledBy: data['cancelledBy']?.toString(),
+      cancelledAt: _parseNullableDateTime(data['cancelledAt']),
       items: parsedItems,
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: _parseDateTime(data['createdAt']),
     );
   }
 

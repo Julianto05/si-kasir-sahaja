@@ -38,7 +38,7 @@ class TransactionService {
     return '$prefix-$dateStr-${sequence.toString().padLeft(4, '0')}';
   }
 
-  /// Streams transactions with safe in-memory sorting.
+  /// Streams transactions with safe in-memory sorting and bulletproof error handling.
   Stream<List<TransactionModel>> streamTransactions({
     DateTime? startDate,
     DateTime? endDate,
@@ -46,30 +46,31 @@ class TransactionService {
     String? status,
   }) {
     return _transactionsRef.snapshots().map((snapshot) {
-      final list = snapshot.docs
-          .map((doc) => TransactionModel.fromFirestore(doc))
-          .where((tx) {
-            if (startDate != null && tx.createdAt.isBefore(startDate)) {
-              return false;
-            }
-            if (endDate != null && tx.createdAt.isAfter(endDate)) {
-              return false;
-            }
-            if (cashierId != null &&
-                cashierId.isNotEmpty &&
-                cashierId != 'all' &&
-                tx.cashierId != cashierId) {
-              return false;
-            }
-            if (status != null &&
-                status.isNotEmpty &&
-                status != 'all' &&
-                tx.status != status) {
-              return false;
-            }
-            return true;
-          })
-          .toList();
+      final list = <TransactionModel>[];
+      for (final doc in snapshot.docs) {
+        try {
+          final tx = TransactionModel.fromFirestore(doc);
+          if (startDate != null && tx.createdAt.isBefore(startDate)) {
+            continue;
+          }
+          if (endDate != null && tx.createdAt.isAfter(endDate)) {
+            continue;
+          }
+          if (cashierId != null &&
+              cashierId.isNotEmpty &&
+              cashierId != 'all' &&
+              tx.cashierId != cashierId) {
+            continue;
+          }
+          if (status != null &&
+              status.isNotEmpty &&
+              status != 'all' &&
+              tx.status != status) {
+            continue;
+          }
+          list.add(tx);
+        } catch (_) {}
+      }
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;

@@ -7,6 +7,7 @@ import '../../../main.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/pos_provider.dart';
 import '../../../providers/product_provider.dart';
+import '../../../providers/shift_provider.dart';
 import '../../../widgets/motion_widgets.dart';
 import '../../pos/pos_screen.dart';
 import '../admin_dashboard_screen.dart';
@@ -447,6 +448,7 @@ class AdminDrawer extends StatelessWidget {
               final authProvider = context.read<AuthProvider>();
 
               posProvider.clearCart();
+              context.read<ShiftProvider>().clearActiveShift();
               await authProvider.signOut();
 
               if (context.mounted) {

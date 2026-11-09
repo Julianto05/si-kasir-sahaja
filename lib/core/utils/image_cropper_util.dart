@@ -52,7 +52,7 @@ class ImageCropperUtil {
   /// Decodes any format supported by Flutter/Skia and returns crisp square byte data.
   static Future<Uint8List> cropToSquare(
     Uint8List rawBytes, {
-    int maxDimension = 1024,
+    int maxDimension = 512,
   }) async {
     final codec = await ui.instantiateImageCodec(rawBytes);
     final frame = await codec.getNextFrame();

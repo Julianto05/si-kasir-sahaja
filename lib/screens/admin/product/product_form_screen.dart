@@ -13,6 +13,7 @@ import '../../../models/product_model.dart';
 import '../../../providers/category_provider.dart';
 import '../../../providers/product_provider.dart';
 import '../../../widgets/barcode_scanner_modal.dart';
+import '../../../widgets/product_image.dart';
 
 /// Screen for adding or editing a product in SiKasirSahaja POS (PRD Section 5.4).
 class ProductFormScreen extends StatefulWidget {
@@ -729,7 +730,15 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                               fit: BoxFit.cover,
                             )
                     else if (existingUrl != null && existingUrl.isNotEmpty)
-                      Image.network(existingUrl, fit: BoxFit.cover)
+                      ProductImage(
+                        imageUrl: existingUrl,
+                        productName: _nameController.text.isNotEmpty
+                            ? _nameController.text
+                            : 'Produk',
+                        width: 140,
+                        height: 140,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                      )
                     else
                       const Center(
                         child: Column(

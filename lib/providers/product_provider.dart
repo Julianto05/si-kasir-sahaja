@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
@@ -247,9 +248,33 @@ class ProductProvider extends ChangeNotifier {
 
       final now = DateTime.now();
       String? imageUrl;
+      final newDocId = _productService.generateProductId();
+
+      if (imageBytes != null) {
+        try {
+          imageUrl = await _storageService.uploadProductImageBytes(
+            imageBytes,
+            newDocId,
+          );
+        } catch (_) {
+          imageUrl = 'data:image/png;base64,${base64Encode(imageBytes)}';
+        }
+      } else if (imageFile != null) {
+        try {
+          imageUrl = await _storageService.uploadProductImage(
+            imageFile,
+            newDocId,
+          );
+        } catch (_) {
+          try {
+            final b = await imageFile.readAsBytes();
+            imageUrl = 'data:image/png;base64,${base64Encode(b)}';
+          } catch (_) {}
+        }
+      }
 
       final productDraft = ProductModel(
-        id: '',
+        id: newDocId,
         code: code.trim().toUpperCase(),
         barcode: barcode.trim(),
         name: name.trim(),
@@ -264,44 +289,20 @@ class ProductProvider extends ChangeNotifier {
         stock: stock,
         minimumStock: minimumStock,
         unit: unit.trim(),
-        imageUrl: null,
+        imageUrl: imageUrl,
         isActive: isActive,
         createdAt: now,
         updatedAt: now,
       );
 
-      final newDocId = await _productService.addProduct(productDraft);
+      await _productService.setProduct(productDraft);
 
-      if (imageBytes != null) {
-        try {
-          imageUrl = await _storageService.uploadProductImageBytes(
-            imageBytes,
-            newDocId,
-          );
-          final updatedProduct = productDraft.copyWith(
-            id: newDocId,
-            imageUrl: imageUrl,
-          );
-          await _productService.updateProduct(updatedProduct);
-        } catch (storageError) {
-          _errorMessage =
-              'Produk tersimpan, namun gagal mengunggah foto: $storageError';
-        }
-      } else if (imageFile != null) {
-        try {
-          imageUrl = await _storageService.uploadProductImage(
-            imageFile,
-            newDocId,
-          );
-          final updatedProduct = productDraft.copyWith(
-            id: newDocId,
-            imageUrl: imageUrl,
-          );
-          await _productService.updateProduct(updatedProduct);
-        } catch (storageError) {
-          _errorMessage =
-              'Produk tersimpan, namun gagal mengunggah foto: $storageError';
-        }
+      // Immediately sync local _products list for instantaneous UI feedback
+      final existingIndex = _products.indexWhere((p) => p.id == newDocId);
+      if (existingIndex >= 0) {
+        _products[existingIndex] = productDraft;
+      } else {
+        _products.insert(0, productDraft);
       }
 
       _isLoading = false;
@@ -361,8 +362,8 @@ class ProductProvider extends ChangeNotifier {
             newImageBytes,
             product.id,
           );
-        } catch (storageError) {
-          _errorMessage = 'Gagal mengunggah foto baru: $storageError';
+        } catch (_) {
+          imageUrl = 'data:image/png;base64,${base64Encode(newImageBytes)}';
         }
       } else if (newImageFile != null) {
         try {
@@ -370,8 +371,11 @@ class ProductProvider extends ChangeNotifier {
             newImageFile,
             product.id,
           );
-        } catch (storageError) {
-          _errorMessage = 'Gagal mengunggah foto baru: $storageError';
+        } catch (_) {
+          try {
+            final b = await newImageFile.readAsBytes();
+            imageUrl = 'data:image/png;base64,${base64Encode(b)}';
+          } catch (_) {}
         }
       }
 
@@ -382,6 +386,12 @@ class ProductProvider extends ChangeNotifier {
       );
 
       await _productService.updateProduct(updatedProduct);
+
+      // Immediately sync local _products list
+      final index = _products.indexWhere((p) => p.id == updatedProduct.id);
+      if (index >= 0) {
+        _products[index] = updatedProduct;
+      }
 
       if (auditUserId != null && auditUserName != null) {
         await AttendanceProvider.logActivity(

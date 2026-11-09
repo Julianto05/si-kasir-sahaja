@@ -121,6 +121,18 @@ class ProductService {
     return 'PRD-${count.toString().padLeft(4, '0')}';
   }
 
+  /// Generates a new unique Firestore document ID for a product.
+  String generateProductId() => _collection.doc().id;
+
+  /// Sets or creates a product document with a specific ID.
+  Future<void> setProduct(ProductModel product) async {
+    final now = DateTime.now();
+    final data = product.toMap();
+    data['createdAt'] = Timestamp.fromDate(product.createdAt);
+    data['updatedAt'] = Timestamp.fromDate(now);
+    await _collection.doc(product.id).set(data);
+  }
+
   /// Adds a new product document.
   Future<String> addProduct(ProductModel product) async {
     final now = DateTime.now();

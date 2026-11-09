@@ -2,6 +2,46 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'transaction_model.dart';
 
+/// Helper functions for safe parsing across different Firestore data versions.
+double _parseNumToDouble(dynamic val, [double fallback = 0.0]) {
+  if (val == null) return fallback;
+  if (val is num) return val.toDouble();
+  if (val is String) {
+    return double.tryParse(val.replaceAll(',', '.')) ?? fallback;
+  }
+  return fallback;
+}
+
+int _parseNumToInt(dynamic val, [int fallback = 0]) {
+  if (val == null) return fallback;
+  if (val is num) return val.toInt();
+  if (val is String) {
+    return int.tryParse(val) ?? fallback;
+  }
+  return fallback;
+}
+
+DateTime _parseDateTime(dynamic val, [DateTime? fallback]) {
+  if (val == null) return fallback ?? DateTime.now();
+  if (val is Timestamp) return val.toDate();
+  if (val is DateTime) return val;
+  if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+  if (val is String) {
+    final parsed = DateTime.tryParse(val);
+    if (parsed != null) return parsed;
+  }
+  return fallback ?? DateTime.now();
+}
+
+DateTime? _parseNullableDateTime(dynamic val) {
+  if (val == null) return null;
+  if (val is Timestamp) return val.toDate();
+  if (val is DateTime) return val;
+  if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+  if (val is String) return DateTime.tryParse(val);
+  return null;
+}
+
 /// Represents a manual petty cash entry (Kas Masuk / Kas Keluar) during an active shift.
 class ShiftCashEntry {
   final String id;
@@ -20,11 +60,11 @@ class ShiftCashEntry {
 
   factory ShiftCashEntry.fromMap(Map<String, dynamic> map) {
     return ShiftCashEntry(
-      id: map['id'] as String? ?? '',
-      type: map['type'] as String? ?? 'out',
-      amount: (map['amount'] as num?)?.toDouble() ?? 0.0,
-      reason: map['reason'] as String? ?? '',
-      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      id: map['id']?.toString() ?? '',
+      type: map['type']?.toString() ?? 'out',
+      amount: _parseNumToDouble(map['amount']),
+      reason: map['reason']?.toString() ?? '',
+      createdAt: _parseDateTime(map['createdAt']),
     );
   }
 
@@ -81,8 +121,8 @@ class ShiftModel {
     this.status = 'open',
   });
 
-  bool get isOpen => status == 'open';
-  bool get isClosed => status == 'closed';
+  bool get isOpen => status == 'open' && closedAt == null;
+  bool get isClosed => status == 'closed' || closedAt != null;
 
   double get totalCashIn =>
       cashIn.fold(0.0, (acc, entry) => acc + entry.amount);
@@ -99,39 +139,48 @@ class ShiftModel {
 
     Map<String, int> parseDenominations(dynamic raw) {
       if (raw is Map) {
-        return raw.map((k, v) => MapEntry(k.toString(), (v as num).toInt()));
+        final result = <String, int>{};
+        raw.forEach((k, v) {
+          result[k.toString()] = _parseNumToInt(v);
+        });
+        return result;
       }
       return {};
     }
 
     List<ShiftCashEntry> parseCashList(dynamic raw) {
       if (raw is List) {
-        return raw
-            .whereType<Map>()
-            .map((e) => ShiftCashEntry.fromMap(Map<String, dynamic>.from(e)))
-            .toList();
+        final list = <ShiftCashEntry>[];
+        for (final item in raw) {
+          if (item is Map) {
+            try {
+              list.add(ShiftCashEntry.fromMap(Map<String, dynamic>.from(item)));
+            } catch (_) {}
+          }
+        }
+        return list;
       }
       return const [];
     }
 
     return ShiftModel(
       id: doc.id,
-      cashierId: data['cashierId'] as String? ?? '',
-      cashierName: data['cashierName'] as String? ?? '',
-      openedAt: (data['openedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      closedAt: (data['closedAt'] as Timestamp?)?.toDate(),
-      startingCash: (data['startingCash'] as num?)?.toDouble() ?? 0.0,
-      cashSales: (data['cashSales'] as num?)?.toDouble() ?? 0.0,
-      nonCashSales: (data['nonCashSales'] as num?)?.toDouble() ?? 0.0,
-      totalSales: (data['totalSales'] as num?)?.toDouble() ?? 0.0,
-      transactionCount: (data['transactionCount'] as num?)?.toInt() ?? 0,
-      physicalCash: (data['physicalCash'] as num?)?.toDouble() ?? 0.0,
-      cashDifference: (data['cashDifference'] as num?)?.toDouble() ?? 0.0,
+      cashierId: data['cashierId']?.toString() ?? '',
+      cashierName: data['cashierName']?.toString() ?? '',
+      openedAt: _parseDateTime(data['openedAt']),
+      closedAt: _parseNullableDateTime(data['closedAt']),
+      startingCash: _parseNumToDouble(data['startingCash']),
+      cashSales: _parseNumToDouble(data['cashSales']),
+      nonCashSales: _parseNumToDouble(data['nonCashSales']),
+      totalSales: _parseNumToDouble(data['totalSales']),
+      transactionCount: _parseNumToInt(data['transactionCount']),
+      physicalCash: _parseNumToDouble(data['physicalCash']),
+      cashDifference: _parseNumToDouble(data['cashDifference']),
       denominations: parseDenominations(data['denominations']),
       cashIn: parseCashList(data['cashIn']),
       cashOut: parseCashList(data['cashOut']),
-      notes: data['notes'] as String? ?? '',
-      status: data['status'] as String? ?? 'open',
+      notes: data['notes']?.toString() ?? '',
+      status: data['status']?.toString() ?? 'open',
     );
   }
 
@@ -229,16 +278,20 @@ class ShiftSalesBreakdown {
         if (tx.paidAmount > 0) {
           if (tx.payments.isNotEmpty) {
             for (final p in tx.payments) {
-              if (p.method.toLowerCase() == 'cash') {
+              final m = p.method.toLowerCase();
+              if (m == 'cash' || m == 'tunai') {
                 cash += p.amount;
               } else {
                 nonCash += p.amount;
               }
             }
-          } else if (tx.paymentMethod.toLowerCase() == 'cash') {
-            cash += tx.paidAmount;
           } else {
-            nonCash += tx.paidAmount;
+            final m = tx.paymentMethod.toLowerCase();
+            if (m == 'cash' || m == 'tunai') {
+              cash += tx.paidAmount;
+            } else {
+              nonCash += tx.paidAmount;
+            }
           }
         }
         final sisaBelumLunas = tx.total - tx.paidAmount;
@@ -250,7 +303,8 @@ class ShiftSalesBreakdown {
         if (tx.payments.isNotEmpty) {
           double txCash = 0.0;
           for (final p in tx.payments) {
-            if (p.method.toLowerCase() == 'cash') {
+            final m = p.method.toLowerCase();
+            if (m == 'cash' || m == 'tunai') {
               txCash += p.amount;
             } else {
               nonCash += p.amount;
@@ -260,7 +314,8 @@ class ShiftSalesBreakdown {
           final netCash = txCash - tx.changeAmount;
           cash += netCash > 0 ? netCash : 0.0;
         } else {
-          if (tx.paymentMethod.toLowerCase() == 'cash') {
+          final m = tx.paymentMethod.toLowerCase();
+          if (m == 'cash' || m == 'tunai') {
             cash += tx.total;
           } else {
             nonCash += tx.total;

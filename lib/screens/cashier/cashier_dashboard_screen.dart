@@ -60,6 +60,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
               Navigator.of(dialogCtx).pop();
 
               context.read<PosProvider>().clearCart();
+              context.read<ShiftProvider>().clearActiveShift();
               await context.read<AuthProvider>().signOut();
 
               if (context.mounted) {
@@ -132,19 +133,47 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
     final shiftProvider = context.watch<ShiftProvider>();
     final user = authProvider.currentUser;
 
-    // Filter today's transactions for this cashier
+    final activeShift = shiftProvider.activeShift;
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final myTodayTx = txProvider.allTransactions.where((tx) {
-      final isMine = tx.cashierId == user?.id || tx.cashierName == user?.name;
-      final isToday = tx.createdAt.isAfter(today);
-      return isMine && isToday && !tx.isCancelled;
-    }).toList();
+
+    // If shift is active, filter transactions strictly for this active shift
+    // Otherwise fallback to today's transactions for this cashier
+    final List<TransactionModel> myShiftTx;
+    if (shiftProvider.hasActiveShift && activeShift != null) {
+      myShiftTx = txProvider.allTransactions.where((tx) {
+        if (tx.isCancelled) return false;
+        if (tx.shiftId != null &&
+            tx.shiftId!.isNotEmpty &&
+            tx.shiftId == activeShift.id) {
+          return true;
+        }
+        final isMine =
+            tx.cashierId == user?.id ||
+            tx.cashierName.toLowerCase() == (user?.name ?? '').toLowerCase();
+        final openTolerance = activeShift.openedAt.subtract(
+          const Duration(minutes: 5),
+        );
+        final afterOpen = tx.createdAt.isAfter(openTolerance);
+        final hasOtherShiftId =
+            tx.shiftId != null &&
+            tx.shiftId!.isNotEmpty &&
+            tx.shiftId != activeShift.id;
+
+        return !hasOtherShiftId && isMine && afterOpen;
+      }).toList();
+    } else {
+      myShiftTx = txProvider.allTransactions.where((tx) {
+        final isMine = tx.cashierId == user?.id || tx.cashierName == user?.name;
+        final isToday = tx.createdAt.isAfter(today);
+        return isMine && isToday && !tx.isCancelled;
+      }).toList();
+    }
 
     // Summary calculations
     double myTodaySales = 0.0;
     int myTodayItems = 0;
-    for (final tx in myTodayTx) {
+    for (final tx in myShiftTx) {
       myTodaySales += tx.total;
       for (final item in tx.items) {
         myTodayItems += item.quantity;
@@ -382,7 +411,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                               _buildMetricCard(
                                 'Transaksi Sukses',
                                 AnimatedCountText(
-                                  count: myTodayTx.length,
+                                  count: myShiftTx.length,
                                   suffix: ' Nota',
                                   style: AppTheme.numericSmallStyle.copyWith(
                                     fontSize: 15,
@@ -466,7 +495,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                               ),
                             ),
                             child: Text(
-                              '${myTodayTx.length} Transaksi',
+                              '${myShiftTx.length} Transaksi',
                               style: const TextStyle(
                                 fontSize: 11,
                                 color: AppTheme.primary,
@@ -477,7 +506,7 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      if (myTodayTx.isEmpty)
+                      if (myShiftTx.isEmpty)
                         Container(
                           padding: const EdgeInsets.all(32),
                           decoration: BoxDecoration(
@@ -532,10 +561,10 @@ class _CashierDashboardScreenState extends State<CashierDashboardScreen> {
                         ListView.separated(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          itemCount: myTodayTx.take(8).length,
+                          itemCount: myShiftTx.take(8).length,
                           separatorBuilder: (_, _) => const SizedBox(height: 8),
                           itemBuilder: (context, index) {
-                            final tx = myTodayTx[index];
+                            final tx = myShiftTx[index];
                             return _CashierTxCard(
                               transaction: tx,
                               onTap: () =>

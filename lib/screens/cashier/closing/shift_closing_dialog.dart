@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/shift_model.dart';
 import '../../../models/transaction_model.dart';
+import '../../../providers/pos_provider.dart';
 import '../../../providers/shift_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import 'shift_receipt_dialog.dart';
@@ -96,16 +97,44 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
   List<TransactionModel> _getShiftTransactions(List<TransactionModel> allTxs) {
     return allTxs.where((tx) {
       if (tx.isCancelled) return false;
-      if (tx.shiftId != null && tx.shiftId!.isNotEmpty) {
-        return tx.shiftId == widget.shift.id;
+
+      // 1. Exact match with shift id
+      if (tx.shiftId != null &&
+          tx.shiftId!.isNotEmpty &&
+          tx.shiftId == widget.shift.id) {
+        return true;
       }
+
+      // 2. Fallback: match by cashier and time window with 5 min tolerance
       final isCashier =
-          tx.cashierId == widget.shift.cashierId ||
-          tx.cashierName == widget.shift.cashierName;
-      final afterOpen = tx.createdAt.isAfter(
-        widget.shift.openedAt.subtract(const Duration(minutes: 1)),
+          (tx.cashierId.isNotEmpty && tx.cashierId == widget.shift.cashierId) ||
+          (tx.cashierName.isNotEmpty &&
+              tx.cashierName.toLowerCase() ==
+                  widget.shift.cashierName.toLowerCase());
+
+      final openTolerance = widget.shift.openedAt.subtract(
+        const Duration(minutes: 5),
       );
-      return isCashier && afterOpen;
+      final closeTolerance = widget.shift.closedAt != null
+          ? widget.shift.closedAt!.add(const Duration(minutes: 5))
+          : DateTime.now().add(const Duration(minutes: 5));
+
+      final withinWindow =
+          tx.createdAt.isAfter(openTolerance) &&
+          tx.createdAt.isBefore(closeTolerance);
+
+      final hasOtherShiftId =
+          tx.shiftId != null &&
+          tx.shiftId!.isNotEmpty &&
+          tx.shiftId != widget.shift.id;
+
+      if (!hasOtherShiftId &&
+          (isCashier || widget.shift.cashierId.isEmpty) &&
+          withinWindow) {
+        return true;
+      }
+
+      return false;
     }).toList();
   }
 
@@ -168,6 +197,17 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
       // Perbarui nilai fisik kas setelah talangan ditambahkan
       physicalCash = _totalPhysicalCash;
       variance = physicalCash - expectedCash;
+      if (variance < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Fisik kas masih kurang ${CurrencyFormatter.format(variance.abs())}. Minus wajib ditutupi penuh sebelum closing.',
+            ),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
     }
 
     if (!mounted) return;
@@ -189,6 +229,8 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
     if (mounted) {
       setState(() => _isSubmitting = false);
       if (closedShift != null) {
+        // Clear POS cart so that stale items do not leak into the next shift
+        context.read<PosProvider>().clearCart();
         Navigator.pop(context);
         ShiftReceiptDialog.show(context, closedShift);
       } else {
@@ -303,10 +345,12 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
             label: const Text('Setor Talangan & Lanjutkan'),
             onPressed: () {
               final coveredAmount = CurrencyFormatter.parse(coverCtrl.text);
-              if (coveredAmount <= 0) {
+              if (coveredAmount < minusNominal) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Nominal talangan harus diisi.'),
+                  SnackBar(
+                    content: Text(
+                      'Nominal talangan minimal ${CurrencyFormatter.format(minusNominal)} untuk menutupi seluruh kekurangan kas.',
+                    ),
                     backgroundColor: AppTheme.error,
                   ),
                 );
