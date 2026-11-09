@@ -24,7 +24,16 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Pre-fetch Gradle Wrapper with retry
+        run: |
+          cd android
+          chmod +x gradlew
+          for i in {1..5}; do ./gradlew --version && break || (echo "Gradle wrapper download retry $i..." && sleep 5); done
+          cd ..
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
