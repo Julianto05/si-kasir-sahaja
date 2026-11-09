@@ -281,12 +281,21 @@ class ProductListScreen extends StatelessWidget {
                     FilterChip(
                       label: const Text('Semua Kategori'),
                       selected: selectedId == 'all',
+                      showCheckmark: false,
                       selectedColor: AppTheme.primary,
+                      backgroundColor: AppTheme.surfaceContainerLow,
+                      side: BorderSide(
+                        color: selectedId == 'all'
+                            ? AppTheme.primary
+                            : AppTheme.outlineVariant,
+                      ),
                       labelStyle: TextStyle(
                         color: selectedId == 'all'
                             ? Colors.white
-                            : AppTheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                            : AppTheme.onSurfaceVariant,
+                        fontWeight: selectedId == 'all'
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                         fontSize: 12,
                       ),
                       onSelected: (_) => prodProvider.setCategoryFilter('all'),
@@ -302,12 +311,21 @@ class ProductListScreen extends StatelessWidget {
                       ),
                       label: const Text('Arsip'),
                       selected: prodProvider.showArchived,
+                      showCheckmark: false,
                       selectedColor: AppTheme.secondary,
+                      backgroundColor: AppTheme.surfaceContainerLow,
+                      side: BorderSide(
+                        color: prodProvider.showArchived
+                            ? AppTheme.secondary
+                            : AppTheme.outlineVariant,
+                      ),
                       labelStyle: TextStyle(
                         color: prodProvider.showArchived
                             ? Colors.white
-                            : AppTheme.onSurface,
-                        fontWeight: FontWeight.w600,
+                            : AppTheme.onSurfaceVariant,
+                        fontWeight: prodProvider.showArchived
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                         fontSize: 12,
                       ),
                       onSelected: (_) => prodProvider.toggleShowArchived(),
@@ -320,12 +338,21 @@ class ProductListScreen extends StatelessWidget {
                         child: FilterChip(
                           label: Text(cat.name),
                           selected: isSelected,
+                          showCheckmark: false,
                           selectedColor: AppTheme.primary,
+                          backgroundColor: AppTheme.surfaceContainerLow,
+                          side: BorderSide(
+                            color: isSelected
+                                ? AppTheme.primary
+                                : AppTheme.outlineVariant,
+                          ),
                           labelStyle: TextStyle(
                             color: isSelected
                                 ? Colors.white
-                                : AppTheme.onSurface,
-                            fontWeight: FontWeight.w600,
+                                : AppTheme.onSurfaceVariant,
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : FontWeight.w600,
                             fontSize: 12,
                           ),
                           onSelected: (_) =>

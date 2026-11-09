@@ -133,6 +133,43 @@ class FinanceProvider extends ChangeNotifier {
     _initStreams();
   }
 
+  /// Returns debt payments from memory cache
+  List<DebtPaymentModel> getPaymentsForDebt(String debtId) {
+    return _debtPayments.where((p) => p.debtId == debtId).toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  /// Finds matching debt by POS invoice number
+  DebtModel? findDebtByInvoice(String invoiceNumber) {
+    if (invoiceNumber.trim().isEmpty) return null;
+    try {
+      return _debts.firstWhere(
+        (d) =>
+            d.referenceNo.trim().toLowerCase() ==
+            invoiceNumber.trim().toLowerCase(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Fetches debt payments directly from Firestore
+  Future<List<DebtPaymentModel>> fetchPaymentsForDebt(String debtId) async {
+    try {
+      final snap = await _firestore
+          .collection(AppConstants.debtPaymentsCollection)
+          .where('debtId', isEqualTo: debtId)
+          .get();
+      final list = snap.docs
+          .map((doc) => DebtPaymentModel.fromFirestore(doc))
+          .toList();
+      list.sort((a, b) => b.date.compareTo(a.date));
+      return list;
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<bool> addExpense({
     required String category,
     required double amount,

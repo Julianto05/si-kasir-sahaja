@@ -37,10 +37,13 @@ class PosScreen extends StatefulWidget {
 
 class _PosScreenState extends State<PosScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final StringBuffer _hardwareBarcodeBuffer = StringBuffer();
+  DateTime _lastHardwareKeyTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
+    HardwareKeyboard.instance.addHandler(_handleHardwareKey);
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       context.read<ProductProvider>().resetFilters();
@@ -60,8 +63,102 @@ class _PosScreenState extends State<PosScreen> {
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleHardwareKey);
     _searchController.dispose();
     super.dispose();
+  }
+
+  bool _handleHardwareKey(KeyEvent event) {
+    if (event is! KeyDownEvent) return false;
+
+    // Abaikan jika fokus sedang mengetik di input teks (search/note)
+    final primaryFocus = FocusManager.instance.primaryFocus;
+    if (primaryFocus != null &&
+        primaryFocus.context != null &&
+        primaryFocus.context!.widget is EditableText) {
+      return false;
+    }
+
+    final now = DateTime.now();
+    final elapsedMs = now.difference(_lastHardwareKeyTime).inMilliseconds;
+    _lastHardwareKeyTime = now;
+
+    // Scanner fisik mengirim karakter dengan sangat cepat (< 90ms per key)
+    if (elapsedMs > 120 && _hardwareBarcodeBuffer.isNotEmpty) {
+      _hardwareBarcodeBuffer.clear();
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      final code = _hardwareBarcodeBuffer.toString().trim();
+      _hardwareBarcodeBuffer.clear();
+      if (code.isNotEmpty) {
+        _processScannedBarcode(code);
+        return true;
+      }
+      return false;
+    }
+
+    final char = event.character;
+    if (char != null && char.isNotEmpty && !char.contains(RegExp(r'[\r\n]'))) {
+      _hardwareBarcodeBuffer.write(char);
+    }
+    return false;
+  }
+
+  Future<void> _processScannedBarcode(String barcode) async {
+    final shiftProv = context.read<ShiftProvider>();
+    if (!shiftProv.hasActiveShift) {
+      StartShiftDialog.show(context);
+      return;
+    }
+
+    final trimmed = barcode.trim();
+    if (trimmed.isEmpty) return;
+
+    final product = await context.read<ProductProvider>().findByBarcode(
+      trimmed,
+    );
+    if (!mounted) return;
+
+    if (product != null) {
+      final added = context.read<PosProvider>().addToCart(product);
+      if (added) {
+        HapticFeedback.mediumImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '"${product.name}" berhasil dipindai & masuk keranjang',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.secondary,
+            duration: const Duration(seconds: 1),
+          ),
+        );
+      }
+    } else {
+      HapticFeedback.vibrate();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Produk dengan barcode "$trimmed" tidak ditemukan'),
+          backgroundColor: AppTheme.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _scanBarcode() async {
@@ -72,29 +169,7 @@ class _PosScreenState extends State<PosScreen> {
     }
     final barcode = await BarcodeScannerModal.show(context);
     if (barcode != null && barcode.isNotEmpty && mounted) {
-      final product = await context.read<ProductProvider>().findByBarcode(
-        barcode,
-      );
-      if (product != null && mounted) {
-        final added = context.read<PosProvider>().addToCart(product);
-        if (added) {
-          HapticFeedback.mediumImpact();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('"${product.name}" ditambahkan ke keranjang'),
-              backgroundColor: AppTheme.secondary,
-              duration: const Duration(seconds: 1),
-            ),
-          );
-        }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Produk dengan barcode "$barcode" tidak ditemukan'),
-            backgroundColor: AppTheme.error,
-          ),
-        );
-      }
+      await _processScannedBarcode(barcode);
     }
   }
 

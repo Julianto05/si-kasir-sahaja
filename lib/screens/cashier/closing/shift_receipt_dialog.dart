@@ -195,9 +195,9 @@ class ShiftReceiptDialog extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
 
-                      // Cashier Drawer Reconciliation
+                      // Cashier Drawer Reconciliation (Termasuk Modal Awal)
                       _buildReceiptRow(
-                        'Estimasi Kas di Laci',
+                        'Total Kas Wajib di Laci',
                         CurrencyFormatter.format(shift.expectedCash),
                         isBold: true,
                       ),
@@ -292,6 +292,73 @@ class ShiftReceiptDialog extends StatelessWidget {
                         }),
                         const SizedBox(height: 6),
                       ],
+
+                      // Non-Cash Reconciliation Section
+                      if (shift.nonCashSales > 0 || shift.physicalNonCash > 0) ...[
+                        const Text(
+                          '--------------------------------',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            color: Colors.black38,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Rekonsiliasi Non-Tunai (Slip/EDC):',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        _buildReceiptRow(
+                          'Sistem Non-Tunai',
+                          CurrencyFormatter.format(shift.nonCashSales),
+                        ),
+                        _buildReceiptRow(
+                          'Fisik Bukti Transfer/EDC',
+                          '${shift.nonCashReceiptCount} Slip = ${CurrencyFormatter.format(shift.physicalNonCash)}',
+                          isBold: true,
+                        ),
+                        _buildReceiptRow(
+                          'Selisih Slip Non-Tunai',
+                          CurrencyFormatter.format(shift.nonCashDifference),
+                          color: shift.nonCashDifference == 0
+                              ? Colors.green.shade800
+                              : (shift.nonCashDifference < 0
+                                  ? Colors.red.shade800
+                                  : Colors.blue.shade800),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
+
+                      const Text(
+                        '================================',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          color: Colors.black87,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 2),
+                      _buildReceiptRow(
+                        'TOTAL SETORAN KASIR',
+                        CurrencyFormatter.format(shift.totalPhysicalIncome),
+                        isBold: true,
+                      ),
+                      _buildReceiptRow(
+                        '• Fisik Kas Tunai',
+                        CurrencyFormatter.format(shift.physicalCash),
+                      ),
+                      if (shift.physicalNonCash > 0)
+                        _buildReceiptRow(
+                          '• Fisik Bukti Non-Tunai',
+                          CurrencyFormatter.format(shift.physicalNonCash),
+                        ),
+                      const SizedBox(height: 6),
 
                       if (shift.notes.isNotEmpty) ...[
                         const Text(
@@ -423,7 +490,12 @@ class ShiftReceiptDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildReceiptRow(String label, String value, {bool isBold = false}) {
+  Widget _buildReceiptRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? color,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Row(
@@ -436,7 +508,7 @@ class ShiftReceiptDialog extends StatelessWidget {
                 fontFamily: 'monospace',
                 fontSize: 11,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                color: Colors.black87,
+                color: color ?? Colors.black87,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -450,7 +522,7 @@ class ShiftReceiptDialog extends StatelessWidget {
                 fontFamily: 'monospace',
                 fontSize: 11,
                 fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-                color: Colors.black87,
+                color: color ?? Colors.black87,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

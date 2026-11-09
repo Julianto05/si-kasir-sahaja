@@ -439,6 +439,9 @@ class PosProvider extends ChangeNotifier {
     required StoreSettingsModel settings,
     String? status,
     String? shiftId,
+    String? customerName,
+    String? customerPhone,
+    String? customerAddress,
   }) async {
     if (_cartItems.isEmpty) {
       _errorMessage = 'Keranjang belanja masih kosong!';
@@ -478,11 +481,14 @@ class PosProvider extends ChangeNotifier {
           ? _splitPayments
           : [PaymentSplitItem(method: _paymentMethod, amount: _paidAmount)];
 
-      final finalStatus =
-          status ??
-          (isUnpaidTx
-              ? AppConstants.statusUnpaid
-              : AppConstants.statusCompleted);
+      final finalStatus = isUnpaidTx
+          ? AppConstants.statusUnpaid
+          : (status ?? AppConstants.statusCompleted);
+
+      final effectiveCustomerName =
+          (customerName != null && customerName.trim().isNotEmpty)
+          ? customerName.trim()
+          : _selectedCustomer?.name;
 
       final draftTransaction = TransactionModel(
         id: '',
@@ -490,7 +496,15 @@ class PosProvider extends ChangeNotifier {
         cashierId: cashier.uid,
         cashierName: cashier.name,
         customerId: _selectedCustomer?.id,
-        customerName: _selectedCustomer?.name,
+        customerName: effectiveCustomerName,
+        customerPhone:
+            (customerPhone != null && customerPhone.trim().isNotEmpty)
+            ? customerPhone.trim()
+            : _selectedCustomer?.whatsapp,
+        customerAddress:
+            (customerAddress != null && customerAddress.trim().isNotEmpty)
+            ? customerAddress.trim()
+            : _selectedCustomer?.address,
         subtotal: subtotal,
         discount: effDiscount,
         tax: tax,

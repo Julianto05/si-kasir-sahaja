@@ -82,10 +82,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       text: p != null && p.variants.isNotEmpty ? p.variants.join(', ') : '',
     );
     _costPriceController = TextEditingController(
-      text: p != null ? p.costPrice.toInt().toString() : '',
+      text: p != null && p.costPrice > 0
+          ? CurrencyFormatter.formatCompact(p.costPrice)
+          : '',
     );
     _sellingPriceController = TextEditingController(
-      text: p != null ? p.sellingPrice.toInt().toString() : '',
+      text: p != null && p.sellingPrice > 0
+          ? CurrencyFormatter.formatCompact(p.sellingPrice)
+          : '',
     );
     _stockController = TextEditingController(
       text: p != null ? p.stock.toString() : '0',
@@ -189,10 +193,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     setState(() => _isSubmitting = true);
 
     final provider = context.read<ProductProvider>();
-    final costPrice =
-        double.tryParse(_costPriceController.text.replaceAll('.', '')) ?? 0;
-    final sellingPrice =
-        double.tryParse(_sellingPriceController.text.replaceAll('.', '')) ?? 0;
+    final costPrice = CurrencyFormatter.parse(_costPriceController.text);
+    final sellingPrice = CurrencyFormatter.parse(_sellingPriceController.text);
     final stock = int.tryParse(_stockController.text) ?? 0;
     final minStock = int.tryParse(_minStockController.text) ?? 5;
     final variantsList = _variantsController.text
@@ -502,12 +504,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _costPriceController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                              ThousandsSeparatorInputFormatter(),
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Harga Modal (Rp) *',
-                              hintText: 'e.g. 3500',
+                              hintText: 'e.g. 3.500',
                               prefixText: 'Rp ',
                             ),
                             validator: (val) {
@@ -527,12 +529,12 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                             controller: _sellingPriceController,
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
+                              ThousandsSeparatorInputFormatter(),
                             ],
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
                               labelText: 'Harga Jual (Rp) *',
-                              hintText: 'e.g. 5000',
+                              hintText: 'e.g. 5.000',
                               prefixText: 'Rp ',
                             ),
                             validator: (val) {
@@ -862,10 +864,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Widget _buildProfitMarginPreview() {
-    final cost =
-        double.tryParse(_costPriceController.text.replaceAll('.', '')) ?? 0;
-    final selling =
-        double.tryParse(_sellingPriceController.text.replaceAll('.', '')) ?? 0;
+    final cost = CurrencyFormatter.parse(_costPriceController.text);
+    final selling = CurrencyFormatter.parse(_sellingPriceController.text);
 
     if (cost <= 0 || selling <= 0) return const SizedBox.shrink();
 

@@ -220,6 +220,8 @@ class ShiftProvider extends ChangeNotifier {
   Future<ShiftModel?> closeCurrentShift({
     required List<TransactionModel> shiftTransactions,
     required double physicalCash,
+    double physicalNonCash = 0.0,
+    int nonCashReceiptCount = 0,
     required Map<String, int> denominations,
     required String notes,
     String? shiftId,
@@ -254,6 +256,7 @@ class ShiftProvider extends ChangeNotifier {
           targetShift.totalCashIn -
           targetShift.totalCashOut;
       final cashDifference = physicalCash - expectedCash;
+      final nonCashDifference = physicalNonCash - nonCashSales;
 
       await _shiftService.closeShift(
         shiftId: targetShift.id,
@@ -263,6 +266,9 @@ class ShiftProvider extends ChangeNotifier {
         transactionCount: transactionCount,
         physicalCash: physicalCash,
         cashDifference: cashDifference,
+        physicalNonCash: physicalNonCash,
+        nonCashReceiptCount: nonCashReceiptCount,
+        nonCashDifference: nonCashDifference,
         denominations: denominations,
         notes: notes,
       );
@@ -271,7 +277,7 @@ class ShiftProvider extends ChangeNotifier {
         userId: targetShift.cashierId,
         userName: targetShift.cashierName,
         action:
-            'Menutup Shift Kasir (Fisik: Rp ${physicalCash.toInt()}, Selisih: Rp ${cashDifference.toInt()})',
+            'Menutup Shift Kasir (Fisik Kas: Rp ${physicalCash.toInt()}, Fisik Non-Tunai: Rp ${physicalNonCash.toInt()})',
         entity: 'shifts',
         entityId: targetShift.id,
       );
@@ -284,6 +290,9 @@ class ShiftProvider extends ChangeNotifier {
         transactionCount: transactionCount,
         physicalCash: physicalCash,
         cashDifference: cashDifference,
+        physicalNonCash: physicalNonCash,
+        nonCashReceiptCount: nonCashReceiptCount,
+        nonCashDifference: nonCashDifference,
         denominations: denominations,
         notes: notes,
         status: 'closed',

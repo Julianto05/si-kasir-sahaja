@@ -183,10 +183,16 @@ class DiscountManagementScreen extends StatelessWidget {
     final nameCtrl = TextEditingController(text: discount?.name ?? '');
     final codeCtrl = TextEditingController(text: discount?.code ?? '');
     final valCtrl = TextEditingController(
-      text: discount != null ? discount.value.toInt().toString() : '10',
+      text: discount != null
+          ? (discount.isPercentage
+              ? discount.value.toInt().toString()
+              : CurrencyFormatter.formatCompact(discount.value))
+          : '10',
     );
     final minCtrl = TextEditingController(
-      text: discount != null ? discount.minPurchase.toInt().toString() : '0',
+      text: discount != null && discount.minPurchase > 0
+          ? CurrencyFormatter.formatCompact(discount.minPurchase)
+          : '0',
     );
     String selectedType = discount?.type ?? 'transaksi';
     bool isPct = discount?.isPercentage ?? true;
@@ -268,10 +274,15 @@ class DiscountManagementScreen extends StatelessWidget {
                         child: TextField(
                           controller: valCtrl,
                           keyboardType: TextInputType.number,
+                          inputFormatters: isPct
+                              ? []
+                              : [ThousandsSeparatorInputFormatter()],
                           decoration: InputDecoration(
                             labelText: isPct
                                 ? 'Persentase (%)'
                                 : 'Nominal (Rp)',
+                            prefixText: isPct ? null : 'Rp ',
+                            suffixText: isPct ? '%' : null,
                           ),
                         ),
                       ),
@@ -279,13 +290,23 @@ class DiscountManagementScreen extends StatelessWidget {
                       ChoiceChip(
                         label: const Text('%'),
                         selected: isPct,
-                        onSelected: (_) => setStateDialog(() => isPct = true),
+                        onSelected: (_) => setStateDialog(() {
+                          if (!isPct) {
+                            isPct = true;
+                            valCtrl.text = '10';
+                          }
+                        }),
                       ),
                       const SizedBox(width: 4),
                       ChoiceChip(
                         label: const Text('Rp'),
                         selected: !isPct,
-                        onSelected: (_) => setStateDialog(() => isPct = false),
+                        onSelected: (_) => setStateDialog(() {
+                          if (isPct) {
+                            isPct = false;
+                            valCtrl.text = '5.000';
+                          }
+                        }),
                       ),
                     ],
                   ),
@@ -293,8 +314,10 @@ class DiscountManagementScreen extends StatelessWidget {
                   TextField(
                     controller: minCtrl,
                     keyboardType: TextInputType.number,
+                    inputFormatters: [ThousandsSeparatorInputFormatter()],
                     decoration: const InputDecoration(
                       labelText: 'Minimal Belanja (Rp)',
+                      prefixText: 'Rp ',
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -325,8 +348,10 @@ class DiscountManagementScreen extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () async {
                             if (nameCtrl.text.trim().isEmpty) return;
-                            final val = double.tryParse(valCtrl.text) ?? 0.0;
-                            final minP = double.tryParse(minCtrl.text) ?? 0.0;
+                            final val = isPct
+                                ? (double.tryParse(valCtrl.text) ?? 0.0)
+                                : CurrencyFormatter.parse(valCtrl.text);
+                            final minP = CurrencyFormatter.parse(minCtrl.text);
                             final prov = context.read<DiscountProvider>();
 
                             final model = DiscountModel(

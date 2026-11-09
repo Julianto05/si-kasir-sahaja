@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -5,7 +6,9 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../providers/finance_provider.dart';
 import '../../../providers/product_provider.dart';
+import '../../../providers/store_settings_provider.dart';
 import '../../../providers/transaction_provider.dart';
+import '../../../services/report_export_service.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/motion_widgets.dart';
 import '../widgets/admin_bottom_nav.dart';
@@ -71,11 +74,55 @@ class ReportScreen extends StatelessWidget {
         .take(8)
         .toList();
 
+    final settings = context.watch<StoreSettingsProvider>().settings;
+    final exportData = ReportExportData(
+      settings: settings,
+      startDate: txProvider.startDate,
+      endDate: txProvider.endDate,
+      totalRevenue: txProvider.totalRevenue,
+      totalCost: txProvider.totalCost,
+      grossProfit: grossProfit,
+      operationalExpenses: periodExpenses,
+      netProfit: netProfit,
+      transactions: completedTx,
+      paymentBreakdown: paymentBreakdown,
+      cashierSales: cashierSales,
+      topProducts: sortedTopProducts,
+      debts: financeProvider.allDebts,
+    );
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 520;
+
     return Scaffold(
       backgroundColor: AppTheme.surface,
       appBar: AppBar(
         title: const Text('Laporan & Analitik Keuangan'),
         actions: [
+          if (isCompact)
+            IconButton(
+              icon: const Icon(Icons.file_download_outlined),
+              tooltip: 'Unduh Laporan (Excel / PDF)',
+              onPressed: () => _showDownloadDialog(context, exportData),
+            )
+          else
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.secondary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                icon: const Icon(Icons.file_download_outlined, size: 18),
+                label: const Text(
+                  'Unduh Laporan',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                onPressed: () => _showDownloadDialog(context, exportData),
+              ),
+            ),
+          const SizedBox(width: 4),
           IconButton(
             icon: const Icon(Icons.refresh_rounded),
             tooltip: 'Segarkan Data Transaksi & Keuangan',
@@ -85,6 +132,7 @@ class ReportScreen extends StatelessWidget {
               financeProvider.refreshFinance();
             },
           ),
+          const SizedBox(width: 6),
         ],
       ),
       drawer: const AdminDrawer(currentRoute: 'reports'),
@@ -542,37 +590,23 @@ class ReportScreen extends StatelessWidget {
     String label,
     TransactionProvider provider,
   ) {
-    bool isSelected = false;
-    final now = DateTime.now();
-    if (range == 'all' && provider.startDate == null) {
-      isSelected = true;
-    } else if (range == 'today' &&
-        provider.startDate != null &&
-        provider.startDate!.year == now.year &&
-        provider.startDate!.month == now.month &&
-        provider.startDate!.day == now.day) {
-      isSelected = true;
-    } else if (range == 'month' &&
-        provider.startDate != null &&
-        provider.startDate!.day == 1) {
-      isSelected = true;
-    } else if (range == 'week' &&
-        provider.startDate != null &&
-        provider.startDate!.day != 1 &&
-        provider.startDate!.day != now.day) {
-      isSelected = true;
-    }
+    final isSelected = provider.quickDateFilter == range;
 
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
-        selectedColor: AppTheme.primary.withValues(alpha: 0.18),
-        checkmarkColor: AppTheme.primary,
+        showCheckmark: false,
+        selectedColor: AppTheme.primary,
+        backgroundColor: AppTheme.surfaceContainerLow,
+        side: BorderSide(
+          color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
+        ),
         labelStyle: TextStyle(
-          color: isSelected ? AppTheme.primary : AppTheme.onSurface,
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          fontSize: 12,
         ),
         onSelected: (_) => provider.setQuickDateFilter(range),
       ),
@@ -758,6 +792,211 @@ class ReportScreen extends StatelessWidget {
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: valueWidget,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDownloadDialog(BuildContext context, ReportExportData exportData) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
+        title: const Row(
+          children: [
+            Icon(Icons.file_download_rounded, color: AppTheme.secondary),
+            SizedBox(width: 8),
+            Text(
+              'Unduh Laporan Keuangan',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pilih format file laporan yang ingin Anda unduh:',
+              style: TextStyle(fontSize: 13, color: AppTheme.onSurfaceVariant),
+            ),
+            const SizedBox(height: 16),
+
+            // Option 1: Microsoft Excel (.xlsx)
+            InkWell(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              onTap: () async {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Menyiapkan file spreadsheet Excel (.xlsx)...',
+                    ),
+                  ),
+                );
+                try {
+                  final path = await ReportExportService.exportToExcel(
+                    exportData,
+                  );
+                  if (context.mounted && path != null) {
+                    final fileName = path.split(Platform.pathSeparator).last;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Laporan Excel berhasil diunduh: $fileName',
+                        ),
+                        backgroundColor: AppTheme.secondary,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal membuat file Excel: $e'),
+                        backgroundColor: AppTheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  border: Border.all(
+                    color: Colors.green.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.green.shade700,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                      ),
+                      child: const Icon(
+                        Icons.table_view_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Format Excel (.xlsx)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '5 Sheet lengkap: Ringkasan, Metode Bayar, Kasir, Top Produk & Transaksi',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.green,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Option 2: PDF (.pdf)
+            InkWell(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              onTap: () async {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Menyiapkan dokumen cetak PDF (.pdf)...'),
+                  ),
+                );
+                try {
+                  await ReportExportService.exportToPdf(exportData);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal membuat dokumen PDF: $e'),
+                        backgroundColor: AppTheme.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                  border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade700,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                      ),
+                      child: const Icon(
+                        Icons.picture_as_pdf_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Format Dokumen PDF (.pdf)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Laporan resmi berkop toko, siap cetak atau simpan ke file',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: AppTheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Icon(Icons.chevron_right_rounded, color: Colors.red),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
           ),
         ],
       ),

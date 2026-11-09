@@ -737,9 +737,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                               setModalState(() {
                                 selectedProduct = val;
                                 if (val != null) {
-                                  buyPriceCtrl.text = val.costPrice
-                                      .toInt()
-                                      .toString();
+                                  buyPriceCtrl.text =
+                                      CurrencyFormatter.formatCompact(
+                                        val.costPrice,
+                                      );
                                 }
                               });
                             },
@@ -762,8 +763,12 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                 child: TextField(
                                   controller: buyPriceCtrl,
                                   keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    ThousandsSeparatorInputFormatter(),
+                                  ],
                                   decoration: const InputDecoration(
                                     labelText: 'Harga Beli / HPP (Rp)',
+                                    prefixText: 'Rp ',
                                     isDense: true,
                                   ),
                                 ),
@@ -773,8 +778,9 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                 onPressed: () {
                                   if (selectedProduct == null) return;
                                   final q = int.tryParse(qtyCtrl.text) ?? 0;
-                                  final bp =
-                                      double.tryParse(buyPriceCtrl.text) ?? 0.0;
+                                  final bp = CurrencyFormatter.parse(
+                                    buyPriceCtrl.text,
+                                  );
                                   if (q <= 0) return;
 
                                   setModalState(() {
@@ -792,7 +798,10 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                                       0.0,
                                       (s, i) => s + i.subtotal,
                                     );
-                                    paidCtrl.text = newTotal.toInt().toString();
+                                    paidCtrl.text =
+                                        CurrencyFormatter.formatCompact(
+                                          newTotal,
+                                        );
                                   });
                                 },
                                 child: const Text('+ Tambah'),
@@ -864,9 +873,13 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                       TextField(
                         controller: paidCtrl,
                         keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          ThousandsSeparatorInputFormatter(),
+                        ],
                         decoration: const InputDecoration(
                           labelText:
                               'Nominal Dibayar Sekarang (Rp) — Isi 0 jika Utang Penuh',
+                          prefixText: 'Rp ',
                           prefixIcon: Icon(Icons.payments_outlined),
                           isDense: true,
                         ),
@@ -887,7 +900,7 @@ class _PurchaseManagementScreenState extends State<PurchaseManagementScreen>
                             return;
                           }
                           final user = context.read<AuthProvider>().currentUser;
-                          final paid = double.tryParse(paidCtrl.text) ?? 0.0;
+                          final paid = CurrencyFormatter.parse(paidCtrl.text);
                           final ok = await context
                               .read<PurchaseProvider>()
                               .createPurchase(

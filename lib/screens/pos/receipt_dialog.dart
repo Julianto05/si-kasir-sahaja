@@ -109,6 +109,15 @@ class ReceiptDialog extends StatelessWidget {
                 _buildMetaRow('No. Nota', transaction.invoiceNumber),
                 _buildMetaRow('Tanggal', dateStr),
                 _buildMetaRow('Kasir', transaction.cashierName),
+                if (transaction.customerName != null &&
+                    transaction.customerName!.isNotEmpty)
+                  _buildMetaRow('Pelanggan', transaction.customerName!),
+                if (transaction.customerPhone != null &&
+                    transaction.customerPhone!.isNotEmpty)
+                  _buildMetaRow('No. HP', transaction.customerPhone!),
+                if (transaction.customerAddress != null &&
+                    transaction.customerAddress!.isNotEmpty)
+                  _buildMetaRow('Alamat', transaction.customerAddress!),
                 _buildMetaRow(
                   'Status',
                   transaction.isUnpaid ? 'Belum Lunas (Piutang)' : 'Lunas',

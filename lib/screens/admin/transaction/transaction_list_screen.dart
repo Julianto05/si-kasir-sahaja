@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/transaction_model.dart';
+import '../../../providers/finance_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../../../widgets/app_background.dart';
 import '../../../widgets/motion_widgets.dart';
@@ -223,11 +224,25 @@ class TransactionListScreen extends StatelessWidget {
     String label,
     TransactionProvider provider,
   ) {
+    final isSelected = provider.quickDateFilter == range;
+
     return Padding(
       padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
+      child: FilterChip(
         label: Text(label),
-        onPressed: () => provider.setQuickDateFilter(range),
+        selected: isSelected,
+        showCheckmark: false,
+        selectedColor: AppTheme.primary,
+        backgroundColor: AppTheme.surfaceContainerLow,
+        side: BorderSide(
+          color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
+        ),
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          fontSize: 12,
+        ),
+        onSelected: (_) => provider.setQuickDateFilter(range),
       ),
     );
   }
@@ -276,12 +291,35 @@ class _TransactionCard extends StatelessWidget {
     final dateStr = DateFormat(
       'dd/MM/yyyy HH:mm',
     ).format(transaction.createdAt);
-    final isCompleted = transaction.isCompleted;
-    final isUnpaid = transaction.isUnpaid;
+    final financeProv = context.watch<FinanceProvider>();
+    final debt = financeProv.findDebtByInvoice(transaction.invoiceNumber);
 
-    Color badgeColor = isCompleted
+    // Sinkronkan status Lunas jika di menu Pengeluaran & Keuangan piutang sudah lunas
+    final isCancelled = transaction.isCancelled;
+    final isLunas = !isCancelled && (transaction.isCompleted || (debt != null && debt.isPaid));
+    final isPiutang = !isCancelled && !isLunas &&
+        (transaction.isUnpaid || debt != null || transaction.paymentMethod.toLowerCase() == 'piutang');
+    final isCicilan = isPiutang && (debt != null && debt.paidAmount > 0);
+
+    final sisaPiutang = debt != null
+        ? debt.remainingAmount
+        : (transaction.total - transaction.paidAmount).clamp(0.0, double.infinity);
+    final terbayarPiutang = debt != null
+        ? debt.paidAmount
+        : transaction.paidAmount;
+
+    Color badgeColor = isLunas
         ? AppTheme.primary
-        : (isUnpaid ? Colors.amber[800]! : AppTheme.error);
+        : (isPiutang ? Colors.amber[800]! : AppTheme.error);
+
+    String statusLabel = 'Lunas';
+    if (isCancelled) {
+      statusLabel = 'Batal';
+    } else if (isCicilan) {
+      statusLabel = 'Dicicil';
+    } else if (isPiutang) {
+      statusLabel = 'Belum Lunas';
+    }
 
     return ScaleTap(
       onTap: onTap,
@@ -290,9 +328,9 @@ class _TransactionCard extends StatelessWidget {
           color: AppTheme.surfaceContainerLowest,
           borderRadius: BorderRadius.circular(AppTheme.radiusLg),
           border: Border.all(
-            color: isCompleted
+            color: isLunas
                 ? AppTheme.outlineVariant.withValues(alpha: 0.7)
-                : (isUnpaid
+                : (isPiutang
                       ? Colors.amber.withValues(alpha: 0.5)
                       : AppTheme.error.withValues(alpha: 0.35)),
           ),
@@ -306,18 +344,18 @@ class _TransactionCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: isCompleted
+                color: isLunas
                     ? AppTheme.primary.withValues(alpha: 0.1)
-                    : (isUnpaid
+                    : (isPiutang
                           ? Colors.amber.withValues(alpha: 0.15)
                           : AppTheme.errorContainer),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
               child: Icon(
-                isCompleted
+                isLunas
                     ? Icons.receipt_long_rounded
-                    : (isUnpaid
-                          ? Icons.pending_actions_rounded
+                    : (isPiutang
+                          ? (isCicilan ? Icons.payments_rounded : Icons.pending_actions_rounded)
                           : Icons.cancel_outlined),
                 color: badgeColor,
                 size: 22,
@@ -354,9 +392,9 @@ class _TransactionCard extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: isCompleted
+                                color: isLunas
                                     ? AppTheme.secondaryContainer
-                                    : (isUnpaid
+                                    : (isPiutang
                                           ? Colors.amber.withValues(alpha: 0.2)
                                           : AppTheme.errorContainer),
                                 borderRadius: BorderRadius.circular(
@@ -364,15 +402,13 @@ class _TransactionCard extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                isCompleted
-                                    ? 'Lunas'
-                                    : (isUnpaid ? 'Belum Lunas' : 'Batal'),
+                                statusLabel,
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: isCompleted
+                                  color: isLunas
                                       ? AppTheme.secondary
-                                      : (isUnpaid
+                                      : (isPiutang
                                             ? Colors.amber[900]
                                             : AppTheme.error),
                                 ),
@@ -389,9 +425,9 @@ class _TransactionCard extends StatelessWidget {
                           CurrencyFormatter.format(transaction.total),
                           style: AppTheme.numericSmallStyle.copyWith(
                             fontWeight: FontWeight.w800,
-                            color: isCompleted
+                            color: isLunas
                                 ? AppTheme.secondary
-                                : (isUnpaid
+                                : (isPiutang
                                       ? Colors.amber[900]
                                       : AppTheme.error),
                           ),
@@ -405,10 +441,13 @@ class _TransactionCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          '${transaction.cashierName} • ${transaction.paymentMethod}',
-                          style: const TextStyle(
+                          isPiutang
+                              ? '${transaction.cashierName} • Terbayar: ${CurrencyFormatter.format(terbayarPiutang)} • Sisa: ${CurrencyFormatter.format(sisaPiutang)}'
+                              : '${transaction.cashierName} • ${transaction.paymentMethod}',
+                          style: TextStyle(
                             fontSize: 11.5,
-                            color: AppTheme.outline,
+                            color: isPiutang ? Colors.amber[900] : AppTheme.outline,
+                            fontWeight: isPiutang ? FontWeight.w600 : FontWeight.normal,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,

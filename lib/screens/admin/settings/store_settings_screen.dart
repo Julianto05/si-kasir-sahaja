@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../core/utils/currency_formatter.dart';
 import '../../../providers/category_provider.dart';
 import '../../../providers/customer_provider.dart';
 import '../../../providers/product_provider.dart';
@@ -71,10 +72,10 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
     _footerController = TextEditingController(text: settings.receiptFooter);
     _prefixController = TextEditingController(text: settings.invoicePrefix);
     _pointsPerAmountController = TextEditingController(
-      text: settings.pointsPerAmount.toInt().toString(),
+      text: CurrencyFormatter.formatCompact(settings.pointsPerAmount),
     );
     _pointRedeemValueController = TextEditingController(
-      text: settings.pointRedeemValue.toInt().toString(),
+      text: CurrencyFormatter.formatCompact(settings.pointRedeemValue),
     );
     _memberDiscountController = TextEditingController(
       text: settings.memberDiscountPercentage.toString(),
@@ -125,9 +126,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
           : _activePaymentMethods.toList(),
       enableLoyaltyPoints: _enableLoyaltyPoints,
       pointsPerAmount:
-          double.tryParse(_pointsPerAmountController.text) ?? 10000.0,
+          CurrencyFormatter.parse(_pointsPerAmountController.text),
       pointRedeemValue:
-          double.tryParse(_pointRedeemValueController.text) ?? 100.0,
+          CurrencyFormatter.parse(_pointRedeemValueController.text),
       memberDiscountPercentage:
           double.tryParse(_memberDiscountController.text) ?? 0.0,
       enableBarcodeScanner: _enableBarcodeScanner,
@@ -425,6 +426,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                                   TextFormField(
                                     controller: _pointsPerAmountController,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      ThousandsSeparatorInputFormatter(),
+                                    ],
                                     decoration: const InputDecoration(
                                       labelText: 'Belanja per 1 Poin (Rp)',
                                       prefixText: 'Rp ',
@@ -434,6 +438,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                                   TextFormField(
                                     controller: _pointRedeemValueController,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      ThousandsSeparatorInputFormatter(),
+                                    ],
                                     decoration: const InputDecoration(
                                       labelText: 'Nilai Tukar 1 Poin (Rp)',
                                       prefixText: 'Rp ',
@@ -448,6 +455,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                                   child: TextFormField(
                                     controller: _pointsPerAmountController,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      ThousandsSeparatorInputFormatter(),
+                                    ],
                                     decoration: const InputDecoration(
                                       labelText: 'Belanja per 1 Poin (Rp)',
                                       prefixText: 'Rp ',
@@ -459,6 +469,9 @@ class _StoreSettingsScreenState extends State<StoreSettingsScreen> {
                                   child: TextFormField(
                                     controller: _pointRedeemValueController,
                                     keyboardType: TextInputType.number,
+                                    inputFormatters: [
+                                      ThousandsSeparatorInputFormatter(),
+                                    ],
                                     decoration: const InputDecoration(
                                       labelText: 'Nilai Tukar 1 Poin (Rp)',
                                       prefixText: 'Rp ',

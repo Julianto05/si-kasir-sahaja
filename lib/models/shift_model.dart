@@ -95,6 +95,9 @@ class ShiftModel {
   final int transactionCount; // Jumlah transaksi berhasil
   final double physicalCash; // Total fisik uang hasil hitungan kasir
   final double cashDifference; // Selisih = physicalCash - expectedCash
+  final double physicalNonCash; // Total fisik bukti transfer / slip EDC hasil hitungan kasir
+  final int nonCashReceiptCount; // Jumlah lembar bukti transfer / slip EDC
+  final double nonCashDifference; // Selisih = physicalNonCash - nonCashSales
   final Map<String, int> denominations; // Rincian pecahan uang
   final List<ShiftCashEntry> cashIn; // Catatan kas kecil masuk manual
   final List<ShiftCashEntry> cashOut; // Catatan kas kecil keluar manual
@@ -114,6 +117,9 @@ class ShiftModel {
     this.transactionCount = 0,
     this.physicalCash = 0.0,
     this.cashDifference = 0.0,
+    this.physicalNonCash = 0.0,
+    this.nonCashReceiptCount = 0,
+    this.nonCashDifference = 0.0,
     this.denominations = const {},
     this.cashIn = const [],
     this.cashOut = const [],
@@ -133,6 +139,16 @@ class ShiftModel {
   /// Expected physical cash in drawer = startingCash + cashSales + manual cashIn - manual cashOut.
   double get expectedCash =>
       startingCash + cashSales + totalCashIn - totalCashOut;
+
+  /// Total physical setoran kasir = fisik tunai + fisik non-tunai (bukti transfer/EDC)
+  double get totalPhysicalIncome => physicalCash + physicalNonCash;
+
+  /// Total yang seharusnya diterima = kas laci + penjualan non-tunai
+  double get totalExpectedIncome => expectedCash + nonCashSales;
+
+  /// Total selisih fisik kasir (tunai + non-tunai)
+  double get totalIncomeDifference =>
+      cashDifference + nonCashDifference;
 
   factory ShiftModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -176,6 +192,9 @@ class ShiftModel {
       transactionCount: _parseNumToInt(data['transactionCount']),
       physicalCash: _parseNumToDouble(data['physicalCash']),
       cashDifference: _parseNumToDouble(data['cashDifference']),
+      physicalNonCash: _parseNumToDouble(data['physicalNonCash']),
+      nonCashReceiptCount: _parseNumToInt(data['nonCashReceiptCount']),
+      nonCashDifference: _parseNumToDouble(data['nonCashDifference']),
       denominations: parseDenominations(data['denominations']),
       cashIn: parseCashList(data['cashIn']),
       cashOut: parseCashList(data['cashOut']),
@@ -197,6 +216,9 @@ class ShiftModel {
       'transactionCount': transactionCount,
       'physicalCash': physicalCash,
       'cashDifference': cashDifference,
+      'physicalNonCash': physicalNonCash,
+      'nonCashReceiptCount': nonCashReceiptCount,
+      'nonCashDifference': nonCashDifference,
       'denominations': denominations,
       'cashIn': cashIn.map((e) => e.toMap()).toList(),
       'cashOut': cashOut.map((e) => e.toMap()).toList(),
@@ -218,6 +240,9 @@ class ShiftModel {
     int? transactionCount,
     double? physicalCash,
     double? cashDifference,
+    double? physicalNonCash,
+    int? nonCashReceiptCount,
+    double? nonCashDifference,
     Map<String, int>? denominations,
     List<ShiftCashEntry>? cashIn,
     List<ShiftCashEntry>? cashOut,
@@ -237,6 +262,9 @@ class ShiftModel {
       transactionCount: transactionCount ?? this.transactionCount,
       physicalCash: physicalCash ?? this.physicalCash,
       cashDifference: cashDifference ?? this.cashDifference,
+      physicalNonCash: physicalNonCash ?? this.physicalNonCash,
+      nonCashReceiptCount: nonCashReceiptCount ?? this.nonCashReceiptCount,
+      nonCashDifference: nonCashDifference ?? this.nonCashDifference,
       denominations: denominations ?? this.denominations,
       cashIn: cashIn ?? this.cashIn,
       cashOut: cashOut ?? this.cashOut,

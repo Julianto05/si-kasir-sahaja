@@ -30,6 +30,9 @@ class CheckoutDialog extends StatefulWidget {
 class _CheckoutDialogState extends State<CheckoutDialog> {
   late final TextEditingController _paidController;
   late final TextEditingController _notesController;
+  late final TextEditingController _customerNameCtrl;
+  late final TextEditingController _customerPhoneCtrl;
+  late final TextEditingController _customerAddressCtrl;
 
   // Status transaksi: 'completed' (Lunas) atau 'unpaid' (Belum Lunas)
   String _transactionStatus = AppConstants.statusCompleted;
@@ -47,6 +50,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     final posProvider = context.read<PosProvider>();
     final settings = context.read<StoreSettingsProvider>().settings;
     final total = posProvider.calculateTotal(settings);
+    final customer = posProvider.selectedCustomer;
 
     posProvider.setPaidAmount(total);
     posProvider.clearSplitPayments();
@@ -55,6 +59,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
       text: CurrencyFormatter.formatCompact(total),
     );
     _notesController = TextEditingController(text: posProvider.notes);
+    _customerNameCtrl = TextEditingController(text: customer?.name ?? '');
+    _customerPhoneCtrl = TextEditingController(text: customer?.whatsapp ?? '');
+    _customerAddressCtrl = TextEditingController(text: customer?.address ?? '');
 
     final half = (total / 2).roundToDouble();
     _splitAmount1Ctrl = TextEditingController(
@@ -69,6 +76,9 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
   void dispose() {
     _paidController.dispose();
     _notesController.dispose();
+    _customerNameCtrl.dispose();
+    _customerPhoneCtrl.dispose();
+    _customerAddressCtrl.dispose();
     _splitAmount1Ctrl.dispose();
     _splitAmount2Ctrl.dispose();
     super.dispose();
@@ -94,6 +104,48 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
         const SnackBar(content: Text('Sesi kasir tidak valid. Silakan login.')),
       );
       return;
+    }
+
+    final isUnpaid =
+        _transactionStatus == AppConstants.statusUnpaid ||
+        posProvider.paymentMethod == 'Piutang';
+
+    final custName = _customerNameCtrl.text.trim();
+    final custPhone = _customerPhoneCtrl.text.trim();
+    final custAddress = _customerAddressCtrl.text.trim();
+
+    if (isUnpaid) {
+      if (custName.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nama customer wajib diisi untuk transaksi piutang!'),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+      if (custPhone.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nomor HP customer wajib diisi untuk transaksi piutang!',
+            ),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
+      if (custAddress.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Alamat customer wajib diisi untuk transaksi piutang!',
+            ),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+        return;
+      }
     }
 
     if (_isSplitPayment) {
@@ -123,8 +175,11 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     final completedTx = await posProvider.checkout(
       cashier: user,
       settings: settings,
-      status: _transactionStatus,
+      status: isUnpaid ? AppConstants.statusUnpaid : _transactionStatus,
       shiftId: shiftProvider.activeShift!.id,
+      customerName: custName.isNotEmpty ? custName : null,
+      customerPhone: custPhone.isNotEmpty ? custPhone : null,
+      customerAddress: custAddress.isNotEmpty ? custAddress : null,
     );
 
     if (!mounted) return;
@@ -755,12 +810,92 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                 ],
               ],
 
+              // Customer Information Section (Optional for Cash, Mandatory for Piutang)
+              if (isUnpaid) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    border: Border.all(color: Colors.amber[700]!, width: 1.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_pin_rounded,
+                            color: Colors.amber[900],
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Data Pengutang (Wajib Diisi Lengkap)',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.amber[900],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      TextField(
+                        controller: _customerNameCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Nama Customer *',
+                          hintText: 'Nama lengkap pengutang',
+                          prefixIcon: Icon(Icons.person_outline),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _customerPhoneCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Nomor HP / WhatsApp *',
+                          hintText: 'e.g. 081234567890',
+                          prefixIcon: Icon(Icons.phone_android_rounded),
+                          isDense: true,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _customerAddressCtrl,
+                        maxLines: 2,
+                        decoration: const InputDecoration(
+                          labelText: 'Alamat Pengutang *',
+                          hintText: 'Alamat domisili lengkap pengutang',
+                          prefixIcon: Icon(Icons.location_on_outlined),
+                          isDense: true,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ] else ...[
+                TextField(
+                  controller: _customerNameCtrl,
+                  decoration: const InputDecoration(
+                    labelText: 'Nama Pelanggan (Opsional)',
+                    hintText: 'e.g. Budi / Pelanggan Umum',
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+
               // Notes
               TextField(
                 controller: _notesController,
                 decoration: const InputDecoration(
                   labelText: 'Catatan Transaksi (Opsional)',
-                  hintText: 'e.g. Meja 4 / Take Away / Nama Pelanggan',
+                  hintText: 'e.g. Meja 4 / Take Away',
                   prefixIcon: Icon(Icons.edit_note_rounded),
                 ),
               ),

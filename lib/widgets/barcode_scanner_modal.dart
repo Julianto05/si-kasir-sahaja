@@ -123,10 +123,10 @@ class _BarcodeScannerModalState extends State<BarcodeScannerModal>
                             ),
                       ),
                       Text(
-                        'Posisikan barcode di dalam kotak pemindai',
+                        'Arahkan kamera ke barcode — otomatis mendeteksi tanpa perlu foto',
                         style: TextStyle(
                           fontSize: 11,
-                          color: Colors.white.withValues(alpha: 0.65),
+                          color: Colors.white.withValues(alpha: 0.85),
                         ),
                       ),
                     ],

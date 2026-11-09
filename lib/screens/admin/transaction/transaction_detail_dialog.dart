@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
+import '../../../models/finance_model.dart';
 import '../../../models/transaction_model.dart';
+import '../../../providers/finance_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../../pos/receipt_dialog.dart';
 
-/// Modal dialog displaying full transaction details with refund capabilities.
+/// Modal dialog displaying full transaction details with receivable installment history.
+/// Only contains the 'Cetak Struk' button as requested.
 class TransactionDetailDialog extends StatefulWidget {
   final TransactionModel transaction;
 
@@ -54,150 +56,6 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
     }
   }
 
-  Future<void> _handleChangeStatus() async {
-    final tx = widget.transaction;
-
-    // Jika belum lunas, berikan dialog konfirmasi langsung ubah ke Lunas
-    if (tx.isUnpaid) {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Konfirmasi Status Lunas'),
-          content: Text(
-            'Ubah status transaksi ${tx.invoiceNumber} menjadi LUNAS?\n\n'
-            'Status transaksi akan berubah menjadi Lunas dan piutang di menu Pengeluaran & Keuangan juga otomatis menjadi LUNAS.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondary,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Ubah ke Lunas'),
-            ),
-          ],
-        ),
-      );
-
-      if (confirm == true && mounted) {
-        final success = await context
-            .read<TransactionProvider>()
-            .updateTransactionStatus(
-              transaction: tx,
-              newStatus: AppConstants.statusCompleted,
-            );
-
-        if (!mounted) return;
-
-        if (success) {
-          Navigator.pop(context);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Status transaksi ${tx.invoiceNumber} berhasil diubah menjadi LUNAS!',
-              ),
-              backgroundColor: AppTheme.secondary,
-            ),
-          );
-        }
-      }
-      return;
-    }
-
-    // Jika sudah lunas atau status lain, berikan pilihan untuk ubah status
-    String selectedStatus = tx.status;
-    final chosenStatus = await showDialog<String>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text('Ubah Status Transaksi'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Nota: ${tx.invoiceNumber}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                'Pilih status transaksi. Status piutang di menu Pengeluaran & Keuangan akan otomatis tersinkronisasi.',
-                style: TextStyle(fontSize: 12, color: AppTheme.outline),
-              ),
-              const SizedBox(height: 14),
-              DropdownButtonFormField<String>(
-                initialValue: selectedStatus,
-                decoration: const InputDecoration(
-                  labelText: 'Status Transaksi',
-                  prefixIcon: Icon(Icons.sync_alt_rounded),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: AppConstants.statusCompleted,
-                    child: Text('Lunas (Selesai)'),
-                  ),
-                  DropdownMenuItem(
-                    value: AppConstants.statusUnpaid,
-                    child: Text('Belum Lunas'),
-                  ),
-                ],
-                onChanged: (val) {
-                  if (val != null) {
-                    setDialogState(() => selectedStatus = val);
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, null),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(ctx, selectedStatus),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.secondary,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Simpan'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (chosenStatus != null && chosenStatus != tx.status && mounted) {
-      final success = await context
-          .read<TransactionProvider>()
-          .updateTransactionStatus(transaction: tx, newStatus: chosenStatus);
-
-      if (!mounted) return;
-
-      if (success) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Status transaksi ${tx.invoiceNumber} berhasil diubah menjadi ${chosenStatus == AppConstants.statusCompleted ? "LUNAS" : "BELUM LUNAS"}!',
-            ),
-            backgroundColor: chosenStatus == AppConstants.statusCompleted
-                ? AppTheme.secondary
-                : Colors.amber[800],
-          ),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final tx = widget.transaction;
@@ -206,22 +64,49 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
     final isUnpaid = tx.isUnpaid;
     final isCancelled = tx.isCancelled;
 
+    final isDebtTx =
+        isUnpaid ||
+        tx.paymentMethod.toLowerCase() == 'piutang' ||
+        tx.payments.any((p) => p.method.toLowerCase() == 'piutang') ||
+        (tx.paidAmount < tx.total);
+
+    final financeProvider = context.watch<FinanceProvider>();
+    final debt = financeProvider.findDebtByInvoice(tx.invoiceNumber);
+    final payments = debt != null
+        ? financeProvider.getPaymentsForDebt(debt.id)
+        : <DebtPaymentModel>[];
+
+    final isLunasFromDebt = (debt != null && debt.isPaid) || isCompleted;
+    final isActualUnpaid = !isCancelled && !isLunasFromDebt &&
+        (isUnpaid || debt != null || tx.paymentMethod.toLowerCase() == 'piutang');
+
+    final effectivePaid = debt != null
+        ? (tx.total - debt.remainingAmount).clamp(0.0, tx.total)
+        : tx.paidAmount;
+    final effectiveRemaining = debt != null
+        ? debt.remainingAmount
+        : (tx.total - tx.paidAmount).clamp(0.0, double.infinity);
+
     String statusText;
     Color statusBg;
     Color statusFg;
 
-    if (isCompleted) {
-      statusText = 'Lunas';
-      statusBg = AppTheme.secondaryContainer;
-      statusFg = AppTheme.secondary;
-    } else if (isUnpaid) {
-      statusText = 'Belum Lunas';
-      statusBg = Colors.amber.withValues(alpha: 0.2);
-      statusFg = Colors.amber[900]!;
-    } else if (isCancelled) {
+    if (isCancelled) {
       statusText = 'Dibatalkan / Refund';
       statusBg = AppTheme.errorContainer;
       statusFg = AppTheme.onErrorContainer;
+    } else if (isLunasFromDebt) {
+      statusText = 'Lunas';
+      statusBg = AppTheme.secondaryContainer;
+      statusFg = AppTheme.secondary;
+    } else if (debt != null && debt.paidAmount > 0) {
+      statusText = 'Dicicil (Sisa: ${CurrencyFormatter.format(debt.remainingAmount)})';
+      statusBg = Colors.amber.withValues(alpha: 0.2);
+      statusFg = Colors.amber[900]!;
+    } else if (isActualUnpaid) {
+      statusText = 'Belum Lunas (Piutang)';
+      statusBg = Colors.amber.withValues(alpha: 0.2);
+      statusFg = Colors.amber[900]!;
     } else {
       statusText = 'Ditahan (Hold)';
       statusBg = Colors.blue.withValues(alpha: 0.2);
@@ -234,14 +119,13 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
         borderRadius: BorderRadius.circular(AppTheme.radiusXl),
       ),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppTheme.containerPadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Row(
+        constraints: const BoxConstraints(maxWidth: 520, maxHeight: 760),
+        child: Column(
+          children: [
+            // Modal Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
@@ -284,185 +168,446 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                       ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-
-              // Cashier & Payment
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Kasir: ${tx.cashierName}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.outline,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Metode: ${tx.paymentMethod}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppTheme.onSurface,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ],
               ),
-              if (tx.notes.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Catatan: ${tx.notes}',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.outline),
-                ),
-              ],
-              if (tx.cancelReason != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Alasan Batal: ${tx.cancelReason}',
-                  style: const TextStyle(fontSize: 12, color: AppTheme.error),
-                ),
-              ],
-              const SizedBox(height: 12),
+            ),
+            const Divider(height: 1),
 
-              // Items Section
-              Text(
-                'Rincian Produk',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-
-              if (_isLoadingItems)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (_items != null)
-                ..._items!.map((item) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
+            // Scrollable Body
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppTheme.containerPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Cashier & Payment
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                item.productName,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: AppTheme.outline,
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            'Kasir: ${tx.cashierName}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.outline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
-                          CurrencyFormatter.format(item.subtotal),
-                          style: AppTheme.numericSmallStyle.copyWith(
-                            fontWeight: FontWeight.bold,
+                          'Metode: ${tx.paymentMethod}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppTheme.onSurface,
                           ),
                         ),
                       ],
                     ),
-                  );
-                }),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-
-              // Totals
-              _buildRow('Subtotal', tx.subtotal),
-              if (tx.discount > 0)
-                _buildRow('Diskon', -tx.discount, isDiscount: true),
-              if (tx.tax > 0) _buildRow('Pajak (PPN)', tx.tax),
-              if (tx.serviceCharge > 0)
-                _buildRow('Service Charge', tx.serviceCharge),
-              const SizedBox(height: 4),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Total Pembayaran',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    CurrencyFormatter.format(tx.total),
-                    style: AppTheme.numericStyle.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primary,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              _buildRow('Nominal Bayar', tx.paidAmount),
-              _buildRow('Kembalian', tx.changeAmount),
-              const SizedBox(height: 20),
-
-              // Actions
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        ReceiptDialog.show(
-                          context,
-                          tx.copyWith(items: _items ?? []),
-                        );
-                      },
-                      icon: const Icon(Icons.receipt_rounded, size: 18),
-                      label: const FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text('Cetak Struk'),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _handleChangeStatus,
-                      icon: const Icon(Icons.sync_alt_rounded, size: 18),
-                      label: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          tx.isUnpaid ? 'Ubah ke Lunas' : 'Ubah Status',
+                    if (tx.notes.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Catatan: ${tx.notes}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.outline,
                         ),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: tx.isUnpaid
-                            ? AppTheme.secondary
-                            : AppTheme.primary,
-                        foregroundColor: Colors.white,
+                    ],
+                    if (tx.cancelReason != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Alasan Batal: ${tx.cancelReason}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.error,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 12),
+
+                    // Items Section
+                    Text(
+                      'Rincian Produk',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+
+                    if (_isLoadingItems)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_items != null)
+                      ..._items!.map((item) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.productName,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: AppTheme.outline,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(item.subtotal),
+                                style: AppTheme.numericSmallStyle.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                    const SizedBox(height: 12),
+                    const Divider(),
+                    const SizedBox(height: 8),
+
+                    // Totals
+                    _buildRow('Subtotal', tx.subtotal),
+                    if (tx.discount > 0)
+                      _buildRow('Diskon', -tx.discount, isDiscount: true),
+                    if (tx.tax > 0) _buildRow('Pajak (PPN)', tx.tax),
+                    if (tx.serviceCharge > 0)
+                      _buildRow('Service Charge', tx.serviceCharge),
+                    const SizedBox(height: 4),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Total Tagihan',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          CurrencyFormatter.format(tx.total),
+                          style: AppTheme.numericStyle.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primary,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    _buildRow(
+                      isDebtTx ? 'Total Telah Dibayar (DP + Cicilan)' : 'Nominal Bayar',
+                      effectivePaid,
+                    ),
+                    _buildRow(
+                      isActualUnpaid ? 'Sisa Piutang Saat Ini' : 'Kembalian',
+                      isActualUnpaid ? effectiveRemaining : tx.changeAmount,
+                    ),
+
+                    // Riwayat Cicilan Piutang Section
+                    if (isDebtTx) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.history_edu_rounded,
+                            size: 18,
+                            color: Colors.amber[900],
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Informasi & Riwayat Cicilan Piutang',
+                            style: Theme.of(context).textTheme.titleSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.amber[900],
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Card Data Pengutang
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusMd,
+                          ),
+                          border: Border.all(
+                            color: Colors.amber.withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildInfoRow(
+                              'Nama Pengutang',
+                              tx.customerName ??
+                                  (debt?.partyName.isNotEmpty == true
+                                      ? debt!.partyName
+                                      : 'Pelanggan Umum'),
+                            ),
+                            if ((tx.customerPhone != null &&
+                                    tx.customerPhone!.isNotEmpty) ||
+                                (debt?.phone.isNotEmpty == true))
+                              _buildInfoRow(
+                                'No. WhatsApp / HP',
+                                tx.customerPhone ?? debt!.phone,
+                              ),
+                            if ((tx.customerAddress != null &&
+                                    tx.customerAddress!.isNotEmpty) ||
+                                (debt?.address.isNotEmpty == true))
+                              _buildInfoRow(
+                                'Alamat',
+                                tx.customerAddress ?? debt!.address,
+                              ),
+                            if (debt?.dueDate != null)
+                              _buildInfoRow(
+                                'Jatuh Tempo',
+                                DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(debt!.dueDate!),
+                              ),
+                            _buildInfoRow(
+                              'Total Tagihan Nota',
+                              CurrencyFormatter.format(tx.total),
+                            ),
+                            _buildInfoRow(
+                              'Total Cicilan Masuk (Keuangan)',
+                              CurrencyFormatter.format(debt?.paidAmount ?? 0),
+                            ),
+                            const Divider(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isLunasFromDebt
+                                      ? 'Status Pembayaran:'
+                                      : 'Sisa Piutang Saat Ini:',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  isLunasFromDebt
+                                      ? 'LUNAS'
+                                      : CurrencyFormatter.format(effectiveRemaining),
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isLunasFromDebt
+                                        ? AppTheme.secondary
+                                        : Colors.amber[900],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // List Cicilan
+                      Text(
+                        'Daftar Pembayaran Cicilan:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.onSurface.withValues(alpha: 0.8),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+
+                      if (payments.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.surfaceContainerLow,
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusMd,
+                            ),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline_rounded,
+                                size: 16,
+                                color: AppTheme.outline,
+                              ),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Belum ada pembayaran cicilan untuk piutang ini.',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: AppTheme.outline,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        ...payments.map((p) {
+                          final pDate = DateFormat(
+                            'dd/MM/yyyy HH:mm',
+                          ).format(p.date);
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppTheme.surfaceContainerLow,
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusMd,
+                              ),
+                              border: Border.all(
+                                color: AppTheme.outlineVariant.withValues(
+                                  alpha: 0.5,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        pDate,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Metode: ${p.method}${p.createdByName.isNotEmpty ? " • Kasir: ${p.createdByName}" : ""}',
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          color: AppTheme.outline,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      if (p.note.isNotEmpty)
+                                        Text(
+                                          'Catatan: ${p.note}',
+                                          style: const TextStyle(
+                                            fontSize: 10.5,
+                                            fontStyle: FontStyle.italic,
+                                            color: AppTheme.outline,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '+${CurrencyFormatter.format(p.amount)}',
+                                  style: AppTheme.numericSmallStyle.copyWith(
+                                    color: AppTheme.secondary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ],
+                ),
               ),
-            ],
-          ),
+            ),
+
+            // Footer: Hanya ada tombol 'Cetak Struk'
+            Padding(
+              padding: const EdgeInsets.all(AppTheme.containerPadding),
+              child: SizedBox(
+                width: double.infinity,
+                height: AppTheme.touchTarget,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    ReceiptDialog.show(
+                      context,
+                      tx.copyWith(items: _items ?? []),
+                    );
+                  },
+                  icon: const Icon(Icons.print_rounded, size: 20),
+                  label: const Text(
+                    'Cetak Struk',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 11.5, color: AppTheme.outline),
+            ),
+          ),
+          const Text(': ', style: TextStyle(fontSize: 11.5)),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

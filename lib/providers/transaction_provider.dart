@@ -15,6 +15,7 @@ class TransactionProvider extends ChangeNotifier {
   String _selectedStatus = 'all';
   DateTime? _startDate;
   DateTime? _endDate;
+  String _quickDateFilter = 'all';
   String _searchQuery = '';
   bool _isLoading = false;
   String? _errorMessage;
@@ -33,6 +34,7 @@ class TransactionProvider extends ChangeNotifier {
   String get selectedStatus => _selectedStatus;
   DateTime? get startDate => _startDate;
   DateTime? get endDate => _endDate;
+  String get quickDateFilter => _quickDateFilter;
   String get searchQuery => _searchQuery;
 
   List<TransactionModel> get allTransactions => _transactions;
@@ -165,6 +167,7 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   void setDateRange(DateTime? start, DateTime? end) {
+    _quickDateFilter = 'custom';
     _startDate = start;
     _endDate = end != null
         ? DateTime(end.year, end.month, end.day, 23, 59, 59)
@@ -173,6 +176,7 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   void setQuickDateFilter(String range) {
+    _quickDateFilter = range;
     final now = DateTime.now();
     switch (range) {
       case 'today':
@@ -194,6 +198,7 @@ class TransactionProvider extends ChangeNotifier {
         break;
       case 'all':
       default:
+        _quickDateFilter = 'all';
         _startDate = null;
         _endDate = null;
     }
@@ -204,6 +209,7 @@ class TransactionProvider extends ChangeNotifier {
     _selectedCashierId = 'all';
     _selectedStatus = 'all';
     _searchQuery = '';
+    _quickDateFilter = 'all';
     _startDate = null;
     _endDate = null;
     notifyListeners();

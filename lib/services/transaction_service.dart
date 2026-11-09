@@ -183,20 +183,20 @@ class TransactionService {
 
     // 6. Customer Receivable / Piutang Pelanggan (PRD Section 5.9)
     double piutangAmount = 0.0;
-    if (transaction.status == AppConstants.statusUnpaid) {
-      // Jika status belum lunas, sisa tagihan dicatat sebagai piutang
+    final isPiutangMethod =
+        transaction.paymentMethod.toLowerCase() == 'piutang' ||
+        transaction.payments.any((p) => p.method.toLowerCase() == 'piutang');
+
+    if (transaction.status == AppConstants.statusUnpaid ||
+        isPiutangMethod ||
+        transaction.paidAmount < transaction.total) {
       piutangAmount = (transaction.total - transaction.paidAmount).clamp(
         0.0,
         double.infinity,
       );
-    } else if (transaction.payments.isNotEmpty) {
-      for (final p in transaction.payments) {
-        if (p.method.toLowerCase() == 'piutang') {
-          piutangAmount += p.amount;
-        }
+      if (piutangAmount <= 0 && isPiutangMethod) {
+        piutangAmount = transaction.total;
       }
-    } else if (transaction.paymentMethod.toLowerCase() == 'piutang') {
-      piutangAmount = transaction.total;
     }
 
     if (piutangAmount > 0) {
@@ -205,13 +205,19 @@ class TransactionService {
         'type': 'piutang',
         'partyType': 'customer',
         'partyId': transaction.customerId ?? 'guest',
-        'partyName': transaction.customerName ?? 'Pelanggan Umum',
+        'partyName': (transaction.customerName != null &&
+                transaction.customerName!.trim().isNotEmpty)
+            ? transaction.customerName!.trim()
+            : 'Pelanggan Umum',
+        'phone': transaction.customerPhone ?? '',
+        'address': transaction.customerAddress ?? '',
         'referenceNo': transaction.invoiceNumber,
         'amount': piutangAmount,
         'paidAmount': 0.0,
-        'dueDate': Timestamp.fromDate(now.add(const Duration(days: 7))),
+        'dueDate': Timestamp.fromDate(now.add(const Duration(days: 14))),
         'status': 'unpaid',
-        'notes': 'Piutang Nota ${transaction.invoiceNumber}',
+        'notes':
+            'Piutang Kasir Nota ${transaction.invoiceNumber} (${transaction.cashierName})',
         'createdAt': Timestamp.fromDate(now),
       });
     }

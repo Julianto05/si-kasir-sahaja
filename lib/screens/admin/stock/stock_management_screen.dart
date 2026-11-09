@@ -109,14 +109,30 @@ class _StockManagementScreenState extends State<StockManagementScreen>
                             ? Icons.check_circle_rounded
                             : Icons.warning_amber_rounded,
                         size: 16,
-                        color: AppTheme.error,
+                        color: prodProvider.showOnlyLowStock
+                            ? Colors.white
+                            : AppTheme.error,
                       ),
                       label: Text(
                         'Stok Menipis/Kosong (${prodProvider.lowStockCount})',
+                        style: TextStyle(
+                          color: prodProvider.showOnlyLowStock
+                              ? Colors.white
+                              : AppTheme.onSurface,
+                          fontWeight: prodProvider.showOnlyLowStock
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          fontSize: 12,
+                        ),
                       ),
                       backgroundColor: prodProvider.showOnlyLowStock
-                          ? AppTheme.errorContainer
+                          ? AppTheme.error
                           : AppTheme.surfaceContainerHigh,
+                      side: BorderSide(
+                        color: prodProvider.showOnlyLowStock
+                            ? AppTheme.error
+                            : AppTheme.outlineVariant,
+                      ),
                       onPressed: () => prodProvider.toggleLowStockFilter(),
                     ),
                     if (expiringCount > 0) ...[
@@ -298,7 +314,7 @@ class _StockManagementScreenState extends State<StockManagementScreen>
   }
 
   Widget _buildFilterChip(BuildContext context, String type, String label) {
-    final provider = context.read<StockProvider>();
+    final provider = context.watch<StockProvider>();
     final isSelected = provider.selectedType == type;
 
     return Padding(
@@ -306,6 +322,17 @@ class _StockManagementScreenState extends State<StockManagementScreen>
       child: FilterChip(
         label: Text(label),
         selected: isSelected,
+        showCheckmark: false,
+        selectedColor: AppTheme.primary,
+        backgroundColor: AppTheme.surfaceContainerLow,
+        side: BorderSide(
+          color: isSelected ? AppTheme.primary : AppTheme.outlineVariant,
+        ),
+        labelStyle: TextStyle(
+          color: isSelected ? Colors.white : AppTheme.onSurfaceVariant,
+          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+          fontSize: 12,
+        ),
         onSelected: (_) => provider.setTypeFilter(type),
       ),
     );

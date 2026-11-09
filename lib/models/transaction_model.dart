@@ -155,6 +155,8 @@ class TransactionModel {
   final String cashierName;
   final String? customerId;
   final String? customerName;
+  final String? customerPhone;
+  final String? customerAddress;
   final double subtotal;
   final double discount;
   final double tax;
@@ -183,6 +185,8 @@ class TransactionModel {
     required this.cashierName,
     this.customerId,
     this.customerName,
+    this.customerPhone,
+    this.customerAddress,
     required this.subtotal,
     this.discount = 0.0,
     this.tax = 0.0,
@@ -261,6 +265,8 @@ class TransactionModel {
       cashierName: data['cashierName']?.toString() ?? '',
       customerId: data['customerId']?.toString(),
       customerName: data['customerName']?.toString(),
+      customerPhone: data['customerPhone']?.toString(),
+      customerAddress: data['customerAddress']?.toString(),
       subtotal: _parseNumToDouble(data['subtotal']),
       discount: _parseNumToDouble(data['discount']),
       tax: _parseNumToDouble(data['tax']),
@@ -292,6 +298,8 @@ class TransactionModel {
       'cashierName': cashierName,
       'customerId': customerId,
       'customerName': customerName,
+      'customerPhone': customerPhone,
+      'customerAddress': customerAddress,
       'subtotal': subtotal,
       'discount': discount,
       'tax': tax,
@@ -324,6 +332,8 @@ class TransactionModel {
     String? cashierName,
     String? customerId,
     String? customerName,
+    String? customerPhone,
+    String? customerAddress,
     double? subtotal,
     double? discount,
     double? tax,
@@ -352,6 +362,8 @@ class TransactionModel {
       cashierName: cashierName ?? this.cashierName,
       customerId: customerId ?? this.customerId,
       customerName: customerName ?? this.customerName,
+      customerPhone: customerPhone ?? this.customerPhone,
+      customerAddress: customerAddress ?? this.customerAddress,
       subtotal: subtotal ?? this.subtotal,
       discount: discount ?? this.discount,
       tax: tax ?? this.tax,

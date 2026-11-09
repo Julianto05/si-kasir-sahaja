@@ -46,9 +46,19 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
   final TextEditingController _coinsController = TextEditingController(
     text: '0',
   );
+  late final TextEditingController _nonCashCountCtrl;
+  late final TextEditingController _nonCashAmountCtrl;
   final TextEditingController _notesController = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _nonCashInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _nonCashCountCtrl = TextEditingController(text: '0');
+    _nonCashAmountCtrl = TextEditingController(text: '0');
+  }
 
   @override
   void dispose() {
@@ -56,6 +66,8 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
       c.dispose();
     }
     _coinsController.dispose();
+    _nonCashCountCtrl.dispose();
+    _nonCashAmountCtrl.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -218,9 +230,15 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
 
     setState(() => _isSubmitting = true);
 
+    final physicalNonCash = CurrencyFormatter.parse(_nonCashAmountCtrl.text);
+    final nonCashCount =
+        int.tryParse(_nonCashCountCtrl.text.replaceAll('.', '').trim()) ?? 0;
+
     final closedShift = await shiftProvider.closeCurrentShift(
       shiftTransactions: shiftTxs,
       physicalCash: physicalCash,
+      physicalNonCash: physicalNonCash,
+      nonCashReceiptCount: nonCashCount,
       denominations: _denominationMap,
       notes: _notesController.text.trim(),
       shiftId: widget.shift.id,
@@ -392,12 +410,30 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
     final unpaidSales = breakdown.unpaidSales;
     final totalSales = breakdown.totalSales;
 
+    if (!_nonCashInitialized) {
+      _nonCashAmountCtrl.text = CurrencyFormatter.formatCompact(nonCashSales);
+      final count = shiftTxs
+          .where(
+            (tx) =>
+                !tx.isCancelled &&
+                tx.paymentMethod.toLowerCase() != 'cash' &&
+                tx.paymentMethod.toLowerCase() != 'tunai',
+          )
+          .length;
+      _nonCashCountCtrl.text = '$count';
+      _nonCashInitialized = true;
+    }
+
     final manualCashIn = widget.shift.totalCashIn;
     final manualCashOut = widget.shift.totalCashOut;
     final expectedCash =
         widget.shift.startingCash + cashSales + manualCashIn - manualCashOut;
     final physicalCash = _totalPhysicalCash;
     final variance = physicalCash - expectedCash;
+
+    final physicalNonCash = CurrencyFormatter.parse(_nonCashAmountCtrl.text);
+    final nonCashVariance = physicalNonCash - nonCashSales;
+    final totalPhysicalSetoran = physicalCash + physicalNonCash;
 
     final openTimeStr = DateFormat(
       'dd MMM yyyy, HH:mm',
@@ -493,9 +529,10 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                       child: Column(
                         children: [
                           _buildRecapRow(
-                            'Modal Awal Kasir',
+                            'Modal Awal Kasir (Uang Modal Laci)',
                             widget.shift.startingCash,
-                            isMuted: true,
+                            isBold: true,
+                            color: AppTheme.primary,
                           ),
                           _buildRecapRow(
                             'Penjualan Tunai (Kas Masuk)',
@@ -537,10 +574,45 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                           ),
                           const Divider(height: 16),
                           _buildRecapRow(
-                            'Wajib Ada di Laci (Sistem)',
+                            'Total Uang Wajib di Laci Kasir',
                             expectedCash,
                             isBold: true,
                             color: AppTheme.secondary,
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.secondaryContainer.withValues(
+                                alpha: 0.35,
+                              ),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusSm,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 14,
+                                  color: AppTheme.secondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Dihitung dari: Modal Awal (${CurrencyFormatter.format(widget.shift.startingCash)}) + Penjualan Tunai (${CurrencyFormatter.format(cashSales)})${manualCashIn > 0 ? " + Kas Masuk (${CurrencyFormatter.format(manualCashIn)})" : ""}${manualCashOut > 0 ? " - Kas Keluar (${CurrencyFormatter.format(manualCashOut)})" : ""}',
+                                    style: const TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppTheme.onSecondaryContainer,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),
@@ -663,7 +735,196 @@ class _ShiftClosingDialogState extends State<ShiftClosingDialog> {
                     ),
                     const SizedBox(height: 18),
 
-                    // 4. Notes
+                    // 3. Rekonsiliasi Non-Tunai (Bukti Transfer & Struk EDC)
+                    _buildSectionTitle(
+                      '3. Rekonsiliasi Non-Tunai (Bukti Transfer & EDC)',
+                      Icons.qr_code_2_rounded,
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Hitung jumlah struk / bukti transfer & nota QRIS yang terkumpul:',
+                      style: TextStyle(fontSize: 11, color: AppTheme.outline),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.surfaceContainerLow,
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                        border: Border.all(
+                          color: AppTheme.outlineVariant.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildRecapRow(
+                            'Total Non-Tunai (Sistem)',
+                            nonCashSales,
+                            isBold: true,
+                            color: AppTheme.primary,
+                          ),
+                          const Divider(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextField(
+                                  controller: _nonCashCountCtrl,
+                                  keyboardType: TextInputType.number,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Jumlah Slip/Struk',
+                                    hintText: '0',
+                                    prefixIcon: Icon(Icons.receipt_outlined),
+                                    isDense: true,
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                flex: 3,
+                                child: TextField(
+                                  controller: _nonCashAmountCtrl,
+                                  keyboardType: TextInputType.number,
+                                  inputFormatters: [
+                                    ThousandsSeparatorInputFormatter(),
+                                  ],
+                                  decoration: const InputDecoration(
+                                    labelText: 'Total Fisik Slip/Bukti (Rp)',
+                                    prefixText: 'Rp ',
+                                    isDense: true,
+                                  ),
+                                  onChanged: (_) => setState(() {}),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: nonCashVariance == 0
+                                  ? AppTheme.secondary.withValues(alpha: 0.1)
+                                  : (nonCashVariance < 0
+                                        ? AppTheme.error.withValues(alpha: 0.1)
+                                        : Colors.blue.withValues(alpha: 0.1)),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusSm,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  nonCashVariance == 0
+                                      ? 'Slip/Bukti Non-Tunai Sesuai (Klop)'
+                                      : (nonCashVariance < 0
+                                            ? 'Bukti Fisik Kurang'
+                                            : 'Bukti Fisik Lebih'),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: nonCashVariance == 0
+                                        ? AppTheme.secondary
+                                        : (nonCashVariance < 0
+                                              ? AppTheme.error
+                                              : Colors.blue.shade700),
+                                  ),
+                                ),
+                                Text(
+                                  CurrencyFormatter.format(nonCashVariance),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                    color: nonCashVariance == 0
+                                        ? AppTheme.secondary
+                                        : (nonCashVariance < 0
+                                              ? AppTheme.error
+                                              : Colors.blue.shade700),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 4. Ringkasan Total Setoran Kasir (Tunai + Non-Tunai)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+                        border: Border.all(
+                          color: AppTheme.primary.withValues(alpha: 0.25),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Fisik Uang Tunai di Laci:',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(physicalCash),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Fisik Bukti Non-Tunai:',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(physicalNonCash),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'TOTAL SETORAN SHIFT:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13.5,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                              Text(
+                                CurrencyFormatter.format(totalPhysicalSetoran),
+                                style: AppTheme.numericStyle.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 17,
+                                  color: AppTheme.primary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // 5. Notes
                     TextField(
                       controller: _notesController,
                       maxLines: 2,

@@ -95,6 +95,8 @@ class DebtModel {
   final String partyType; // 'supplier' or 'customer'
   final String partyId;
   final String partyName;
+  final String phone;
+  final String address;
   final String referenceNo; // Purchase No or Invoice No
   final double amount;
   final double paidAmount;
@@ -109,6 +111,8 @@ class DebtModel {
     required this.partyType,
     required this.partyId,
     required this.partyName,
+    this.phone = '',
+    this.address = '',
     this.referenceNo = '',
     required this.amount,
     this.paidAmount = 0.0,
@@ -130,6 +134,8 @@ class DebtModel {
       partyType: data['partyType'] as String? ?? 'supplier',
       partyId: data['partyId'] as String? ?? '',
       partyName: data['partyName'] as String? ?? '',
+      phone: data['phone'] as String? ?? '',
+      address: data['address'] as String? ?? '',
       referenceNo: data['referenceNo'] as String? ?? '',
       amount: (data['amount'] as num?)?.toDouble() ?? 0.0,
       paidAmount: (data['paidAmount'] as num?)?.toDouble() ?? 0.0,
@@ -146,6 +152,8 @@ class DebtModel {
       'partyType': partyType,
       'partyId': partyId,
       'partyName': partyName,
+      'phone': phone.trim(),
+      'address': address.trim(),
       'referenceNo': referenceNo,
       'amount': amount,
       'paidAmount': paidAmount,
