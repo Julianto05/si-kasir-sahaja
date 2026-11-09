@@ -28,13 +28,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Pre-fetch Gradle Wrapper with retry
-        run: |
-          cd android
-          chmod +x gradlew
-          for i in {1..5}; do ./gradlew --version && break || (echo "Gradle wrapper download retry $i..." && sleep 5); done
-          cd ..
-
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -45,7 +38,13 @@ jobs:
         run: flutter pub get
 
       - name: Build Android APK Release
-        run: flutter build apk --release
+        run: |
+          for i in 1 2 3 4 5; do
+            flutter build apk --release && exit 0
+            echo "Build gagal (kemungkinan timeout download Gradle), retry $i/5..."
+            sleep 15
+          done
+          exit 1
 
       - name: Copy Renamed APK
         run: cp build/app/outputs/flutter-apk/app-release.apk SiKasirSahaja-Android.apk
