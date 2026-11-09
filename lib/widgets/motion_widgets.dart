@@ -36,15 +36,9 @@ class _FadeSlideInState extends State<FadeSlideIn>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
+    _controller = AnimationController(vsync: this, duration: widget.duration);
 
-    final curved = CurvedAnimation(
-      parent: _controller,
-      curve: widget.curve,
-    );
+    final curved = CurvedAnimation(parent: _controller, curve: widget.curve);
 
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(curved);
     _slideAnimation = Tween<Offset>(
@@ -71,10 +65,7 @@ class _FadeSlideInState extends State<FadeSlideIn>
   Widget build(BuildContext context) {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: SlideTransition(
-        position: _slideAnimation,
-        child: widget.child,
-      ),
+      child: SlideTransition(position: _slideAnimation, child: widget.child),
     );
   }
 }
@@ -167,10 +158,7 @@ class _ScaleTapState extends State<ScaleTap>
       onTapCancel: _onTapCancel,
       onTap: widget.onTap != null ? _handleTap : null,
       onLongPress: widget.onLongPress,
-      child: ScaleTransition(
-        scale: _scale,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scale, child: widget.child),
     );
   }
 }
@@ -298,10 +286,7 @@ class _PulseIndicatorState extends State<PulseIndicator>
       return Container(
         width: widget.size,
         height: widget.size,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
-        ),
+        decoration: BoxDecoration(color: widget.color, shape: BoxShape.circle),
       );
     }
 
@@ -423,8 +408,9 @@ class _AnimatedSuccessBadgeState extends State<AnimatedSuccessBadge>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.secondary
-                          .withValues(alpha: _ringOpacity.value),
+                      color: AppTheme.secondary.withValues(
+                        alpha: _ringOpacity.value,
+                      ),
                       width: 3,
                     ),
                   ),
@@ -466,26 +452,25 @@ class SmoothPageRoute<T> extends PageRouteBuilder<T> {
   final Widget page;
 
   SmoothPageRoute({required this.page})
-      : super(
-          pageBuilder: (context, animation, secondaryAnimation) => page,
-          transitionDuration: const Duration(milliseconds: 280),
-          reverseTransitionDuration: const Duration(milliseconds: 240),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            );
-            return FadeTransition(
-              opacity: curved,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.02, 0.015),
-                  end: Offset.zero,
-                ).animate(curved),
-                child: child,
-              ),
-            );
-          },
-        );
+    : super(
+        pageBuilder: (context, animation, secondaryAnimation) => page,
+        transitionDuration: const Duration(milliseconds: 280),
+        reverseTransitionDuration: const Duration(milliseconds: 240),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(
+            parent: animation,
+            curve: Curves.easeOutCubic,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.02, 0.015),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      );
 }
-

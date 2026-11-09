@@ -19,18 +19,18 @@ class ProductService {
       final list = snapshot.docs
           .map((doc) => ProductModel.fromFirestore(doc))
           .where((p) {
-        if (onlyActive && !p.isActive) return false;
-        if (categoryId != null &&
-            categoryId.isNotEmpty &&
-            categoryId != 'all' &&
-            p.categoryId != categoryId) {
-          return false;
-        }
-        return true;
-      }).toList();
+            if (onlyActive && !p.isActive) return false;
+            if (categoryId != null &&
+                categoryId.isNotEmpty &&
+                categoryId != 'all' &&
+                p.categoryId != categoryId) {
+              return false;
+            }
+            return true;
+          })
+          .toList();
 
-      list.sort((a, b) =>
-          a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       return list;
     });
   }
@@ -44,18 +44,18 @@ class ProductService {
     final list = snapshot.docs
         .map((doc) => ProductModel.fromFirestore(doc))
         .where((p) {
-      if (onlyActive && !p.isActive) return false;
-      if (categoryId != null &&
-          categoryId.isNotEmpty &&
-          categoryId != 'all' &&
-          p.categoryId != categoryId) {
-        return false;
-      }
-      return true;
-    }).toList();
+          if (onlyActive && !p.isActive) return false;
+          if (categoryId != null &&
+              categoryId.isNotEmpty &&
+              categoryId != 'all' &&
+              p.categoryId != categoryId) {
+            return false;
+          }
+          return true;
+        })
+        .toList();
 
-    list.sort((a, b) =>
-        a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
     return list;
   }
 
@@ -119,6 +119,18 @@ class ProductService {
     final snapshot = await _collection.get();
     final count = snapshot.docs.length + 1;
     return 'PRD-${count.toString().padLeft(4, '0')}';
+  }
+
+  /// Generates a new unique Firestore document ID for a product.
+  String generateProductId() => _collection.doc().id;
+
+  /// Sets or creates a product document with a specific ID.
+  Future<void> setProduct(ProductModel product) async {
+    final now = DateTime.now();
+    final data = product.toMap();
+    data['createdAt'] = Timestamp.fromDate(product.createdAt);
+    data['updatedAt'] = Timestamp.fromDate(now);
+    await _collection.doc(product.id).set(data);
   }
 
   /// Adds a new product document.

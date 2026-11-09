@@ -7,7 +7,7 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 
-/// Provider for managing cashier and admin users in the system.
+/// Provider for managing cashier and admin users, employee profiles, and permissions (PRD Section 3 & 5.10).
 class UserProvider extends ChangeNotifier {
   final UserService _userService = UserService();
 
@@ -48,7 +48,8 @@ class UserProvider extends ChangeNotifier {
         final q = _searchQuery.toLowerCase().trim();
         final matchName = u.name.toLowerCase().contains(q);
         final matchEmail = u.email.toLowerCase().contains(q);
-        if (!matchName && !matchEmail) {
+        final matchPosition = u.position.toLowerCase().contains(q);
+        if (!matchName && !matchEmail && !matchPosition) {
           return false;
         }
       }
@@ -91,11 +92,15 @@ class UserProvider extends ChangeNotifier {
 
   // ─── Actions ────────────────────────────────────────────────
 
-  /// Creates a new cashier account.
+  /// Creates a new cashier/staff account with optional phone, position, and permissions.
   Future<bool> createCashier({
     required String email,
     required String password,
     required String name,
+    String phone = '',
+    String position = 'Kasir',
+    List<String> permissions = const [],
+    String? workScheduleId,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -106,6 +111,9 @@ class UserProvider extends ChangeNotifier {
         email: email,
         password: password,
         name: name,
+        phone: phone,
+        position: position,
+        permissions: permissions,
       );
       _isLoading = false;
       notifyListeners();
@@ -135,14 +143,58 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
-  /// Updates user display name.
-  Future<bool> updateUserProfile(UserModel user, String newName) async {
+  /// Updates user display name, phone, position, and permissions.
+  Future<bool> updateUserProfile(
+    UserModel user,
+    String newName, {
+    String? phone,
+    String? position,
+    List<String>? permissions,
+  }) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await _userService.updateUserProfile(user.uid, name: newName);
+      await _userService.updateUserProfile(
+        user.uid,
+        name: newName,
+        phone: phone,
+        position: position,
+        permissions: permissions,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal memperbarui profil: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates user display name, phone, position, and permissions by uid.
+  Future<bool> updateUserProfileAndPermissions({
+    required String uid,
+    required String name,
+    String? phone,
+    String? position,
+    List<String>? permissions,
+    String? workScheduleId,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _userService.updateUserProfile(
+        uid,
+        name: name,
+        phone: phone,
+        position: position,
+        permissions: permissions,
+      );
       _isLoading = false;
       notifyListeners();
       return true;

@@ -67,25 +67,25 @@ class AppTheme {
   );
 
   static List<BoxShadow> get cardShadow => [
-        BoxShadow(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-        BoxShadow(
-          color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-          blurRadius: 2,
-          offset: const Offset(0, 1),
-        ),
-      ];
+    BoxShadow(
+      color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+      blurRadius: 12,
+      offset: const Offset(0, 4),
+    ),
+    BoxShadow(
+      color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+      blurRadius: 2,
+      offset: const Offset(0, 1),
+    ),
+  ];
 
   static List<BoxShadow> get elevatedShadow => [
-        BoxShadow(
-          color: primary.withValues(alpha: 0.14),
-          blurRadius: 20,
-          offset: const Offset(0, 8),
-        ),
-      ];
+    BoxShadow(
+      color: primary.withValues(alpha: 0.14),
+      blurRadius: 20,
+      offset: const Offset(0, 8),
+    ),
+  ];
 
   // ─── Spacing ────────────────────────────────────────────────
   static const double spacingBase = 8.0;
@@ -248,10 +248,7 @@ class AppTheme {
           color: onSurfaceVariant,
           fontWeight: FontWeight.w500,
         ),
-        hintStyle: GoogleFonts.hankenGrotesk(
-          fontSize: 14,
-          color: outline,
-        ),
+        hintStyle: GoogleFonts.hankenGrotesk(fontSize: 14, color: outline),
       ),
       cardTheme: CardThemeData(
         color: surfaceContainerLowest,
@@ -354,9 +351,7 @@ class AppTheme {
         backgroundColor: surfaceContainerLowest,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(radiusXl),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXl)),
         ),
       ),
     );
@@ -463,25 +458,25 @@ class AppTheme {
   /// Numeric text style for prices, totals, quantities.
   /// Uses JetBrains Mono for tabular alignment.
   static TextStyle get numericStyle => GoogleFonts.jetBrainsMono(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        height: 20 / 16,
-        color: onSurface,
-      );
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    height: 20 / 16,
+    color: onSurface,
+  );
 
   /// Large numeric style for main totals (e.g. "Rp 2.450.000").
   static TextStyle get numericLargeStyle => GoogleFonts.jetBrainsMono(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
-        height: 34 / 26,
-        color: onSurface,
-      );
+    fontSize: 26,
+    fontWeight: FontWeight.w700,
+    height: 34 / 26,
+    color: onSurface,
+  );
 
   /// Small numeric style for item prices.
   static TextStyle get numericSmallStyle => GoogleFonts.jetBrainsMono(
-        fontSize: 13,
-        fontWeight: FontWeight.w600,
-        height: 18 / 13,
-        color: onSurface,
-      );
+    fontSize: 13,
+    fontWeight: FontWeight.w600,
+    height: 18 / 13,
+    color: onSurface,
+  );
 }

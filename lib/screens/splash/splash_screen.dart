@@ -42,15 +42,13 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.15, 0.8, curve: Curves.easeOutCubic),
-      ),
-    );
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.08), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.15, 0.8, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _controller.forward();
 
@@ -159,11 +157,13 @@ class _SplashScreenState extends State<SplashScreen>
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
                           color: AppTheme.surfaceContainerLowest,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusXxl),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusXxl,
+                          ),
                           border: Border.all(
-                            color:
-                                AppTheme.outlineVariant.withValues(alpha: 0.6),
+                            color: AppTheme.outlineVariant.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -174,8 +174,9 @@ class _SplashScreenState extends State<SplashScreen>
                           ],
                         ),
                         child: ClipRRect(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusXl),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusXl,
+                          ),
                           child: Image.asset(
                             'assets/images/5.png',
                             fit: BoxFit.contain,
@@ -184,8 +185,9 @@ class _SplashScreenState extends State<SplashScreen>
                               height: 130,
                               decoration: BoxDecoration(
                                 gradient: AppTheme.primaryGradient,
-                                borderRadius:
-                                    BorderRadius.circular(AppTheme.radiusXl),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusXl,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.point_of_sale_rounded,
@@ -207,8 +209,9 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                         decoration: BoxDecoration(
                           color: AppTheme.secondary.withValues(alpha: 0.1),
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusFull,
+                          ),
                         ),
                         child: const Text(
                           'SMART RETAIL POS',
@@ -225,9 +228,7 @@ class _SplashScreenState extends State<SplashScreen>
                       // App Title
                       Text(
                         AppConstants.appName,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(
                               color: AppTheme.primary,
                               fontWeight: FontWeight.w800,
@@ -238,9 +239,9 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'Aplikasi Kasir Modern & Terpercaya',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppTheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          color: AppTheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
 
                       const Spacer(flex: 2),
@@ -249,8 +250,9 @@ class _SplashScreenState extends State<SplashScreen>
                       SizedBox(
                         width: 140,
                         child: ClipRRect(
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusFull),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusFull,
+                          ),
                           child: TweenAnimationBuilder<double>(
                             tween: Tween<double>(begin: 0.0, end: 1.0),
                             duration: const Duration(milliseconds: 1900),
@@ -272,10 +274,10 @@ class _SplashScreenState extends State<SplashScreen>
                       Text(
                         'Menyiapkan ruang kerja kasir...',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppTheme.outline,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          color: AppTheme.outline,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
 
                       const Spacer(flex: 1),

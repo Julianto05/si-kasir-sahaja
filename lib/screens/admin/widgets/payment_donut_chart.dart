@@ -109,8 +109,8 @@ class PaymentDonutChart extends StatelessWidget {
                     Text(
                       'Komposisi Pembayaran',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                     const Text(
                       'Proporsi metode transaksi pelanggan',
@@ -139,8 +139,10 @@ class PaymentDonutChart extends StatelessWidget {
                         const SizedBox(height: 8),
                         const Text(
                           'Belum ada data pembayaran tercatat',
-                          style:
-                              TextStyle(fontSize: 12, color: AppTheme.outline),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.outline,
+                          ),
                         ),
                       ],
                     ),
@@ -201,8 +203,9 @@ class PaymentDonutChart extends StatelessWidget {
                                   : 0.0;
 
                               return Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 5,
+                                ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -231,10 +234,10 @@ class PaymentDonutChart extends StatelessWidget {
                                           '${(pct * progress).toStringAsFixed(0)}%',
                                           style: AppTheme.numericSmallStyle
                                               .copyWith(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppTheme.onSurface,
-                                          ),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: AppTheme.onSurface,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -248,7 +251,8 @@ class PaymentDonutChart extends StatelessWidget {
                                             AppTheme.surfaceContainerLow,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
-                                                s.color),
+                                              s.color,
+                                            ),
                                       ),
                                     ),
                                   ],
@@ -308,8 +312,10 @@ class _DonutChartPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
     const strokeWidth = 16.0;
-    final rect =
-        Rect.fromCircle(center: center, radius: radius - strokeWidth / 2);
+    final rect = Rect.fromCircle(
+      center: center,
+      radius: radius - strokeWidth / 2,
+    );
 
     // Background track
     final trackPaint = Paint()
@@ -335,13 +341,7 @@ class _DonutChartPainter extends CustomPainter {
 
       final currentSweep = math.min(fullSliceSweep, remaining);
       paint.color = slice.color;
-      canvas.drawArc(
-        rect,
-        startAngle,
-        currentSweep,
-        false,
-        paint,
-      );
+      canvas.drawArc(rect, startAngle, currentSweep, false, paint);
 
       startAngle += fullSliceSweep;
       drawnSweep += currentSweep;

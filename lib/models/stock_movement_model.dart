@@ -2,9 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Represents an inventory stock change record in SiKasirSahaja.
 ///
-/// Types:
-/// - `'in'`: Stock received / Restock from supplier
-/// - `'out'`: Stock written off / expired
+/// Types (PRD v1.1.0 Section 8.2):
+/// - `'in'`: Stock received / Restock manual
+/// - `'purchase_in'`: Stock received from supplier purchase
+/// - `'purchase_return'`: Stock returned to supplier
+/// - `'out'`: Stock written off
+/// - `'damaged'`: Barang rusak
+/// - `'expired'`: Barang kedaluwarsa
 /// - `'sale'`: Stock automatically deducted from POS transaction
 /// - `'adjustment'`: Stock manual adjustment / stock opname
 /// - `'refund'`: Stock returned from cancelled transaction
@@ -13,7 +17,7 @@ class StockMovementModel {
   final String productId;
   final String productName;
   final String productCode;
-  final String type; // 'in', 'out', 'sale', 'adjustment', 'refund'
+  final String type;
   final int quantity;
   final int stockBefore;
   final int stockAfter;
@@ -73,19 +77,30 @@ class StockMovementModel {
     };
   }
 
+  /// True if this movement increases stock.
+  bool get isAddition => stockAfter >= stockBefore;
+
   /// User friendly label in Indonesian.
   String get typeLabel {
     switch (type) {
       case 'in':
         return 'Stok Masuk';
+      case 'purchase_in':
+        return 'Pembelian Supplier';
+      case 'purchase_return':
+        return 'Retur Pembelian';
       case 'sale':
         return 'Penjualan POS';
       case 'adjustment':
-        return 'Penyesuaian';
+        return 'Penyesuaian Opname';
       case 'refund':
         return 'Pengembalian / Refund';
+      case 'damaged':
+        return 'Barang Rusak';
+      case 'expired':
+        return 'Barang Kedaluwarsa';
       case 'out':
-        return 'Stok Keluar / Rusak';
+        return 'Stok Keluar';
       default:
         return type;
     }

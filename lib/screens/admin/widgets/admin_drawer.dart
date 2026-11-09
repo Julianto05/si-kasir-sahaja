@@ -7,11 +7,16 @@ import '../../../main.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/pos_provider.dart';
 import '../../../providers/product_provider.dart';
+import '../../../providers/shift_provider.dart';
 import '../../../widgets/motion_widgets.dart';
 import '../../pos/pos_screen.dart';
 import '../admin_dashboard_screen.dart';
 import '../category/category_list_screen.dart';
+import '../customer/customer_management_screen.dart';
+import '../discount/discount_management_screen.dart';
+import '../finance/finance_management_screen.dart';
 import '../product/product_list_screen.dart';
+import '../purchase/purchase_management_screen.dart';
 import '../report/report_screen.dart';
 import '../settings/store_settings_screen.dart';
 import '../shift/shift_history_screen.dart';
@@ -23,10 +28,7 @@ import '../user/user_management_screen.dart';
 class AdminDrawer extends StatelessWidget {
   final String currentRoute;
 
-  const AdminDrawer({
-    super.key,
-    required this.currentRoute,
-  });
+  const AdminDrawer({super.key, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
@@ -46,8 +48,8 @@ class AdminDrawer extends StatelessWidget {
             // ─── Modern Profile Header ──────────────────────────────
             Container(
               width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-              padding: const EdgeInsets.all(18),
+              margin: const EdgeInsets.fromLTRB(12, 6, 12, 4),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 gradient: AppTheme.primaryGradient,
                 borderRadius: BorderRadius.circular(AppTheme.radiusLg),
@@ -110,8 +112,9 @@ class AdminDrawer extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.secondary,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: const Text(
                             'ADMINISTRATOR',
@@ -133,8 +136,10 @@ class AdminDrawer extends StatelessWidget {
             // ─── Menu Items ─────────────────────────────────────────
             Expanded(
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 12,
+                ),
                 children: [
                   _buildMenuItem(
                     context,
@@ -172,6 +177,24 @@ class AdminDrawer extends StatelessWidget {
                     isSelected: currentRoute == 'categories',
                     onTap: () => _navigate(context, const CategoryListScreen()),
                   ),
+                  const SizedBox(height: 4),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.discount_rounded,
+                    title: 'Diskon & Promo',
+                    isSelected: currentRoute == 'discounts',
+                    onTap: () =>
+                        _navigate(context, const DiscountManagementScreen()),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.card_membership_rounded,
+                    title: 'Pelanggan & Member',
+                    isSelected: currentRoute == 'customers',
+                    onTap: () =>
+                        _navigate(context, const CustomerManagementScreen()),
+                  ),
 
                   const SizedBox(height: 12),
                   _buildSectionHeader('MANAJEMEN & LAPORAN'),
@@ -179,12 +202,21 @@ class AdminDrawer extends StatelessWidget {
                   _buildMenuItem(
                     context,
                     icon: Icons.warehouse_rounded,
-                    title: 'Stok Barang',
+                    title: 'Stok & Kartu Stok',
                     isSelected: currentRoute == 'stock',
                     badge: lowStockCount > 0 ? '$lowStockCount menipis' : null,
                     badgeColor: AppTheme.error,
                     onTap: () =>
                         _navigate(context, const StockManagementScreen()),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMenuItem(
+                    context,
+                    icon: Icons.local_shipping_rounded,
+                    title: 'Pembelian & Supplier',
+                    isSelected: currentRoute == 'purchases',
+                    onTap: () =>
+                        _navigate(context, const PurchaseManagementScreen()),
                   ),
                   const SizedBox(height: 4),
                   _buildMenuItem(
@@ -198,8 +230,17 @@ class AdminDrawer extends StatelessWidget {
                   const SizedBox(height: 4),
                   _buildMenuItem(
                     context,
+                    icon: Icons.account_balance_wallet_rounded,
+                    title: 'Pengeluaran & Keuangan',
+                    isSelected: currentRoute == 'finance',
+                    onTap: () =>
+                        _navigate(context, const FinanceManagementScreen()),
+                  ),
+                  const SizedBox(height: 4),
+                  _buildMenuItem(
+                    context,
                     icon: Icons.people_alt_rounded,
-                    title: 'Pengguna / Kasir',
+                    title: 'Karyawan & Absensi',
                     isSelected: currentRoute == 'users',
                     onTap: () =>
                         _navigate(context, const UserManagementScreen()),
@@ -254,8 +295,11 @@ class AdminDrawer extends StatelessWidget {
                     color: AppTheme.errorContainer,
                     borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
-                  child: const Icon(Icons.logout_rounded,
-                      color: AppTheme.error, size: 18),
+                  child: const Icon(
+                    Icons.logout_rounded,
+                    color: AppTheme.error,
+                    size: 18,
+                  ),
                 ),
                 title: const Text(
                   'Keluar Akun',
@@ -270,7 +314,6 @@ class AdminDrawer extends StatelessWidget {
                   style: const TextStyle(fontSize: 10, color: AppTheme.outline),
                 ),
                 onTap: () {
-                  Navigator.pop(context);
                   _confirmLogout(context);
                 },
               ),
@@ -283,10 +326,9 @@ class AdminDrawer extends StatelessWidget {
 
   void _navigate(BuildContext context, Widget screen) {
     Navigator.pop(context);
-    Navigator.of(context).pushAndRemoveUntil(
-      SmoothPageRoute(page: screen),
-      (route) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushAndRemoveUntil(SmoothPageRoute(page: screen), (route) => false);
   }
 
   Widget _buildSectionHeader(String title) {
@@ -328,8 +370,7 @@ class AdminDrawer extends StatelessWidget {
           : Colors.transparent,
       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         dense: true,
         leading: Container(
           padding: const EdgeInsets.all(7),
@@ -355,8 +396,7 @@ class AdminDrawer extends StatelessWidget {
         ),
         trailing: badge != null
             ? Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: badgeColor ?? AppTheme.secondary,
                   borderRadius: BorderRadius.circular(AppTheme.radiusFull),
@@ -371,15 +411,15 @@ class AdminDrawer extends StatelessWidget {
                 ),
               )
             : (isSelected
-                ? Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: activeColor,
-                      shape: BoxShape.circle,
-                    ),
-                  )
-                : null),
+                  ? Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: activeColor,
+                        shape: BoxShape.circle,
+                      ),
+                    )
+                  : null),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
         ),
@@ -397,15 +437,19 @@ class AdminDrawer extends StatelessWidget {
         content: const Text('Apakah Anda yakin ingin keluar dari akun admin?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(dialogCtx),
+            onPressed: () => Navigator.of(dialogCtx).pop(),
             child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(dialogCtx);
+              Navigator.of(dialogCtx).pop();
 
-              context.read<PosProvider>().clearCart();
-              await context.read<AuthProvider>().signOut();
+              final posProvider = context.read<PosProvider>();
+              final authProvider = context.read<AuthProvider>();
+
+              posProvider.clearCart();
+              context.read<ShiftProvider>().clearActiveShift();
+              await authProvider.signOut();
 
               if (context.mounted) {
                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(

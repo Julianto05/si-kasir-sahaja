@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/constants/app_constants.dart';
 import '../models/stock_movement_model.dart';
 
-/// Service layer for manual stock restock, adjustments, and movement audit trails.
+/// Service layer for manual stock restock, adjustments, damaged/expired write-offs, and movement audit trails (PRD Section 5.4).
 class StockService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -22,17 +22,21 @@ class StockService {
       final list = snap.docs
           .map((doc) => StockMovementModel.fromFirestore(doc))
           .where((m) {
-        if (productId != null &&
-            productId.isNotEmpty &&
-            productId != 'all' &&
-            m.productId != productId) {
-          return false;
-        }
-        if (type != null && type.isNotEmpty && type != 'all' && m.type != type) {
-          return false;
-        }
-        return true;
-      }).toList();
+            if (productId != null &&
+                productId.isNotEmpty &&
+                productId != 'all' &&
+                m.productId != productId) {
+              return false;
+            }
+            if (type != null &&
+                type.isNotEmpty &&
+                type != 'all' &&
+                m.type != type) {
+              return false;
+            }
+            return true;
+          })
+          .toList();
 
       list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return list;
@@ -82,7 +86,7 @@ class StockService {
     await batch.commit();
   }
 
-  /// Adjusts stock count manually (Stock Opname, damage, correction).
+  /// Adjusts stock count manually (Stock Opname, damaged, expired, correction).
   Future<void> adjustStock({
     required String productId,
     required String productName,
@@ -92,6 +96,7 @@ class StockService {
     required String reason,
     required String userId,
     required String userName,
+    String movementType = AppConstants.stockAdjustment,
   }) async {
     final batch = _firestore.batch();
     final now = DateTime.now();
@@ -111,16 +116,30 @@ class StockService {
       productId: productId,
       productName: productName,
       productCode: productCode,
-      type: AppConstants.stockAdjustment,
-      quantity: difference,
+      type: movementType,
+      quantity: difference.abs(),
       stockBefore: currentStock,
       stockAfter: newStock,
-      notes: 'Penyesuaian stok: $reason',
+      notes: reason.trim(),
       userId: userId,
       userName: userName,
       createdAt: now,
     );
     batch.set(movementRef, movement.toMap());
+
+    // 3. Log activity audit
+    final logRef = _firestore
+        .collection(AppConstants.activityLogsCollection)
+        .doc();
+    batch.set(logRef, {
+      'userId': userId,
+      'userName': userName,
+      'action':
+          'Ubah Stok $productName ($currentStock -> $newStock) [${movement.typeLabel}]',
+      'entity': 'products',
+      'entityId': productId,
+      'createdAt': Timestamp.fromDate(now),
+    });
 
     await batch.commit();
   }

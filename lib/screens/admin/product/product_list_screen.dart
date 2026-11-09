@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_theme.dart';
@@ -6,8 +8,10 @@ import '../../../core/utils/currency_formatter.dart';
 import '../../../models/product_model.dart';
 import '../../../providers/category_provider.dart';
 import '../../../providers/product_provider.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/barcode_scanner_modal.dart';
 import '../../../widgets/motion_widgets.dart';
+import '../../../widgets/product_image.dart';
 import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
 import 'product_form_screen.dart';
@@ -23,6 +27,11 @@ class ProductListScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Kelola Produk'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.import_export_rounded),
+            tooltip: 'Import / Export CSV (Excel)',
+            onPressed: () => _showCsvImportExportDialog(context),
+          ),
           IconButton(
             icon: const Icon(Icons.qr_code_scanner_rounded),
             tooltip: 'Scan Barcode Produk',
@@ -48,78 +57,84 @@ class ProductListScreen extends StatelessWidget {
         label: const Text('Tambah Produk'),
         backgroundColor: AppTheme.primary,
       ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Search & Category Filter Section
-            _buildSearchAndFilters(context),
+      body: AppBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Search & Category Filter Section
+              _buildSearchAndFilters(context),
 
-            // Products Grid / List
-            Expanded(
-              child: Consumer<ProductProvider>(
-                builder: (context, provider, _) {
-                  if (provider.isLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    );
-                  }
+              // Products Grid / List
+              Expanded(
+                child: Consumer<ProductProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
+                      );
+                    }
 
-                  final products = provider.filteredProducts;
+                    final products = provider.filteredProducts;
 
-                  if (products.isEmpty) {
-                    return _buildEmptyState(context, provider);
-                  }
+                    if (products.isEmpty) {
+                      return _buildEmptyState(context, provider);
+                    }
 
-                  return RefreshIndicator(
-                    onRefresh: () async {
-                      await provider.refreshProducts();
-                    },
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        final isDesktop = constraints.maxWidth > 700;
-                        if (isDesktop) {
-                          return GridView.builder(
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        await provider.refreshProducts();
+                      },
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final isDesktop = constraints.maxWidth > 700;
+                          if (isDesktop) {
+                            return GridView.builder(
+                              padding: const EdgeInsets.fromLTRB(
+                                AppTheme.containerPadding,
+                                AppTheme.containerPadding,
+                                AppTheme.containerPadding,
+                                80,
+                              ),
+                              gridDelegate:
+                                  const SliverGridDelegateWithMaxCrossAxisExtent(
+                                    maxCrossAxisExtent: 360,
+                                    mainAxisExtent: 140,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                  ),
+                              itemCount: products.length,
+                              itemBuilder: (context, index) {
+                                return _ProductGridCard(
+                                  product: products[index],
+                                );
+                              },
+                            );
+                          }
+
+                          return ListView.separated(
                             padding: const EdgeInsets.fromLTRB(
                               AppTheme.containerPadding,
                               AppTheme.containerPadding,
                               AppTheme.containerPadding,
                               80,
                             ),
-                            gridDelegate:
-                                const SliverGridDelegateWithMaxCrossAxisExtent(
-                              maxCrossAxisExtent: 360,
-                              childAspectRatio: 2.2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
                             itemCount: products.length,
+                            separatorBuilder: (_, _) =>
+                                const SizedBox(height: 10),
                             itemBuilder: (context, index) {
-                              return _ProductGridCard(product: products[index]);
+                              return _ProductListCard(product: products[index]);
                             },
                           );
-                        }
-
-                        return ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(
-                            AppTheme.containerPadding,
-                            AppTheme.containerPadding,
-                            AppTheme.containerPadding,
-                            80,
-                          ),
-                          itemCount: products.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 10),
-                          itemBuilder: (context, index) {
-                            return _ProductListCard(product: products[index]);
-                          },
-                        );
-                      },
-                    ),
-                  );
-                },
+                        },
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -223,17 +238,12 @@ class ProductListScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        const PulseIndicator(
-                          color: AppTheme.error,
-                          size: 7,
-                        ),
+                        const PulseIndicator(color: AppTheme.error, size: 7),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             '$lowStockCount produk memiliki stok menipis!',
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelMedium
+                            style: Theme.of(context).textTheme.labelMedium
                                 ?.copyWith(
                                   color: AppTheme.onErrorContainer,
                                   fontWeight: FontWeight.bold,
@@ -282,6 +292,27 @@ class ProductListScreen extends StatelessWidget {
                       onSelected: (_) => prodProvider.setCategoryFilter('all'),
                     ),
                     const SizedBox(width: 8),
+                    FilterChip(
+                      avatar: Icon(
+                        Icons.archive_outlined,
+                        size: 15,
+                        color: prodProvider.showArchived
+                            ? Colors.white
+                            : AppTheme.outline,
+                      ),
+                      label: const Text('Arsip'),
+                      selected: prodProvider.showArchived,
+                      selectedColor: AppTheme.secondary,
+                      labelStyle: TextStyle(
+                        color: prodProvider.showArchived
+                            ? Colors.white
+                            : AppTheme.onSurface,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      onSelected: (_) => prodProvider.toggleShowArchived(),
+                    ),
+                    const SizedBox(width: 8),
                     ...categories.map((cat) {
                       final isSelected = selectedId == cat.id;
                       return Padding(
@@ -313,7 +344,8 @@ class ProductListScreen extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context, ProductProvider provider) {
-    final isFiltering = provider.searchQuery.isNotEmpty ||
+    final isFiltering =
+        provider.searchQuery.isNotEmpty ||
         provider.selectedCategoryId != 'all' ||
         provider.showOnlyLowStock;
 
@@ -370,6 +402,113 @@ class ProductListScreen extends StatelessWidget {
       ),
     );
   }
+
+  void _showCsvImportExportDialog(BuildContext context) {
+    final prodProvider = context.read<ProductProvider>();
+    final csvData = prodProvider.exportProductsToCsv();
+    final importCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        ),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Import / Export Produk (CSV Excel)',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Format kolom: code, barcode, name, brand, categoryName, costPrice, sellingPrice, stock, minimumStock, unit',
+                  style: TextStyle(fontSize: 11.5, color: AppTheme.outline),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: csvData));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Data CSV produk berhasil disalin ke Clipboard! Tempelkan di Excel.',
+                        ),
+                        backgroundColor: AppTheme.secondary,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_all_rounded, size: 18),
+                  label: Text(
+                    'Salin Export CSV (${prodProvider.products.length} Produk)',
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: importCtrl,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: 'Tempel (Paste) Data CSV untuk Import Massal',
+                    hintText:
+                        'code,barcode,name,brand,categoryName,costPrice,sellingPrice,stock,minimumStock,unit\nPRD-0099,8991001,Kopi Susu,ABC,Minuman,2000,3500,50,5,pcs',
+                    alignLabelWithHint: true,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Tutup'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          if (importCtrl.text.trim().isEmpty) return;
+                          final defaultCat = context
+                              .read<CategoryProvider>()
+                              .activeCategories
+                              .firstOrNull;
+                          final count = await prodProvider
+                              .importProductsFromCsv(
+                                importCtrl.text,
+                                defaultCategoryId: defaultCat?.id ?? 'default',
+                                defaultCategoryName: defaultCat?.name ?? 'Umum',
+                              );
+                          if (ctx.mounted) {
+                            Navigator.pop(ctx);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  '$count produk berhasil di-import!',
+                                ),
+                                backgroundColor: AppTheme.secondary,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.upload_file_rounded, size: 18),
+                        label: const Text('Proses Import'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ProductListCard extends StatelessWidget {
@@ -397,29 +536,12 @@ class _ProductListCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Thumbnail
-            Container(
+            ProductImage(
+              imageUrl: product.imageUrl,
+              productName: product.name,
               width: 60,
               height: 60,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                child: product.imageUrl != null && product.imageUrl!.isNotEmpty
-                    ? Image.network(
-                        product.imageUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, _, _) => const Icon(
-                          Icons.inventory_2_outlined,
-                          color: AppTheme.outline,
-                        ),
-                      )
-                    : const Icon(
-                        Icons.inventory_2_outlined,
-                        color: AppTheme.outline,
-                      ),
-              ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             ),
             const SizedBox(width: 12),
 
@@ -433,10 +555,8 @@ class _ProductListCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           product.name,
-                          style:
-                              Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w700),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -449,8 +569,9 @@ class _ProductListCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.errorContainer,
-                            borderRadius:
-                                BorderRadius.circular(AppTheme.radiusSm),
+                            borderRadius: BorderRadius.circular(
+                              AppTheme.radiusSm,
+                            ),
                           ),
                           child: const Text(
                             'Nonaktif',
@@ -471,10 +592,10 @@ class _ProductListCard extends StatelessWidget {
                       Text(
                         product.code,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primary,
-                              fontSize: 11.5,
-                            ),
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                          fontSize: 11.5,
+                        ),
                       ),
                       if (product.categoryName.isNotEmpty) ...[
                         const Text(
@@ -483,7 +604,7 @@ class _ProductListCard extends StatelessWidget {
                         ),
                         Expanded(
                           child: Text(
-                            product.categoryName,
+                            '${product.categoryName}${product.brand.isNotEmpty ? " (${product.brand})" : ""}',
                             style: Theme.of(context).textTheme.bodySmall,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -492,6 +613,35 @@ class _ProductListCard extends StatelessWidget {
                       ],
                     ],
                   ),
+                  if (product.expiryDate != null) ...[
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        if (product.isExpired || product.isNearExpiry)
+                          const Padding(
+                            padding: EdgeInsets.only(right: 5),
+                            child: PulseIndicator(
+                              color: AppTheme.error,
+                              size: 6,
+                            ),
+                          ),
+                        Text(
+                          product.isExpired
+                              ? 'KEDALUWARSA (${DateFormat("dd/MM/yy").format(product.expiryDate!)})'
+                              : 'Exp: ${DateFormat("dd/MM/yyyy").format(product.expiryDate!)}',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: product.isExpired
+                                ? AppTheme.error
+                                : (product.isNearExpiry
+                                      ? const Color(0xFFD97706)
+                                      : AppTheme.outline),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 6),
 
                   // Price & Stock Tag Row
@@ -515,8 +665,9 @@ class _ProductListCard extends StatelessWidget {
                           color: product.isLowStock
                               ? AppTheme.errorContainer
                               : AppTheme.surfaceContainerLow,
-                          borderRadius:
-                              BorderRadius.circular(AppTheme.radiusSm),
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusSm,
+                          ),
                         ),
                         child: Text(
                           'Stok: ${product.stock} ${product.unit}',
@@ -565,13 +716,35 @@ class _ProductListCard extends StatelessWidget {
                     ],
                   ),
                 ),
+                PopupMenuItem(
+                  value: 'archive',
+                  child: Row(
+                    children: [
+                      Icon(
+                        product.isArchived
+                            ? Icons.unarchive_outlined
+                            : Icons.archive_outlined,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        product.isArchived
+                            ? 'Pulihkan dari Arsip'
+                            : 'Arsipkan Produk',
+                      ),
+                    ],
+                  ),
+                ),
                 const PopupMenuDivider(),
                 const PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline,
-                          size: 20, color: AppTheme.error),
+                      Icon(
+                        Icons.delete_outline,
+                        size: 20,
+                        color: AppTheme.error,
+                      ),
                       SizedBox(width: 8),
                       Text('Hapus', style: TextStyle(color: AppTheme.error)),
                     ],
@@ -592,6 +765,8 @@ class _ProductListCard extends StatelessWidget {
       ProductFormScreen.navigate(context, product: product);
     } else if (action == 'toggle') {
       provider.toggleProductStatus(product);
+    } else if (action == 'archive') {
+      provider.toggleArchiveProduct(product);
     } else if (action == 'delete') {
       _confirmDelete(context);
     }

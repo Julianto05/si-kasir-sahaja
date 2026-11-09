@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/transaction_model.dart';
-import '../../../providers/auth_provider.dart';
 import '../../../providers/transaction_provider.dart';
 import '../../pos/receipt_dialog.dart';
 
@@ -30,7 +30,6 @@ class TransactionDetailDialog extends StatefulWidget {
 class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
   List<TransactionItemModel>? _items;
   bool _isLoadingItems = false;
-  bool _isRefunding = false;
 
   @override
   void initState() {
@@ -44,9 +43,9 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
 
   Future<void> _loadItems() async {
     setState(() => _isLoadingItems = true);
-    final items = await context
-        .read<TransactionProvider>()
-        .getTransactionItems(widget.transaction.id);
+    final items = await context.read<TransactionProvider>().getTransactionItems(
+      widget.transaction.id,
+    );
     if (mounted) {
       setState(() {
         _items = items;
@@ -55,68 +54,144 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
     }
   }
 
-  Future<void> _handleRefund() async {
-    final reasonController = TextEditingController();
-    final shouldRefund = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Konfirmasi Pembatalan / Refund'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Membatalkan transaksi akan mengembalikan seluruh stok barang yang terjual.',
-              style: TextStyle(fontSize: 13),
+  Future<void> _handleChangeStatus() async {
+    final tx = widget.transaction;
+
+    // Jika belum lunas, berikan dialog konfirmasi langsung ubah ke Lunas
+    if (tx.isUnpaid) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Konfirmasi Status Lunas'),
+          content: Text(
+            'Ubah status transaksi ${tx.invoiceNumber} menjadi LUNAS?\n\n'
+            'Status transaksi akan berubah menjadi Lunas dan piutang di menu Pengeluaran & Keuangan juga otomatis menjadi LUNAS.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Batal'),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: reasonController,
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Alasan Pembatalan *',
-                hintText: 'e.g. Pelanggan salah pesan / barang rusak',
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.secondary,
+                foregroundColor: Colors.white,
               ),
+              child: const Text('Ubah ke Lunas'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal'),
+      );
+
+      if (confirm == true && mounted) {
+        final success = await context
+            .read<TransactionProvider>()
+            .updateTransactionStatus(
+              transaction: tx,
+              newStatus: AppConstants.statusCompleted,
+            );
+
+        if (!mounted) return;
+
+        if (success) {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Status transaksi ${tx.invoiceNumber} berhasil diubah menjadi LUNAS!',
+              ),
+              backgroundColor: AppTheme.secondary,
+            ),
+          );
+        }
+      }
+      return;
+    }
+
+    // Jika sudah lunas atau status lain, berikan pilihan untuk ubah status
+    String selectedStatus = tx.status;
+    final chosenStatus = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: const Text('Ubah Status Transaksi'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Nota: ${tx.invoiceNumber}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Pilih status transaksi. Status piutang di menu Pengeluaran & Keuangan akan otomatis tersinkronisasi.',
+                style: TextStyle(fontSize: 12, color: AppTheme.outline),
+              ),
+              const SizedBox(height: 14),
+              DropdownButtonFormField<String>(
+                initialValue: selectedStatus,
+                decoration: const InputDecoration(
+                  labelText: 'Status Transaksi',
+                  prefixIcon: Icon(Icons.sync_alt_rounded),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: AppConstants.statusCompleted,
+                    child: Text('Lunas (Selesai)'),
+                  ),
+                  DropdownMenuItem(
+                    value: AppConstants.statusUnpaid,
+                    child: Text('Belum Lunas'),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setDialogState(() => selectedStatus = val);
+                  }
+                },
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              if (reasonController.text.trim().isEmpty) return;
-              Navigator.pop(ctx, true);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.error),
-            child: const Text('Batalkan Transaksi'),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, null),
+              child: const Text('Batal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, selectedStatus),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.secondary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Simpan'),
+            ),
+          ],
+        ),
       ),
     );
 
-    if (shouldRefund == true && mounted) {
-      setState(() => _isRefunding = true);
-      final admin = context.read<AuthProvider>().currentUser;
-      if (admin == null) return;
-
-      final success = await context.read<TransactionProvider>().cancelTransaction(
-            transaction: widget.transaction,
-            reason: reasonController.text.trim(),
-            admin: admin,
-          );
+    if (chosenStatus != null && chosenStatus != tx.status && mounted) {
+      final success = await context
+          .read<TransactionProvider>()
+          .updateTransactionStatus(transaction: tx, newStatus: chosenStatus);
 
       if (!mounted) return;
-      setState(() => _isRefunding = false);
 
       if (success) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Transaksi berhasil dibatalkan dan stok dikembalikan'),
-            backgroundColor: AppTheme.secondary,
+          SnackBar(
+            content: Text(
+              'Status transaksi ${tx.invoiceNumber} berhasil diubah menjadi ${chosenStatus == AppConstants.statusCompleted ? "LUNAS" : "BELUM LUNAS"}!',
+            ),
+            backgroundColor: chosenStatus == AppConstants.statusCompleted
+                ? AppTheme.secondary
+                : Colors.amber[800],
           ),
         );
       }
@@ -128,6 +203,30 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
     final tx = widget.transaction;
     final dateStr = DateFormat('dd/MM/yyyy HH:mm').format(tx.createdAt);
     final isCompleted = tx.isCompleted;
+    final isUnpaid = tx.isUnpaid;
+    final isCancelled = tx.isCancelled;
+
+    String statusText;
+    Color statusBg;
+    Color statusFg;
+
+    if (isCompleted) {
+      statusText = 'Lunas';
+      statusBg = AppTheme.secondaryContainer;
+      statusFg = AppTheme.secondary;
+    } else if (isUnpaid) {
+      statusText = 'Belum Lunas';
+      statusBg = Colors.amber.withValues(alpha: 0.2);
+      statusFg = Colors.amber[900]!;
+    } else if (isCancelled) {
+      statusText = 'Dibatalkan / Refund';
+      statusBg = AppTheme.errorContainer;
+      statusFg = AppTheme.onErrorContainer;
+    } else {
+      statusText = 'Ditahan (Hold)';
+      statusBg = Colors.blue.withValues(alpha: 0.2);
+      statusFg = Colors.blue[900]!;
+    }
 
     return Dialog(
       backgroundColor: AppTheme.surfaceContainerLowest,
@@ -145,39 +244,43 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tx.invoiceNumber,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      Text(
-                        dateStr,
-                        style: const TextStyle(
-                            fontSize: 11, color: AppTheme.outline),
-                      ),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx.invoiceNumber,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          dateStr,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppTheme.outline,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppTheme.secondaryContainer
-                          : AppTheme.errorContainer,
+                      color: statusBg,
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                     ),
                     child: Text(
-                      isCompleted ? 'Selesai' : 'Dibatalkan / Refund',
+                      statusText,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: isCompleted
-                            ? AppTheme.onSecondaryContainer
-                            : AppTheme.onErrorContainer,
+                        color: statusFg,
                       ),
                     ),
                   ),
@@ -191,32 +294,50 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Kasir: ${tx.cashierName}',
-                      style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  Text('Metode: ${tx.paymentMethod}',
+                  Expanded(
+                    child: Text(
+                      'Kasir: ${tx.cashierName}',
                       style: const TextStyle(
-                          fontSize: 12, fontWeight: FontWeight.w600)),
+                        fontSize: 12,
+                        color: AppTheme.outline,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Metode: ${tx.paymentMethod}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppTheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
               if (tx.notes.isNotEmpty) ...[
                 const SizedBox(height: 4),
-                Text('Catatan: ${tx.notes}',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  'Catatan: ${tx.notes}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.outline),
+                ),
               ],
               if (tx.cancelReason != null) ...[
                 const SizedBox(height: 4),
-                Text('Alasan Batal: ${tx.cancelReason}',
-                    style:
-                        const TextStyle(fontSize: 12, color: AppTheme.error)),
+                Text(
+                  'Alasan Batal: ${tx.cancelReason}',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.error),
+                ),
               ],
               const SizedBox(height: 12),
 
               // Items Section
               Text(
                 'Rincian Produk',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
 
@@ -241,12 +362,16 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
                               Text(
                                 item.productName,
                                 style: const TextStyle(
-                                    fontSize: 12, fontWeight: FontWeight.bold),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                               Text(
                                 '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
                                 style: const TextStyle(
-                                    fontSize: 11, color: Colors.grey),
+                                  fontSize: 11,
+                                  color: AppTheme.outline,
+                                ),
                               ),
                             ],
                           ),
@@ -277,8 +402,10 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Total Pembayaran',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Total Pembayaran',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   Text(
                     CurrencyFormatter.format(tx.total),
                     style: AppTheme.numericStyle.copyWith(
@@ -297,35 +424,40 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
               // Actions
               Row(
                 children: [
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ReceiptDialog.show(
-                        context,
-                        tx.copyWith(items: _items ?? []),
-                      );
-                    },
-                    icon: const Icon(Icons.receipt_rounded, size: 18),
-                    label: const Text('Cetak Struk'),
-                  ),
-                  const SizedBox(width: 8),
-                  if (isCompleted)
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _isRefunding ? null : _handleRefund,
-                        icon: _isRefunding
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.cancel_rounded, size: 18),
-                        label: const Text('Refund / Batalkan'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.error,
-                        ),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        ReceiptDialog.show(
+                          context,
+                          tx.copyWith(items: _items ?? []),
+                        );
+                      },
+                      icon: const Icon(Icons.receipt_rounded, size: 18),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text('Cetak Struk'),
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _handleChangeStatus,
+                      icon: const Icon(Icons.sync_alt_rounded, size: 18),
+                      label: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          tx.isUnpaid ? 'Ubah ke Lunas' : 'Ubah Status',
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: tx.isUnpaid
+                            ? AppTheme.secondary
+                            : AppTheme.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -341,15 +473,23 @@ class _TransactionDetailDialogState extends State<TransactionDetailDialog> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
+          Expanded(
+            child: Text(
+              label,
               style: TextStyle(
-                  fontSize: 12,
-                  color: isDiscount ? AppTheme.error : Colors.grey)),
+                fontSize: 12,
+                color: isDiscount ? AppTheme.error : AppTheme.outline,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
           Text(
             CurrencyFormatter.format(amount),
             style: AppTheme.numericSmallStyle.copyWith(
-              color: isDiscount ? AppTheme.error : Colors.black87,
-              fontWeight: FontWeight.w500,
+              color: isDiscount ? AppTheme.error : AppTheme.onSurface,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

@@ -36,8 +36,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.category?.name ?? '');
-    _descController =
-        TextEditingController(text: widget.category?.description ?? '');
+    _descController = TextEditingController(
+      text: widget.category?.description ?? '',
+    );
     _isActive = widget.category?.isActive ?? true;
   }
 
@@ -105,7 +106,7 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppTheme.containerPadding),
           child: Form(
             key: _formKey,
@@ -120,7 +121,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         color: AppTheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
+                        borderRadius: BorderRadius.circular(
+                          AppTheme.radiusDefault,
+                        ),
                       ),
                       child: Icon(
                         _isEdit ? Icons.edit_rounded : Icons.add_rounded,
@@ -132,14 +135,15 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                     Expanded(
                       child: Text(
                         _isEdit ? 'Edit Kategori' : 'Tambah Kategori',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: _isSubmitting ? null : () => Navigator.pop(context),
+                      onPressed: _isSubmitting
+                          ? null
+                          : () => Navigator.pop(context),
                     ),
                   ],
                 ),
@@ -201,8 +205,9 @@ class _CategoryFormDialogState extends State<CategoryFormDialog> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed:
-                            _isSubmitting ? null : () => Navigator.pop(context),
+                        onPressed: _isSubmitting
+                            ? null
+                            : () => Navigator.pop(context),
                         child: const Text('Batal'),
                       ),
                     ),

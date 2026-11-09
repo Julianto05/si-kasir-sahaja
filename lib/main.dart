@@ -6,13 +6,19 @@ import 'package:provider/provider.dart';
 
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
+import 'providers/attendance_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/category_provider.dart';
+import 'providers/customer_provider.dart';
+import 'providers/discount_provider.dart';
+import 'providers/finance_provider.dart';
 import 'providers/pos_provider.dart';
 import 'providers/product_provider.dart';
+import 'providers/purchase_provider.dart';
 import 'providers/shift_provider.dart';
 import 'providers/stock_provider.dart';
 import 'providers/store_settings_provider.dart';
+import 'providers/supplier_provider.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/user_provider.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
@@ -21,7 +27,7 @@ import 'screens/cashier/cashier_dashboard_screen.dart';
 import 'screens/splash/splash_screen.dart';
 import 'widgets/loading_overlay.dart';
 
-/// SiKasirSahaja — Point of Sale Application.
+/// SiKasirSahaja — Point of Sale Application (v1.1.0 Gabungan Pusaka Rinjani).
 ///
 /// Entry point that initializes Firebase, sets up Provider-based state
 /// management, and routes users based on authentication state and role:
@@ -36,14 +42,14 @@ void main() async {
   await initializeDateFormatting('id_ID', null);
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // Lock orientation to portrait for mobile POS use
+  // Allow all orientations (portrait and landscape)
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
   ]);
 
   // Set system UI overlay style
@@ -75,6 +81,13 @@ class SiKasirSahajaApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => StoreSettingsProvider()),
         ChangeNotifierProvider(create: (_) => ShiftProvider()),
+        // PRD v1.1.0 Section 4 New Providers:
+        ChangeNotifierProvider(create: (_) => SupplierProvider()),
+        ChangeNotifierProvider(create: (_) => PurchaseProvider()),
+        ChangeNotifierProvider(create: (_) => CustomerProvider()),
+        ChangeNotifierProvider(create: (_) => FinanceProvider()),
+        ChangeNotifierProvider(create: (_) => AttendanceProvider()),
+        ChangeNotifierProvider(create: (_) => DiscountProvider()),
       ],
       child: MaterialApp(
         title: 'SiKasirSahaja',
@@ -120,7 +133,7 @@ class AuthGate extends StatelessWidget {
     }
 
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 350),
+      duration: const Duration(milliseconds: 300),
       switchInCurve: Curves.easeOutCubic,
       switchOutCurve: Curves.easeInCubic,
       child: screen,

@@ -114,7 +114,11 @@ class TransactionProvider extends ChangeNotifier {
 
   // ─── Stream Initialization ──────────────────────────────────
 
+  Timer? _reconnectTimer;
+
   void _initStream() {
+    _subscription?.cancel();
+    _reconnectTimer?.cancel();
     _isLoading = true;
     notifyListeners();
 
@@ -129,8 +133,18 @@ class TransactionProvider extends ChangeNotifier {
         _isLoading = false;
         _errorMessage = 'Gagal memuat riwayat transaksi: $error';
         notifyListeners();
+        // Schedule auto reconnect if stream failed
+        _reconnectTimer?.cancel();
+        _reconnectTimer = Timer(const Duration(seconds: 4), () {
+          _initStream();
+        });
       },
     );
+  }
+
+  /// Manually re-initializes transaction subscription.
+  void refreshTransactions() {
+    _initStream();
   }
 
   // ─── Filters ────────────────────────────────────────────────
@@ -167,7 +181,11 @@ class TransactionProvider extends ChangeNotifier {
         break;
       case 'week':
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        _startDate = DateTime(startOfWeek.year, startOfWeek.month, startOfWeek.day);
+        _startDate = DateTime(
+          startOfWeek.year,
+          startOfWeek.month,
+          startOfWeek.day,
+        );
         _endDate = DateTime(now.year, now.month, now.day, 23, 59, 59);
         break;
       case 'month':
@@ -221,9 +239,64 @@ class TransactionProvider extends ChangeNotifier {
     }
   }
 
+  /// Settles an unpaid transaction to completed status.
+  Future<bool> settleTransaction({
+    required TransactionModel transaction,
+    required double additionalPaidAmount,
+    required String paymentMethod,
+    String notes = '',
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _transactionService.settleUnpaidTransaction(
+        transaction: transaction,
+        additionalPaidAmount: additionalPaidAmount,
+        paymentMethod: paymentMethod,
+        notes: notes,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal mencatat pelunasan transaksi: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Updates transaction status and syncs with debts collection.
+  Future<bool> updateTransactionStatus({
+    required TransactionModel transaction,
+    required String newStatus,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _transactionService.updateTransactionStatus(
+        transaction: transaction,
+        newStatus: newStatus,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Gagal memperbarui status transaksi: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Fetches subcollection items for detail views.
   Future<List<TransactionItemModel>> getTransactionItems(
-      String transactionId) async {
+    String transactionId,
+  ) async {
     return await _transactionService.getTransactionItems(transactionId);
   }
 
@@ -234,6 +307,7 @@ class TransactionProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _subscription?.cancel();
     super.dispose();
   }

@@ -26,8 +26,9 @@ class ReceiptDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<StoreSettingsProvider>().settings;
-    final dateStr =
-        DateFormat('dd/MM/yyyy HH:mm').format(transaction.createdAt);
+    final dateStr = DateFormat(
+      'dd/MM/yyyy HH:mm',
+    ).format(transaction.createdAt);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -52,17 +53,19 @@ class ReceiptDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Animated Top Success Check Icon
-                const Center(
-                  child: AnimatedSuccessBadge(size: 52),
-                ),
+                const Center(child: AnimatedSuccessBadge(size: 52)),
                 const SizedBox(height: 8),
                 Center(
                   child: Text(
-                    'Transaksi Berhasil!',
+                    transaction.isUnpaid
+                        ? 'Transaksi Tersimpan (Belum Lunas)'
+                        : 'Transaksi Berhasil (Lunas)!',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.secondary,
-                        ),
+                      fontWeight: FontWeight.w800,
+                      color: transaction.isUnpaid
+                          ? Colors.amber[900]
+                          : AppTheme.secondary,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -73,10 +76,8 @@ class ReceiptDialog extends StatelessWidget {
                     children: [
                       Text(
                         settings.storeName,
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
                       if (settings.storeAddress.isNotEmpty) ...[
@@ -108,6 +109,10 @@ class ReceiptDialog extends StatelessWidget {
                 _buildMetaRow('No. Nota', transaction.invoiceNumber),
                 _buildMetaRow('Tanggal', dateStr),
                 _buildMetaRow('Kasir', transaction.cashierName),
+                _buildMetaRow(
+                  'Status',
+                  transaction.isUnpaid ? 'Belum Lunas (Piutang)' : 'Lunas',
+                ),
                 _buildMetaRow('Metode', transaction.paymentMethod),
                 const SizedBox(height: 12),
 
@@ -123,24 +128,27 @@ class ReceiptDialog extends StatelessWidget {
                       children: [
                         Text(
                           item.productName,
-                          style:
-                              Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppTheme.onSurface,
-                                  ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.onSurface,
+                              ),
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
-                                  ?.copyWith(
-                                    color: AppTheme.onSurfaceVariant,
-                                  ),
+                            Expanded(
+                              child: Text(
+                                '${item.quantity} ${item.unit} x ${CurrencyFormatter.format(item.price)}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppTheme.onSurfaceVariant,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
                               CurrencyFormatter.format(item.subtotal),
                               style: AppTheme.numericSmallStyle.copyWith(
@@ -161,8 +169,11 @@ class ReceiptDialog extends StatelessWidget {
                 // Totals Breakdown
                 _buildTotalRow('Subtotal', transaction.subtotal),
                 if (transaction.discount > 0)
-                  _buildTotalRow('Diskon', -transaction.discount,
-                      isDiscount: true),
+                  _buildTotalRow(
+                    'Diskon',
+                    -transaction.discount,
+                    isDiscount: true,
+                  ),
                 if (transaction.tax > 0)
                   _buildTotalRow('Pajak (PPN)', transaction.tax),
                 if (transaction.serviceCharge > 0)
@@ -170,23 +181,24 @@ class ReceiptDialog extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primary.withValues(alpha: 0.06),
-                    borderRadius:
-                        BorderRadius.circular(AppTheme.radiusDefault),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusDefault),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'TOTAL',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppTheme.primary,
-                                ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: AppTheme.primary,
+                            ),
                       ),
                       Text(
                         CurrencyFormatter.format(transaction.total),
@@ -200,10 +212,25 @@ class ReceiptDialog extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildTotalRow('Bayar (${transaction.paymentMethod})',
-                    transaction.paidAmount),
-                _buildTotalRow('Kembalian', transaction.changeAmount,
-                    isChange: true),
+                _buildTotalRow(
+                  'Bayar (${transaction.paymentMethod})',
+                  transaction.paidAmount,
+                ),
+                if (transaction.isUnpaid)
+                  _buildTotalRow(
+                    'Sisa Belum Bayar',
+                    (transaction.total - transaction.paidAmount).clamp(
+                      0.0,
+                      double.infinity,
+                    ),
+                    isDiscount: true,
+                  )
+                else
+                  _buildTotalRow(
+                    'Kembalian',
+                    transaction.changeAmount,
+                    isChange: true,
+                  ),
                 const SizedBox(height: 16),
 
                 _buildDashedLine(),
@@ -214,9 +241,9 @@ class ReceiptDialog extends StatelessWidget {
                   child: Text(
                     settings.receiptFooter,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontStyle: FontStyle.italic,
-                          color: AppTheme.outline,
-                        ),
+                      fontStyle: FontStyle.italic,
+                      color: AppTheme.outline,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -266,31 +293,48 @@ class ReceiptDialog extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: const TextStyle(fontSize: 12, color: AppTheme.outline)),
-          Text(value,
-              style:
-                  const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: AppTheme.outline),
+          ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTotalRow(String label, double amount,
-      {bool isDiscount = false, bool isChange = false}) {
+  Widget _buildTotalRow(
+    String label,
+    double amount, {
+    bool isDiscount = false,
+    bool isChange = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              color: isDiscount ? AppTheme.error : Colors.black87,
-              fontWeight: isChange ? FontWeight.bold : FontWeight.normal,
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDiscount ? AppTheme.error : Colors.black87,
+                fontWeight: isChange ? FontWeight.bold : FontWeight.normal,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             CurrencyFormatter.format(amount),
             style: AppTheme.numericSmallStyle.copyWith(

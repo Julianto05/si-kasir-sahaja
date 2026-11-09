@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/currency_formatter.dart';
 import '../../../models/transaction_model.dart';
 import '../../../providers/transaction_provider.dart';
+import '../../../widgets/app_background.dart';
 import '../../../widgets/motion_widgets.dart';
 import '../widgets/admin_bottom_nav.dart';
 import '../widgets/admin_drawer.dart';
@@ -33,63 +34,81 @@ class TransactionListScreen extends StatelessWidget {
       ),
       drawer: const AdminDrawer(currentRoute: 'transactions'),
       bottomNavigationBar: const AdminBottomNav(currentRoute: 'transactions'),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Top Filter & Metrics Section
-            _buildTopFilters(context),
+      body: AppBackground(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Top Filter & Metrics Section
+              _buildTopFilters(context),
 
-            // Transactions List
-            Expanded(
-              child: Consumer<TransactionProvider>(
-                builder: (context, provider, _) {
-                  if (provider.isLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: AppTheme.primary),
-                    );
-                  }
+              // Transactions List
+              Expanded(
+                child: Consumer<TransactionProvider>(
+                  builder: (context, provider, _) {
+                    if (provider.isLoading) {
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: AppTheme.primary,
+                        ),
+                      );
+                    }
 
-                  final transactions = provider.filteredTransactions;
+                    final transactions = provider.filteredTransactions;
 
-                  if (transactions.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: const BoxDecoration(
-                              color: AppTheme.surfaceContainerLow,
-                              shape: BoxShape.circle,
+                    if (transactions.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(18),
+                              decoration: const BoxDecoration(
+                                color: AppTheme.surfaceContainerLow,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.receipt_long_outlined,
+                                size: 44,
+                                color: AppTheme.outline,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.receipt_long_outlined,
-                              size: 44,
-                              color: AppTheme.outline,
+                            const SizedBox(height: 12),
+                            Text(
+                              'Tidak ada transaksi ditemukan',
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Tidak ada transaksi ditemukan',
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+                          ],
+                        ),
+                      );
+                    }
 
-                  final width = MediaQuery.of(context).size.width;
-                  if (width >= 700) {
-                    return GridView.builder(
+                    final width = MediaQuery.of(context).size.width;
+                    if (width >= 700) {
+                      return GridView.builder(
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 380,
+                              mainAxisExtent: 110,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                            ),
+                        itemCount: transactions.length,
+                        itemBuilder: (context, index) {
+                          final tx = transactions[index];
+                          return _TransactionCard(
+                            transaction: tx,
+                            onTap: () =>
+                                TransactionDetailDialog.show(context, tx),
+                          );
+                        },
+                      );
+                    }
+
+                    return ListView.separated(
                       padding: const EdgeInsets.all(16),
-                      gridDelegate:
-                          const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 380,
-                        childAspectRatio: 3.1,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                      ),
                       itemCount: transactions.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final tx = transactions[index];
                         return _TransactionCard(
@@ -99,25 +118,11 @@ class TransactionListScreen extends StatelessWidget {
                         );
                       },
                     );
-                  }
-
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: transactions.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      final tx = transactions[index];
-                      return _TransactionCard(
-                        transaction: tx,
-                        onTap: () =>
-                            TransactionDetailDialog.show(context, tx),
-                      );
-                    },
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -212,8 +217,12 @@ class TransactionListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChip(BuildContext context, String range, String label,
-      TransactionProvider provider) {
+  Widget _buildChip(
+    BuildContext context,
+    String range,
+    String label,
+    TransactionProvider provider,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
@@ -241,9 +250,15 @@ class TransactionListScreen extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: AppTheme.onSurfaceVariant,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
-          valueWidget,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: valueWidget,
+          ),
         ],
       ),
     );
@@ -258,9 +273,15 @@ class _TransactionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dateStr =
-        DateFormat('dd/MM/yyyy HH:mm').format(transaction.createdAt);
+    final dateStr = DateFormat(
+      'dd/MM/yyyy HH:mm',
+    ).format(transaction.createdAt);
     final isCompleted = transaction.isCompleted;
+    final isUnpaid = transaction.isUnpaid;
+
+    Color badgeColor = isCompleted
+        ? AppTheme.primary
+        : (isUnpaid ? Colors.amber[800]! : AppTheme.error);
 
     return ScaleTap(
       onTap: onTap,
@@ -271,7 +292,9 @@ class _TransactionCard extends StatelessWidget {
           border: Border.all(
             color: isCompleted
                 ? AppTheme.outlineVariant.withValues(alpha: 0.7)
-                : AppTheme.error.withValues(alpha: 0.35),
+                : (isUnpaid
+                      ? Colors.amber.withValues(alpha: 0.5)
+                      : AppTheme.error.withValues(alpha: 0.35)),
           ),
           boxShadow: AppTheme.cardShadow,
         ),
@@ -285,14 +308,18 @@ class _TransactionCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isCompleted
                     ? AppTheme.primary.withValues(alpha: 0.1)
-                    : AppTheme.errorContainer,
+                    : (isUnpaid
+                          ? Colors.amber.withValues(alpha: 0.15)
+                          : AppTheme.errorContainer),
                 borderRadius: BorderRadius.circular(AppTheme.radiusMd),
               ),
               child: Icon(
                 isCompleted
                     ? Icons.receipt_long_rounded
-                    : Icons.cancel_outlined,
-                color: isCompleted ? AppTheme.primary : AppTheme.error,
+                    : (isUnpaid
+                          ? Icons.pending_actions_rounded
+                          : Icons.cancel_outlined),
+                color: badgeColor,
                 size: 22,
               ),
             ),
@@ -306,19 +333,68 @@ class _TransactionCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        transaction.invoiceNumber,
-                        style: const TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                transaction.invoiceNumber,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isCompleted
+                                    ? AppTheme.secondaryContainer
+                                    : (isUnpaid
+                                          ? Colors.amber.withValues(alpha: 0.2)
+                                          : AppTheme.errorContainer),
+                                borderRadius: BorderRadius.circular(
+                                  AppTheme.radiusSm,
+                                ),
+                              ),
+                              child: Text(
+                                isCompleted
+                                    ? 'Lunas'
+                                    : (isUnpaid ? 'Belum Lunas' : 'Batal'),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: isCompleted
+                                      ? AppTheme.secondary
+                                      : (isUnpaid
+                                            ? Colors.amber[900]
+                                            : AppTheme.error),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      Text(
-                        CurrencyFormatter.format(transaction.total),
-                        style: AppTheme.numericSmallStyle.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color:
-                              isCompleted ? AppTheme.secondary : AppTheme.error,
+                      const SizedBox(width: 8),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          CurrencyFormatter.format(transaction.total),
+                          style: AppTheme.numericSmallStyle.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: isCompleted
+                                ? AppTheme.secondary
+                                : (isUnpaid
+                                      ? Colors.amber[900]
+                                      : AppTheme.error),
+                          ),
                         ),
                       ),
                     ],
